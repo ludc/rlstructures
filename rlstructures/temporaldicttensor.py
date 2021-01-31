@@ -47,6 +47,13 @@ class TemporalDictTensor:
         assert self.lengths.dtype == torch.int64
         self._specs = None
 
+    def clone(self):
+        v={k:self.variables[k].clone() for k in self.variables}
+        return TemporalDictTensor(v,lengths=self.lengths.clone())
+
+    def set(self,name,tensor):
+        self.variables[name]=tensor
+
     def specs(self):
         if self._specs is None:
             s = Specs()
@@ -82,7 +89,7 @@ class TemporalDictTensor:
         a float tensor (0.0 or 1.0) of size BxT. A 0.0 value means that the
         value at b x t is not set in the TemporalDictTensor.
         """
-        for k in self.variables:            
+        for k in self.variables:
             max_length = self.variables[k].size()[1]
             _mask = (
                 torch.arange(max_length)
@@ -217,9 +224,9 @@ class TemporalDictTensor:
         retour = {}
         for key in tensors[0].keys():
             to_concat = []
-            for n in range(len(tensors)):                
+            for n in range(len(tensors)):
                 v = tensors[n][key]
-                s = v.size()                
+                s = v.size()
                 s = (s[0],) + (lm - s[1],) + s[2:]
                 if s[1] > 0:
                     toadd = torch.zeros(s, dtype=v.dtype)
@@ -252,7 +259,7 @@ class TemporalDictTensor:
     def __contains__(self, item:str)->bool:
         return item in self.variables
 
-    def expand(self,new_batch_size):        
+    def expand(self,new_batch_size):
         """
         Expand a TemporalDictTensor to reach a given batch_size
         """
@@ -261,21 +268,21 @@ class TemporalDictTensor:
         new_lengths=torch.zeros(new_batch_size).long().to(self.device())
         new_lengths[0:self.n_elems()]=self.lengths
         new_variables={}
-        
+
         for k in self.variables.keys():
             s=self.variables[k].size()
             zeros=torch.zeros(diff,*s[1:]).to(self.device())
             nv=torch.cat([self.variables[k],zeros])
             new_variables[k]=nv
-        
+
         return TemporalDictTensor(new_variables,new_lengths)
-    
+
     def copy_(self,source,source_indexes,destination_indexes):
         """
         Copy the values of a source TDT at given indexes to the current TDT at the specified indexes
         """
         assert source_indexes.size()==destination_indexes.size()
-        max_length_source=source.lengths.max().item()        
+        max_length_source=source.lengths.max().item()
         for k in self.variables.keys():
             self.variables[k][destination_indexes,0:max_length_source]=source[k][source_indexes,0:max_length_source]
         self.lengths[destination_indexes]=source.lengths[source_indexes]

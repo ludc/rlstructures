@@ -20,8 +20,8 @@ class S_Agent:
     def __call__(self, state:DictTensor, input:DictTensor,agent_info:DictTensor,history:TemporalDictTensor = None):
         raise NotImplementedError
 
-    def call_bp(self,state, observation,action,agent_info,history=None):
-        raise NotImplementedError
+    def call_bp(self,state, observation,action,agent_info,trajectories,history):
+        return self.__call__(state,observation,agent_info,history)
 
     def update(self, info):
         raise NotImplementedError
@@ -32,18 +32,41 @@ class S_Agent:
     def get_default_agent_info(self,batch_size):
         raise NotImplementedError
 
-def replay_agent(self,agent,trajectories,info,function_name="call_bp"):
+def replay_agent(agent,trajectories,info,function_name="call_bp"):
+    #TODO: Computation is made on all batches, could use the mask to reduce the amount of computations
     agent_info=info.truncate_key("agent_info/")
     env_info=info.truncate_key("env_info/")
+
+    tdt=trajectories.clone()
+
     T=trajectories.lengths.max().item()
     tslice=trajectories.temporal_index(0)
     agent_state=tslice.truncate_key("agent_state/")
-    observation=tslice.truncate_key("observation/")
-    action=tslice.truncate_key("action/")
     f=getattr(agent,function_name)
-    agent_states=[agent_state]
     actions=[]
+    assert not agent.require_history(),"History not implemented in replay_agent"
+
     for t in range(T):
-        agent_state,action=f(agent_state,observation,action,agent_info)
-        agent_states.append(agent_state)
-        actions.append(action)
+        tslice=trajectories.temporal_index(t)
+        observation=tslice.truncate_key("observation/")
+        action=tslice.truncate_key("action/")
+
+        for k in agent_state.keys():
+            tdt.variables["agent_state/"+k][:,t]=agent_state[k]
+
+
+        action,agent_state=f(agent_state,observation,action,agent_info,history=tdt,trajectories=trajectories)
+
+        if t==0:
+            for k in action.keys():
+                if not "action/"+k in tdt.variables:
+                    s=action[k].size()
+                    nt=torch.zeros(s[0],T,*s[1:],dtype=action[k].dtype)
+                    tdt.set("action/"+k,nt)
+
+        #Copy of agent_state
+        for k in agent_state.keys():
+            tdt.variables["_agent_state/"+k][:,t]=agent_state[k]
+        for k in action.keys():
+            tdt.variables["action/"+k][:,t]=action[k]
+    return tdt

@@ -15,8 +15,8 @@ import torch
 import time
 import numpy as np
 import torch.nn.functional as F
-from tutorial.tutorial_reinforce.agent import ReinforceAgent
-from tutorial.tutorial_reinforce_with_evaluation.reinforce import Reinforce
+from tutorial.tutorial_reinforce_s.agent import ReinforceAgent
+from tutorial.tutorial_reinforce_with_evaluation_s.reinforce import Reinforce
 import gym
 from gym.wrappers import TimeLimit
 

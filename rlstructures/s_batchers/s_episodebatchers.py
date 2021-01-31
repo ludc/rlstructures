@@ -47,7 +47,7 @@ class S_EpisodeBatcher:
             for w in range(len(self.workers)):
                 b=self.workers[w].finished()
                 if not b:
-                    return None
+                    return None,None
 
         max_length = 0
         buffer_slot_id_lists = []

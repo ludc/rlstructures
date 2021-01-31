@@ -19,6 +19,7 @@ import numpy as np
 import torch.nn.functional as F
 from tutorial.tutorial_reinforce_s.agent import *
 from rlstructures.s_agent import replay_agent
+
 class Reinforce:
     def __init__(self, config,create_env,create_agent):
         self.config = config
@@ -41,6 +42,24 @@ class Reinforce:
         baseline_model=BaselineModel(self.obs_dim,16)
         self.learning_model=Model(action_model,baseline_model)
         self.agent=self._create_agent(n_actions = self.n_actions, model = self.learning_model)
+
+        #We create a batcher dedicated to evaluation
+        model=copy.deepcopy(self.learning_model)
+        self.evaluation_batcher=S_EpisodeBatcher(
+            n_timesteps=self.config["max_episode_steps"],
+            n_slots=self.config["n_evaluation_episodes"],
+            create_agent=self._create_agent,
+            create_env=self._create_env,
+            env_args={
+                "n_envs": self.config["n_envs"],
+                "max_episode_steps": self.config["max_episode_steps"],
+                "env_name":self.config["env_name"]
+            },
+            agent_args={"n_actions": self.n_actions, "model": model},
+            n_threads=self.config["n_evaluation_threads"],
+            seeds=[self.config["env_seed"]+k*10 for k in range(self.config["n_evaluation_threads"])],
+        )
+
 
         #Creation of the batcher for sampling complete episodes (i.e Episode Batcher)
         #The batcher will sample n_threads*n_envs trajectories at each call
@@ -67,8 +86,14 @@ class Reinforce:
         #Training Loop:
         _start_time=time.time()
         self.iteration=0
-        while(time.time()-_start_time<self.config["time_limit"]):
 
+        #We launch the evaluation batcher (in deterministic mode)
+        n_episodes=self.config["n_evaluation_episodes"]
+        agent_info=DictTensor({"stochastic":torch.tensor([False]).repeat(n_episodes)})
+        self.evaluation_batcher.execute(n_episodes=n_episodes,agent_info=agent_info)
+        self.evaluation_iteration=self.iteration
+
+        while(time.time()-_start_time<self.config["time_limit"]):
             #Update the batcher with the last version of the learning model
             self.train_batcher.update(self.learning_model.state_dict())
 
@@ -91,6 +116,7 @@ class Reinforce:
             le = self.config["entropy_coef"] * dt["entropy_loss"]
 
             floss = ld - le - lr
+
             optimizer.zero_grad()
             floss.backward()
             optimizer.step()
@@ -99,12 +125,26 @@ class Reinforce:
             self.train_batcher.update(self.learning_model.state_dict())
             print("At iteration %d, avg (discounted) reward is %f"%(self.iteration,dt["avg_reward"].item()))
             print("\t Avg trajectory length is %f"%(trajectories.lengths.float().mean().item()))
-            print("\t Curves can be visualized using 'tensorbaord --logdir=%s'"%self.config["logdir"])
+            print("\t Curves can be visualized using 'tensorboard --logdir=%s'"%self.config["logdir"])
             self.iteration+=1
 
+            #We check the evaluation batcher
+            evaluation_trajectories,info=self.evaluation_batcher.get(blocking=False)
+            if not evaluation_trajectories is None: #trajectories are available
+                #Compute the cumulated reward
+                cumulated_reward=(evaluation_trajectories["_observation/reward"]*evaluation_trajectories.mask()).sum(1).mean()
+                self.logger.add_scalar("evaluation_reward",cumulated_reward.item(),self.evaluation_iteration)
+                #We reexecute the evaluation batcher (with same value of agent_info and same number of episodes)
+                self.evaluation_batcher.update(self.learning_model.state_dict())
+                self.evaluation_iteration=self.iteration
+                self.evaluation_batcher.reexecute()
+
         self.train_batcher.close()
+        self.evaluation_batcher.get() # To wait for the last trajectories
+        self.evaluation_batcher.close()
         self.logger.update_csv() # To save as a CSV file in logdir
         self.logger.close()
+
 
     def get_loss(self,trajectories,info):
             #First, we want to compute the cumulated reward per trajectory

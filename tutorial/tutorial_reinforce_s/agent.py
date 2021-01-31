@@ -47,8 +47,8 @@ class ReinforceAgent(S_Agent):
             #We initialize the agent_step only for trajectory where an initial_state is met
             state = masked_dicttensor(state,zero_step,observation["initial_state"])
         #We compute one score per possible action
-        action_proba = self.model(observation["frame"])
-
+        action_proba = self.model.action_model(observation["frame"])
+        baseline = self.model.baseline_model(observation["frame"])
         #We sample an action following the distribution
         dist = torch.distributions.Categorical(action_proba)
         action_sampled = dist.sample()
@@ -62,12 +62,19 @@ class ReinforceAgent(S_Agent):
         new_state = DictTensor({"agent_step": state["agent_step"] + 1})
 
         agent_do = DictTensor(
-            {"action": action, "action_probabilities": action_proba}
+            {"action": action, "action_probabilities": action_proba, "baseline":baseline}
         )
 
         return agent_do, new_state
 
-class AgentModel(nn.Module):
+
+class Model(nn.Module):
+    def __init__(self,action_model,baseline_model):
+        super().__init__()
+        self.action_model=action_model
+        self.baseline_model=baseline_model
+
+class ActionModel(nn.Module):
     """ The model that computes one score per action
     """
     def __init__(self, n_observations, n_actions, n_hidden):

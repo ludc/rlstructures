@@ -130,6 +130,7 @@ class Reinforce:
             if not evaluation_trajectories is None: #trajectories are available
                 #Compute the cumulated reward
                 cumulated_reward=(evaluation_trajectories["_reward"]*evaluation_trajectories.mask()).sum(1).mean()
+                print("\tEvaluaiton reward ",cumulated_reward.item())
                 self.logger.add_scalar("evaluation_reward",cumulated_reward.item(),self.evaluation_iteration)
                 #We reexecute the evaluation batcher (with same value of agent_info and same number of episodes)
                 self.evaluation_batcher.update(self.learning_model.state_dict())
