@@ -268,7 +268,6 @@ class DictTensor:
         """
         Create a new DictTensor containing all the tensors from self and dt
         """
-        assert dt.device()==self.device()
         for k in dt.keys():
             assert not k in self.variables, (
                 "variable " + k + " already exists in the DictTensor"
