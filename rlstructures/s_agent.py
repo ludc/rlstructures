@@ -20,8 +20,24 @@ class S_Agent:
     def __call__(self, state:DictTensor, input:DictTensor,agent_info:DictTensor,history:TemporalDictTensor = None):
         raise NotImplementedError
 
-    def call_bp(self,state, observation,action,agent_info,trajectories,history):
-        return self.__call__(state,observation,agent_info,history)
+    def call_bp(self,trajectories,agent_info,t,last_call_state):
+        assert not self.require_history()
+
+        tslice=trajectories.temporal_slice(t)
+        if last_call_state is None:
+            assert t==0
+            last_call_state=tslice.truncate_key("agent_state")
+        else:
+            last_call_state=last_call_state.truncate_key("_agent_state/")
+
+        observation=tslice.truncate_key("observation")
+        action,n_agent_state=self.__call__(state,observation,agent_info,None)
+
+        output=(last_call_state.prepend_key("agent_state/")
+                +action.prepend_key("action/")
+                +n_agent_state.prepend_key("_agent_state/")
+        )
+        return output
 
     def update(self, info):
         raise NotImplementedError
@@ -35,38 +51,24 @@ class S_Agent:
 def replay_agent(agent,trajectories,info,function_name="call_bp"):
     #TODO: Computation is made on all batches, could use the mask to reduce the amount of computations
     agent_info=info.truncate_key("agent_info/")
-    env_info=info.truncate_key("env_info/")
-
-    tdt=trajectories.clone()
 
     T=trajectories.lengths.max().item()
-    tslice=trajectories.temporal_index(0)
-    agent_state=tslice.truncate_key("agent_state/")
     f=getattr(agent,function_name)
-    actions=[]
+    tdt=None
     assert not agent.require_history(),"History not implemented in replay_agent"
 
-    for t in range(T):
-        tslice=trajectories.temporal_index(t)
-        observation=tslice.truncate_key("observation/")
-        action=tslice.truncate_key("action/")
+    output=f(trajectories,agent_info,0,None)
+    variables={}
+    for k in output.keys():
+        s=output[k].size()
+        t=torch.zeros(s[0],T,*s[1:],dtype=output[k].dtype)
+        t[:,0]=output[k]
+        variables[k]=t
 
-        for k in agent_state.keys():
-            tdt.variables["agent_state/"+k][:,t]=agent_state[k]
+    for t in range(1,T):
+        output=f(trajectories,agent_info,t,output)
+        for k in output.keys():
+            variables[k][:,t]=output[k]
+    tdt=TemporalDictTensor(variables,lengths=trajectories.lengths.clone())
 
-
-        action,agent_state=f(agent_state,observation,action,agent_info,history=tdt,trajectories=trajectories)
-
-        if t==0:
-            for k in action.keys():
-                if not "action/"+k in tdt.variables:
-                    s=action[k].size()
-                    nt=torch.zeros(s[0],T,*s[1:],dtype=action[k].dtype)
-                    tdt.set("action/"+k,nt)
-
-        #Copy of agent_state
-        for k in agent_state.keys():
-            tdt.variables["_agent_state/"+k][:,t]=agent_state[k]
-        for k in action.keys():
-            tdt.variables["action/"+k][:,t]=action[k]
     return tdt
