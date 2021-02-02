@@ -8,11 +8,9 @@
 
 import torch
 import torch.nn as nn
-#import rlstructures.logging as logging
-from rlstructures import DictTensor
+from rlstructures import DictTensor,masked_tensor,masked_dicttensor
 from rlstructures import Agent
 import time
-from rlstructures.dicttensor import masked_tensor,masked_dicttensor
 
 class ReinforceAgent(Agent):
     def __init__(self,model=None, n_actions=None):
@@ -24,28 +22,23 @@ class ReinforceAgent(Agent):
     def update(self,  state_dict):
         self.model.load_state_dict(state_dict)
 
-    def __call__(self, state, observation,agent_info=None,history=None):
+    def initial_state(self,agent_info,B):
+        return DictTensor({})
+
+    def __call__(self, state,observation,agent_info=None,history=None):
         """
         Executing one step of the agent
         """
+        assert observation.device()==self.device()
+        assert state.empty()
+        assert agent_info.device()==self.device()
+
         # Verify that the batch size is 1
-        initial_state = observation["initial_state"]
         B = observation.n_elems()
-
-        if agent_info is None:
-            agent_info=DictTensor({"stochastic":torch.tensor([True]).repeat(B)})
-
         #We will store the agent step in the trajectories to illustrate how information can be propagated among multiple timesteps
-        zero_step=DictTensor({"agent_step":torch.zeros(B).long()})
-        if state is None:
-            # if state is None, it means that the agent does not have any internal state. The internal state thus has to be initialized
-            state = zero_step
-        else:
-            #We initialize the agent_step only for trajectory where an initial_state is met
-            state = masked_dicttensor(state,zero_step,observation["initial_state"])
         #We compute one score per possible action
-        action_proba = self.model(observation["frame"])
-
+        action_proba = self.model.action_model(observation["frame"])
+        baseline = self.model.baseline_model(observation["frame"])
         #We sample an action following the distribution
         dist = torch.distributions.Categorical(action_proba)
         action_sampled = dist.sample()
@@ -55,16 +48,22 @@ class ReinforceAgent(Agent):
         smask=agent_info["stochastic"].float()
         action=masked_tensor(action_max,action_sampled,agent_info["stochastic"])
 
-
-        new_state = DictTensor({"agent_step": state["agent_step"] + 1})
+        new_state = DictTensor({})
 
         agent_do = DictTensor(
-            {"action": action, "action_probabilities": action_proba}
+            {"action": action, "action_probabilities": action_proba, "baseline":baseline}
         )
 
-        return state, agent_do, new_state
+        return agent_do, new_state
 
-class AgentModel(nn.Module):
+
+class Model(nn.Module):
+    def __init__(self,action_model,baseline_model):
+        super().__init__()
+        self.action_model=action_model
+        self.baseline_model=baseline_model
+
+class ActionModel(nn.Module):
     """ The model that computes one score per action
     """
     def __init__(self, n_observations, n_actions, n_hidden):

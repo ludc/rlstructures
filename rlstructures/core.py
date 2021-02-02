@@ -278,9 +278,8 @@ class DictTensor:
         Copy the values of a source TDT at given indexes to the current TDT at the specified indexes
         """
         assert source_indexes.size()==destination_indexes.size()
-        max_length_source=source.lengths.max().item()
         for k in self.variables.keys():
-            self.variables[k][destination_indexes,0:max_length_source]=source[k][source_indexes,0:max_length_source]
+            self.variables[k][destination_indexes]=source[k][source_indexes]
 
 
 class TemporalDictTensor:

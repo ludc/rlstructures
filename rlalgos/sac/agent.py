@@ -8,7 +8,7 @@
 
 import torch
 import torch.nn as nn
-import rlstructures.logging as logging
+#import rlstructures.logging as logging
 from rlstructures import DictTensor
 from rlstructures import Agent
 import time
@@ -30,7 +30,7 @@ class SACAgent(Agent):
             model (nn.Module): a module producing a tuple: (actions scores, value)
             n_actions (int): the number of possible actions
         """
-        super().__init__()       
+        super().__init__()
         self.model = policy
         self.action_dim = action_dim
 
@@ -42,7 +42,7 @@ class SACAgent(Agent):
         """
         Executing one step of the agent
         """
-        # Verify that the batch size is 1        
+        # Verify that the batch size is 1
         initial_state = observation["initial_state"]
         B = observation.n_elems()
 
@@ -130,10 +130,10 @@ class DiagGaussianActor(nn.Module):
     """torch.distributions implementation of an diagonal Gaussian policy."""
     def __init__(self, log_std_bounds=[-5, 2]):
         super().__init__()
-        self.log_std_bounds = log_std_bounds        
+        self.log_std_bounds = log_std_bounds
 
     def forward(self, mu,log_std):
-        
+
         # constrain log_std inside [log_std_min, log_std_max]
         log_std = torch.tanh(log_std)
         log_std_min, log_std_max = self.log_std_bounds
@@ -151,13 +151,13 @@ class SACPolicy(nn.Module):
         self.linear_mean = nn.Linear(n_hidden, action_dim)
         self.linear_std = nn.Linear(n_hidden, action_dim)
         self.dg=DiagGaussianActor()
-        
+
     def forward(self, frame):
         z = torch.relu(self.linear(frame))
         mean = self.linear_mean(z)
         std = self.linear_std(z)
         return self.dg(mean,std)
-        
+
 class SACQ(nn.Module):
     def __init__(self, n_observations, action_dim, n_hidden):
         super().__init__()
@@ -165,11 +165,10 @@ class SACQ(nn.Module):
         self.linear_2 = nn.Linear(action_dim, n_hidden)
         self.linear_q = nn.Linear(n_hidden*2, n_hidden)
         self.linear_qq = nn.Linear(n_hidden, 1)
-        
+
     def forward(self, frame, action):
         zf = torch.relu(self.linear(frame))
         za = torch.relu(self.linear_2(action))
         q = torch.relu(self.linear_q(torch.cat([zf,za],dim=1)))
         q = self.linear_qq(q)
         return q
-
