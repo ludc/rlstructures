@@ -6,7 +6,7 @@
 #
 
 
-from .s_agent_fxn import s_acquire_episodes,s_acquire_slot
+from .s_agent_fxn import s_acquire_slot
 import torch.multiprocessing as mp
 import rlstructures.logging as logging
 import time
@@ -46,49 +46,25 @@ def s_worker_thread(
             agent_state = None
             observation = None
             env_running = None
-            t_agent_info=agent_info
+            assert agent_info.empty() or agent_info.n_elems()==env.n_envs()
+            assert env_info.empty() or env_info.n_elems()==env.n_envs()
             observation, env_running = env.reset(env_info)
         elif order_name == "slot":
             if len(env_running)==0:
                 out_queue.put([])
             else:
-                env_to_slot, agent_state, observation, t_agent_info, env_running = acquire_slot(
+                env_to_slot, agent_state, observation, agent_info,env_info, env_running = s_acquire_slot(
                         buffer,
                         env,
                         agent,
                         agent_state,
                         observation,
-                        t_agent_info,
+                        agent_info,
+                        env_info,
                         env_running,
                 )
                 slots=[env_to_slot[k] for k in env_to_slot]
-                out_queue.put(slots)
-        elif order_name == "episode":
-            _, agent_info, env_info,n_episodes = order
-            assert n_episodes%n_envs==0
-            n_sequential_rounds = int(n_episodes / n_envs)
-            buffer_slot_id_lists = []
-            for kk in range(n_sequential_rounds):
-                ei,ai = None,None
-                if not env_info is None:
-                    ei = env_info.slice(kk*n_envs,(kk+1)*n_envs)
-                if not agent_info is None:
-                    ai = agent_info.slice(kk*n_envs,(kk+1)*n_envs)
-                id_lists = s_acquire_episodes(buffer, env, agent,ei,ai)
-                buffer_slot_id_lists += id_lists
-            out_queue.put(buffer_slot_id_lists)
-        elif order_name == "episode_again":
-            n_sequential_rounds = int(n_episodes / n_envs)
-            buffer_slot_id_lists = []
-            for kk in range(n_sequential_rounds):
-                ei,ai = None,None
-                if not env_info is None:
-                    ei = env_info.slice(kk*n_envs,(kk+1)*n_envs)
-                if not agent_info is None:
-                    ai = agent_info.slice(kk*n_envs,(kk+1)*n_envs)
-                id_lists = s_acquire_episodes(buffer, env, agent,ei,ai)
-                buffer_slot_id_lists += id_lists
-            out_queue.put(buffer_slot_id_lists)
+                out_queue.put((slots,len(env_running)))
         elif order_name == "update":
             agent.update(order[1])
             out_queue.put("ok")
@@ -125,14 +101,6 @@ class S_ThreadWorker:
 
     def acquire_slot(self):
         order = ("slot", None)
-        self.inq.put(order)
-
-    def acquire_episodes(self, n_episodes, agent_info,env_info):
-        order = ("episode", agent_info, env_info, n_episodes)
-        self.inq.put(order)
-
-    def acquire_episodes_again(self):
-        order = ("episode_again",None)
         self.inq.put(order)
 
     def reset(self,agent_info=None, env_info=None):

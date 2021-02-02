@@ -42,7 +42,7 @@ class RecurrentAgent(Agent):
         else:
             #Maybe some observations are initial states of new episodes. For these state, we must initialize the internal state of the policy
             istate=DictTensor({"agent_state":agent_initial,"agent_step":torch.zeros(B).long()})
-            state=masked_dicttensor(istate,state,initial_state)
+            state=masked_dicttensor(state,istate,initial_state)
 
 
         new_z,action_proba = self.model(state["agent_state"],observation["frame"])

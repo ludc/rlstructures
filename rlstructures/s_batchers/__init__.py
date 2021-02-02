@@ -1,1 +1,1 @@
-from .s_episodebatchers import S_EpisodeBatcher
+from .s_trajectorybatchers import S_Batcher

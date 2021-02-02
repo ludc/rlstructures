@@ -59,6 +59,8 @@ class Reinforce:
             agent_args={"n_actions": self.n_actions, "model": model},
             n_threads=self.config["n_threads"],
             seeds=[self.config["env_seed"]+k*10 for k in range(self.config["n_threads"])],
+            agent_info=DictTensor({"stochastic":torch.tensor([True]).repeat(self.config["n_envs"])}),
+            env_info=DictTensor({}),
         )
 
         #Creation of the optimizer
@@ -127,9 +129,9 @@ class Reinforce:
 
 
             # Now we do a forward pass, but also computing action_probabilites and the baseline
-            recomputed_trajectories=replay_agent(self.agent,trajectories,info)
-            action_probabilities=recomputed_trajectories["action/action_probabilities"]
-            baseline=recomputed_trajectories["action/baseline"].squeeze(-1)
+            replayed=replay_agent(self.agent,trajectories,info)
+            action_probabilities=replayed["action_probabilities"]
+            baseline=replayed["baseline"].squeeze(-1)
             action_distribution=torch.distributions.Categorical(action_probabilities)
 
             log_proba=action_distribution.log_prob(trajectories["action/action"])

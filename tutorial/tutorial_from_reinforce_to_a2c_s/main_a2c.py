@@ -6,7 +6,7 @@
 #
 
 
-from rlstructures import logging,DictTensor
+from rlstructures import logging
 from rlstructures.env_wrappers import GymEnv
 from rlstructures.tools import weight_init
 import torch.nn as nn
@@ -15,8 +15,8 @@ import torch
 import time
 import numpy as np
 import torch.nn.functional as F
-from tutorial.tutorial_reinforce_s.agent import ReinforceAgent
-from tutorial.tutorial_reinforce_s.reinforce import Reinforce
+from tutorial.tutorial_from_reinforce_to_a2c_s.agent import ReinforceAgent
+from tutorial.tutorial_from_reinforce_to_a2c_s.a2c import A2C
 import gym
 from gym.wrappers import TimeLimit
 
@@ -31,13 +31,12 @@ def create_env(n_envs, env_name=None, max_episode_steps=None, seed=None):
         e = create_gym_env(env_name)
         e = TimeLimit(e, max_episode_steps=max_episode_steps)
         envs.append(e)
-    gym_env=GymEnv(envs, seed) #,default_env_info=DictTensor({"test":torch.ones(n_envs)}))
-    return gym_env
+    return GymEnv(envs, seed)
 
 def create_agent(model,n_actions=1):
     return ReinforceAgent(model=model, n_actions=n_actions)
 
-class Experiment(Reinforce):
+class Experiment(A2C):
     def __init__(self, config, create_env, create_agent):
         super().__init__(config, create_env, create_agent)
 
@@ -47,16 +46,19 @@ if __name__=="__main__":
     mp.set_start_method("spawn")
 
     config={"env_name": "CartPole-v0",
+            "a2c_timesteps": 20,
             "n_envs": 4,
             "max_episode_steps": 100,
             "env_seed": 42,
             "n_threads": 4,
+            "n_evaluation_threads": 2,
+            "n_evaluation_episodes": 256,
             "time_limit": 3600,
             "lr": 0.01,
-            "discount_factor": 0.9,
-            "baseline_coef": 0.1,
+            "discount_factor": 0.95,
+            "critic_coef": 1.0,
             "entropy_coef": 0.01,
-            "reinforce_coef": 1.0,
+            "a2c_coef": 1.0,
             "logdir":"./results"
     }
     exp=Experiment(config,create_env,create_agent)

@@ -38,8 +38,7 @@ class VecEnv:
         (Dicttensor of size B'', mapping vector if size B''))
     """
 
-    def __init__(self,default_env_info=DictTensor({})):
-        self.default_env_info=default_env_info
+    def __init__(self):
         pass
 
     def reset(self,env_info:DictTensor=None):
@@ -49,9 +48,6 @@ class VecEnv:
         :type env_info: DictTensor, optional
         """
         pass
-
-    def get_default_env_info(self):
-        return self.default_env_info
 
     def step(self, policy_output:DictTensor)-> [[DictTensor,torch.Tensor],[DictTensor,torch.Tensor]]:
         """ Execute one step over alll the running environment instances

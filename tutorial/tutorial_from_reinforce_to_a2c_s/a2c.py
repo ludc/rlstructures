@@ -10,17 +10,17 @@ from rlstructures.logger import Logger, TFLogger
 from rlstructures import DictTensor, TemporalDictTensor
 from rlstructures import logging
 from rlstructures.tools import weight_init
-from rlstructures.s_batchers import S_Batcher
+from rlstructures.s_batchers import S_EpisodeBatcher,S_Batcher
 import torch.nn as nn
 import copy
 import torch
 import time
 import numpy as np
 import torch.nn.functional as F
-from tutorial.tutorial_reinforce_s.agent import *
+from .agent import *
 from rlstructures.s_agent import replay_agent
 
-class Reinforce:
+class A2C:
     def __init__(self, config,create_env,create_agent):
         self.config = config
 
@@ -39,35 +39,36 @@ class Reinforce:
     def run(self):
         # Instantiate the learning model abd the baseline model
         action_model=ActionModel(self.obs_dim,self.n_actions,16)
-        baseline_model=BaselineModel(self.obs_dim,16)
-        self.learning_model=Model(action_model,baseline_model)
+        critic_model=CriticModel(self.obs_dim,16)
+        self.learning_model=Model(action_model,critic_model)
         self.agent=self._create_agent(n_actions = self.n_actions, model = self.learning_model)
 
         #We create a batcher dedicated to evaluation
         model=copy.deepcopy(self.learning_model)
-        self.evaluation_batcher=S_Batcher(
+        self.evaluation_batcher=S_EpisodeBatcher(
             n_timesteps=self.config["max_episode_steps"],
+            n_slots=self.config["n_evaluation_episodes"],
             create_agent=self._create_agent,
             create_env=self._create_env,
             env_args={
-                "n_envs": self.config["n_evaluation_envs"],
+                "n_envs": self.config["n_envs"],
                 "max_episode_steps": self.config["max_episode_steps"],
                 "env_name":self.config["env_name"]
             },
             agent_args={"n_actions": self.n_actions, "model": model},
             n_threads=self.config["n_evaluation_threads"],
             seeds=[self.config["env_seed"]+k*10 for k in range(self.config["n_evaluation_threads"])],
-            agent_info=DictTensor({"stochastic":torch.tensor([True])}),
+            agent_info=DictTensor({"stochastic":torch.tensor([True]).repeat(self.config["n_envs"])}),
             env_info=DictTensor({}),
         )
 
-
-        #Creation of the batcher for sampling complete episodes (i.e Episode Batcher)
+        #Creation of the batcher for sampling complete pieces of trajectories (i.e Batcher)
         #The batcher will sample n_threads*n_envs trajectories at each call
         # To have a fast batcher, we have to configure it with n_timesteps=self.config["max_episode_steps"]
         model=copy.deepcopy(self.learning_model)
         self.train_batcher=S_Batcher(
-            n_timesteps=self.config["max_episode_steps"],
+            n_timesteps=self.config["a2c_timesteps"],
+            n_slots=self.config["n_envs"]*self.config["n_threads"],
             create_agent=self._create_agent,
             create_env=self._create_env,
             env_args={
@@ -78,7 +79,7 @@ class Reinforce:
             agent_args={"n_actions": self.n_actions, "model": model},
             n_threads=self.config["n_threads"],
             seeds=[self.config["env_seed"]+k*10 for k in range(self.config["n_threads"])],
-            agent_info=DictTensor({"stochastic":torch.tensor([True])}),
+            agent_info=DictTensor({"stochastic":torch.tensor([True]).repeat(self.config["n_envs"])}),
             env_info=DictTensor({}),
         )
 
@@ -89,38 +90,43 @@ class Reinforce:
         _start_time=time.time()
         self.iteration=0
 
-        #We launch the evaluation batcher (in deterministic mode)
-        n_episodes=self.config["n_evaluation_threads"]*self.config["n_evaluation_envs"]
+        # #We launch the evaluation batcher (in deterministic mode)
+        n_episodes=self.config["n_evaluation_episodes"]
         agent_info=DictTensor({"stochastic":torch.tensor([False]).repeat(n_episodes)})
-        self.evaluation_batcher.reset(agent_info=agent_info)
-        self.evaluation_batcher.execute()
+        self.evaluation_batcher.execute(n_episodes=n_episodes,agent_info=agent_info)
         self.evaluation_iteration=self.iteration
 
+        #Initialize the training batcher such that agents will start to acqire pieces of episodes
+        self.train_batcher.update(self.learning_model.state_dict())
+        n_episodes=self.config["n_envs"]*self.config["n_threads"]
+        agent_info=DictTensor({"stochastic":torch.tensor([True]).repeat(n_episodes)})
+        self.train_batcher.reset(agent_info=agent_info)
+
         while(time.time()-_start_time<self.config["time_limit"]):
-            #Update the batcher with the last version of the learning model
-            self.train_batcher.update(self.learning_model.state_dict())
-
             #Call the batcher to get a sample of trajectories
-            #1) The policy will be executed in "stochastic' mode
-            n_episodes=self.config["n_envs"]*self.config["n_threads"]
-            agent_info=DictTensor({"stochastic":torch.tensor([True]).repeat(n_episodes)})
-            self.train_batcher.reset(agent_info=agent_info)
-            self.train_batcher.execute()
 
-            #2) We get the trajectories (and wait until the trajectories have been sampled)
-            (trajectories,info),n_env_running=self.train_batcher.get(blocking=True)
-            assert n_env_running==0
+            #2) We get the pieces of episodes
+            self.train_batcher.execute()
+            trajectories,info=self.train_batcher.get(blocking=True)
+            if trajectories is None: #All the agents have finished their jobs on the previous episodes:
+                #Then, reset  again to start new episodes
+                n_episodes=self.config["n_envs"]*self.config["n_threads"]
+                agent_info=DictTensor({"stochastic":torch.tensor([True]).repeat(n_episodes)})
+                self.train_batcher.reset(agent_info=agent_info)
+                self.train_batcher.execute()
+                trajectories,info=self.train_batcher.get(blocking=True)
 
             #3) Now, we compute the loss
             dt=self.get_loss(trajectories,info)
             [self.logger.add_scalar(k,dt[k].item(),self.iteration) for k in dt.keys()]
 
             # Computation of final loss
-            ld = self.config["baseline_coef"] * dt["baseline_loss"]
-            lr = self.config["reinforce_coef"] * dt["reinforce_loss"]
+            ld = self.config["critic_coef"] * dt["critic_loss"]
+            lr = self.config["a2c_coef"] * dt["a2c_loss"]
             le = self.config["entropy_coef"] * dt["entropy_loss"]
 
             floss = ld - le - lr
+            floss= floss/n_episodes*trajectories.n_elems()
 
             optimizer.zero_grad()
             floss.backward()
@@ -128,26 +134,19 @@ class Reinforce:
 
             #Update the train batcher with the updated model
             self.train_batcher.update(self.learning_model.state_dict())
-            print("At iteration %d, avg (discounted) reward is %f"%(self.iteration,dt["avg_reward"].item()))
-            print("\t Avg trajectory length is %f"%(trajectories.lengths.float().mean().item()))
-            print("\t Curves can be visualized using 'tensorboard --logdir=%s'"%self.config["logdir"])
             self.iteration+=1
 
             #We check the evaluation batcher
-            (evaluation_trajectories,info),n_env_running=self.evaluation_batcher.get(blocking=False)
+            evaluation_trajectories,info=self.evaluation_batcher.get(blocking=False)
             if not evaluation_trajectories is None: #trajectories are available
-                assert n_env_running==0
                 #Compute the cumulated reward
                 cumulated_reward=(evaluation_trajectories["_observation/reward"]*evaluation_trajectories.mask()).sum(1).mean()
                 self.logger.add_scalar("evaluation_reward",cumulated_reward.item(),self.evaluation_iteration)
-                print("-- Iteration ",self.iteration," Evaluation reward = ",cumulated_reward.item())
+                print("At iteration %d, reward is %f"%(self.evaluation_iteration,cumulated_reward.item()))
                 #We reexecute the evaluation batcher (with same value of agent_info and same number of episodes)
                 self.evaluation_batcher.update(self.learning_model.state_dict())
                 self.evaluation_iteration=self.iteration
-                n_episodes=self.config["n_evaluation_threads"]*self.config["n_evaluation_envs"]
-                agent_info=DictTensor({"stochastic":torch.tensor([False]).repeat(n_episodes)})
-                self.evaluation_batcher.reset(agent_info=agent_info)
-                self.evaluation_batcher.execute()
+                self.evaluation_batcher.reexecute()
 
         self.train_batcher.close()
         self.evaluation_batcher.get() # To wait for the last trajectories
@@ -167,32 +166,27 @@ class Reinforce:
 
             #We remove the reward values that are not in the trajectories
             reward=reward*mask
-
-            #We compute the future cumulated reward at each timestep (by reverse computation)
             max_length=trajectories.lengths.max().item()
-            cumulated_reward=torch.zeros_like(reward)
-            cumulated_reward[:,max_length-1]=reward[:,max_length-1]
-            for t in range(max_length-2,-1,-1):
-                cumulated_reward[:,t]=reward[:,t]+self.config["discount_factor"]*cumulated_reward[:,t+1]
-
-
-            # Now we do a forward pass, but also computing action_probabilites and the baseline
             replayed=replay_agent(self.agent,trajectories,info)
-            action_probabilities=replayed["action_probabilities"]
-            baseline=replayed["baseline"].squeeze(-1)
-            action_distribution=torch.distributions.Categorical(action_probabilities)
 
+            #Now, we want to compute the action probabilities over the trajectories such that we will be able to do 'backward'
+            action_probabilities=replayed["action_probabilities"]
+            #We compute the temporal difference
+            target=reward+self.config["discount_factor"]*(1-trajectories["_observation/done"].float())*replayed["_critic"].squeeze(-1).detach()
+            td=replayed["critic"].squeeze(-1)-target
+
+            critic_loss=td**2
+            critic_loss= (critic_loss*mask).sum(1)/mask.sum(1)
+            avg_critic_loss = critic_loss.mean()
+
+            action_distribution=torch.distributions.Categorical(action_probabilities)
             log_proba=action_distribution.log_prob(trajectories["action/action"])
-            reinforce_loss = log_proba * (cumulated_reward-baseline).detach()
-            reinforce_loss = (reinforce_loss*mask).sum(1)/mask.sum(1)
-            avg_reinforce_loss=reinforce_loss.mean()
+            a2c_loss = -log_proba * td.detach()
+            a2c_loss = (a2c_loss*mask).sum(1)/mask.sum(1)
+            avg_a2c_loss=a2c_loss.mean()
 
             entropy=action_distribution.entropy()
             entropy=(entropy*mask).sum(1)/mask.sum(1)
             avg_entropy=entropy.mean()
 
-            baseline_loss=(baseline-cumulated_reward)**2
-            baseline_loss= (baseline_loss*mask).sum(1)/mask.sum(1)
-            avg_baseline_loss = baseline_loss.mean()
-
-            return DictTensor({"avg_reward":cumulated_reward[:,0].mean(),"baseline_loss":avg_baseline_loss,"reinforce_loss":avg_reinforce_loss,"entropy_loss":avg_entropy})
+            return DictTensor({"critic_loss":avg_critic_loss,"a2c_loss":avg_a2c_loss,"entropy_loss":avg_entropy})

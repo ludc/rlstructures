@@ -24,7 +24,7 @@ class ReinforceAgent(S_Agent):
     def update(self,  state_dict):
         self.model.load_state_dict(state_dict)
 
-    def initial_state(selfl,agent_info,B):
+    def initial_state(self,agent_info,B):
         return DictTensor({})
 
     def __call__(self, state,observation,agent_info=None,history=None):
@@ -33,10 +33,9 @@ class ReinforceAgent(S_Agent):
         """
         # Verify that the batch size is 1
         B = observation.n_elems()
-        #We will store the agent step in the trajectories to illustrate how information can be propagated among multiple timesteps
+
         #We compute one score per possible action
         action_proba = self.model.action_model(observation["frame"])
-        baseline = self.model.baseline_model(observation["frame"])
         #We sample an action following the distribution
         dist = torch.distributions.Categorical(action_proba)
         action_sampled = dist.sample()
@@ -49,17 +48,29 @@ class ReinforceAgent(S_Agent):
         new_state = DictTensor({})
 
         agent_do = DictTensor(
-            {"action": action, "action_probabilities": action_proba, "baseline":baseline}
+            {"action": action}
         )
 
         return agent_do, new_state
 
+    def call_replay(self,trajectories,info,t,last_call_state):
+        """
+        Executing one step of the agent
+        """
+        tslice=trajectories.temporal_index(t)
+        observation=tslice.truncate_key("observation/")
+        _observation=tslice.truncate_key("_observation/")
+        critic=self.model.critic_model(observation["frame"])
+        _critic=self.model.critic_model(_observation["frame"])
+        action_probabilities=self.model.action_model(observation["frame"])
+        return DictTensor({"critic":critic,"_critic":_critic,"action_probabilities":action_probabilities}), None
+
 
 class Model(nn.Module):
-    def __init__(self,action_model,baseline_model):
+    def __init__(self,action_model,critic_model):
         super().__init__()
         self.action_model=action_model
-        self.baseline_model=baseline_model
+        self.critic_model=critic_model
 
 class ActionModel(nn.Module):
     """ The model that computes one score per action
@@ -76,7 +87,7 @@ class ActionModel(nn.Module):
         probabilities_actions = torch.softmax(score_actions,dim=-1)
         return probabilities_actions
 
-class BaselineModel(nn.Module):
+class CriticModel(nn.Module):
     """ The model that computes V(s)
     """
     def __init__(self, n_observations, n_hidden):

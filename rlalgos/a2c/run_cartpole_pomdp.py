@@ -47,7 +47,7 @@ def create_env(n_envs, max_episode_steps=None, seed=None,**args):
         e = TimeLimit(e, max_episode_steps=max_episode_steps)
         envs.append(e)
     return GymEnv(envs, seed)
-    
+
 def create_agent(model,n_actions=1):
     return NNAgent(model=model, n_actions=n_actions)
 
@@ -68,7 +68,7 @@ def flatten(d, parent_key='', sep='/'):
             items.extend(flatten(v, new_key, sep=sep).items())
         else:
             items.append((new_key, v))
-    return dict(items)         
+    return dict(items)
 
 @hydra.main()
 def my_app(cfg : DictConfig) -> None:

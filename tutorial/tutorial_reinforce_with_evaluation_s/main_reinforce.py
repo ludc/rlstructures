@@ -51,7 +51,7 @@ if __name__=="__main__":
             "env_seed": 42,
             "n_threads": 4,
             "n_evaluation_threads": 2,
-            "n_evaluation_episodes": 256,
+            "n_evaluation_envs": 128,
             "time_limit": 3600,
             "lr": 0.01,
             "discount_factor": 0.9,

@@ -19,8 +19,8 @@ class GymEnv(VecEnv):
     """
     A wrapper for gym env
     """
-    def __init__(self, gym_env=None, seed=None, default_env_info=DictTensor({})):
-        super().__init__(default_env_info=default_env_info)
+    def __init__(self, gym_env=None, seed=None):
+        super().__init__()
         assert not seed is None
         assert type(gym_env) is list
         self.gym_envs=gym_env
@@ -32,10 +32,8 @@ class GymEnv(VecEnv):
     def n_envs(self):
         return len(self.gym_envs)
 
-    def reset(self,env_info=None):
-        if env_info is None:
-            env_info=self.get_default_env_info()
-
+    def reset(self,env_info=DictTensor({})):
+        assert env_info.empty() or env_info.n_elems()==self.n_envs()
         N = self.n_envs()
         self.envs_running = torch.arange(N)
         reward = torch.zeros(N)
@@ -139,8 +137,8 @@ class GymEnvInf(VecEnv):
     """
     A wrapper for gym env that automaitcally reset each stopping instance
     """
-    def __init__(self, gym_env=None, seed=None, default_env_info=DictTensor({})):
-        super().__init__(default_env_info=default_env_info)
+    def __init__(self, gym_env=None, seed=None):
+        super().__init__()
         assert not seed is None
         assert type(gym_env) is list
         self.gym_envs=gym_env
@@ -152,10 +150,8 @@ class GymEnvInf(VecEnv):
     def n_envs(self):
         return len(self.gym_envs)
 
-    def reset(self,env_info=None):
-        if env_info is None:
-            env_info=self.get_default_env_info()
-
+    def reset(self,env_info=DictTensor({})):
+        assert env_info.empty() or env_info.n_elems()==self.n_envs()
         N = self.n_envs()
         reward = torch.zeros(N)
 

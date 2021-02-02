@@ -20,24 +20,20 @@ class S_Agent:
     def __call__(self, state:DictTensor, input:DictTensor,agent_info:DictTensor,history:TemporalDictTensor = None):
         raise NotImplementedError
 
-    def call_bp(self,trajectories,agent_info,t,last_call_state):
+    def call_replay(self,trajectories,info,t,state):
         assert not self.require_history()
-
-        tslice=trajectories.temporal_slice(t)
-        if last_call_state is None:
+        if state is None:
             assert t==0
-            last_call_state=tslice.truncate_key("agent_state")
-        else:
-            last_call_state=last_call_state.truncate_key("_agent_state/")
+            state=info.truncate_key("agent_state/")
+        agent_info=info.truncate_key("agent_info/")
+        tslice=trajectories.temporal_index(t)
+        observation=tslice.truncate_key("observation/")
+        action,state=self.__call__(state,observation,agent_info,None)
 
-        observation=tslice.truncate_key("observation")
-        action,n_agent_state=self.__call__(state,observation,agent_info,None)
+        return action,state
 
-        output=(last_call_state.prepend_key("agent_state/")
-                +action.prepend_key("action/")
-                +n_agent_state.prepend_key("_agent_state/")
-        )
-        return output
+    def initial_state(self,agent_info,B):
+        raise NotImplementedError
 
     def update(self, info):
         raise NotImplementedError
@@ -45,20 +41,25 @@ class S_Agent:
     def close(self):
         pass
 
-    def get_default_agent_info(self,batch_size):
-        raise NotImplementedError
+def replay_agent_stateless(agent,trajectories,info,replay_method_name):
+    """
+    Replay transitions all in one
+    returns a TDT
+    """
+    f=getattr(agent,replay_method_name)
+    return f(trajectories,info)
 
-def replay_agent(agent,trajectories,info,function_name="call_bp"):
-    #TODO: Computation is made on all batches, could use the mask to reduce the amount of computations
-    agent_info=info.truncate_key("agent_info/")
-
+def replay_agent(agent,trajectories,info,replay_method_name="call_replay"):
+    """
+    Replay transitions one by one in the temporal order, passing a state between each call
+    returns a TDT
+    """
     T=trajectories.lengths.max().item()
-    f=getattr(agent,function_name)
-    tdt=None
-    assert not agent.require_history(),"History not implemented in replay_agent"
+    f=getattr(agent,replay_method_name)
 
-    output=f(trajectories,agent_info,0,None)
+    output,state=f(trajectories,info,0,None)
     variables={}
+
     for k in output.keys():
         s=output[k].size()
         t=torch.zeros(s[0],T,*s[1:],dtype=output[k].dtype)
@@ -66,7 +67,7 @@ def replay_agent(agent,trajectories,info,function_name="call_bp"):
         variables[k]=t
 
     for t in range(1,T):
-        output=f(trajectories,agent_info,t,output)
+        output,state=f(trajectories,info,t,state)
         for k in output.keys():
             variables[k][:,t]=output[k]
     tdt=TemporalDictTensor(variables,lengths=trajectories.lengths.clone())

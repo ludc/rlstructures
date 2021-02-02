@@ -45,17 +45,13 @@ class S_Buffer:
         self.s_slots = s_slots
 
         # Creation of the storage buffers
-        nspecs_agent_state = {"_agent_state/" + k: specs_agent_state[k] for k in specs_agent_state}
         nspecs_env = {"_observation/" + k: specs_environment[k] for k in specs_environment}
-        specs_agent_state = {"agent_state/"+k:specs_agent_state[k] for k in specs_agent_state}
         specs_environment = {"observation/" + k: specs_environment[k] for k in specs_environment}
         specs_agent_output = {"action/" + k: specs_agent_output[k] for k in specs_agent_output}
 
         specs = {
-            **specs_agent_state,
             **specs_agent_output,
             **specs_environment,
-            **nspecs_agent_state,
             **nspecs_env,
         }
 
@@ -78,7 +74,8 @@ class S_Buffer:
 
         specs_agent_info = {"agent_info/" + k: specs_agent_info[k] for k in specs_agent_info}
         specs_env_info = {"env_info/" + k: specs_env_info[k] for k in specs_env_info}
-        specs_info = {**specs_agent_info,**specs_env_info}
+        specs_agent_state = {"agent_state/"+k:specs_agent_state[k] for k in specs_agent_state}
+        specs_info = {**specs_agent_info,**specs_env_info,**specs_agent_state}
         for n in specs_info:
             size = (n_slots, ) + specs_info[n]["size"]
             logging.getLogger("buffer").debug(
@@ -145,6 +142,7 @@ class S_Buffer:
         a = torch.arange(len(slots)).to(self._device)
         # print("Write in "+str(slot)+" at positions "+str(position))
         for n in variables.keys():
+            #print("FWrite ",n,":", variables[n]," in ",slots)
             # assert variables[n].size()[0] == 1
             # print(self.buffers[n][slots].size())
             self.fbuffers[n][slots] = variables[n][a].detach()
@@ -162,6 +160,7 @@ class S_Buffer:
         a = torch.arange(len(slots)).to(self._device)
         # print("Write in "+str(slot)+" at positions "+str(position))
         for n in variables.keys():
+            #print("Write ",n,":", variables[n]," in ",slots)
             # assert variables[n].size()[0] == 1
             # print(self.buffers[n][slots].size())
             self.buffers[n][slots, positions] = variables[n][a].detach()
@@ -194,8 +193,8 @@ class S_Buffer:
         lengths = self.position_in_slot[idx]
         ml = lengths.max().item()
         v = {k: self.buffers[k][idx, :ml] for k in self.buffers}
+        fvalues=DictTensor({k:self.fbuffers[k][idx] for k in self.fbuffers})
         if erase:
             self.set_free_slots(slots)
         tdt = TemporalDictTensor(v, lengths)
-        fvalues=DictTensor({k:self.fbuffers[k] for k in self.fbuffers})
         return (tdt,fvalues)
