@@ -5,11 +5,93 @@
 # LICENSE file in the root directory of this source tree.
 #
 
+import torch.multiprocessing as mp
+import time
+import math
 
 import torch
 import torch.multiprocessing as mp
-import rlstructures.logging as logging
 from rlstructures import TemporalDictTensor,DictTensor
+
+def s_acquire_slot(
+    buffer,
+    env,
+    agent,
+    agent_state,
+    observation,
+    agent_info,
+    env_info,
+    env_running,
+):
+    with torch.no_grad():
+        B = env_running.size()[0]
+        if agent_state is None:
+            agent_state=agent.initial_state(agent_info,B)
+
+        id_slots = buffer.get_free_slots(B)
+        env_to_slot = {env_running[i].item(): id_slots[i] for i in range(len(id_slots))}
+        to_write = (
+                agent_info.prepend_key("agent_info/")
+                +env_info.prepend_key("env_info/")
+                +agent_state.prepend_key("agent_state/")
+        )
+        buffer.fwrite(id_slots, to_write)
+        require_history=agent.require_history()
+
+        t = 0
+        for t in range(buffer.s_slots):
+            # print(t,buffer.s_slots)
+            _id_slots = [
+                env_to_slot[env_running[i].item()] for i in range(env_running.size()[0])
+            ]
+            history=None
+            if require_history:
+                history=buffer.get_single_slots(_id_slots,erase=False)
+            agent_output, new_agent_state = agent(
+                agent_state, observation, agent_info, history=history
+            )
+
+            # print(old_agent_state,agent_output,new_agent_state)
+            (nobservation, env_running), (nnobservation, nenv_running) = env.step(
+                agent_output
+            )
+            position_in_slot=torch.tensor([t]).repeat(len(_id_slots))
+
+            to_write = (
+                observation.prepend_key("observation/")
+                + agent_output.prepend_key("action/")
+                + nobservation.prepend_key("_observation/")
+            )
+
+            id_slots = [
+                env_to_slot[env_running[i].item()] for i in range(env_running.size()[0])
+            ]
+            assert id_slots==_id_slots
+            buffer.write(id_slots, to_write)
+
+            # Now, let us prepare the next step
+
+            observation = nnobservation
+            idxs = [
+                k
+                for k in range(env_running.size()[0])
+                if env_running[k].item() in nenv_running
+            ]
+            if len(idxs) == 0:
+                return env_to_slot, None, None, None, None, nenv_running
+            idxs = torch.tensor(idxs)
+
+            agent_state = new_agent_state.index(idxs)
+            agent_info = agent_info.index(idxs)
+            env_info = env_info.index(idxs)
+            env_running = nenv_running
+            assert len(agent_state.keys()) == 0 or (
+                agent_state.n_elems() == observation.n_elems()
+            )
+
+            if nenv_running.size()[0] == 0:
+                return env_to_slot, agent_state, observation,  agent_info, env_info,env_running
+        return env_to_slot, agent_state, observation, agent_info, env_info,env_running
 
 
 class S_Buffer:
@@ -57,7 +139,7 @@ class S_Buffer:
 
         for n in specs:
             size = (n_slots, s_slots) + specs[n]["size"]
-            logging.getLogger("buffer").debug(
+            print(
                 "Creating buffer for '"
                 + n
                 + "' of size "
@@ -78,7 +160,7 @@ class S_Buffer:
         specs_info = {**specs_agent_info,**specs_env_info,**specs_agent_state}
         for n in specs_info:
             size = (n_slots, ) + specs_info[n]["size"]
-            logging.getLogger("buffer").debug(
+            print(
                 "Creating F buffer for '"
                 + n
                 + "' of size "
@@ -114,7 +196,6 @@ class S_Buffer:
         x = [self._free_slots_queue.get() for i in range(k)]
         for i in x:
             self.position_in_slot[i] = 0
-        # logging.getLogger("buffer").debug("GET FREE " + str(x))
         return x
 
     def set_free_slots(self, s):
@@ -128,7 +209,6 @@ class S_Buffer:
         else:
             for ss in s:
                 self._free_slots_queue.put(ss)
-        # logging.getLogger("buffer").debug("SET FREE " + str(s))
 
     def fwrite(self,slots,variables):
         if variables.empty():
@@ -198,3 +278,127 @@ class S_Buffer:
             self.set_free_slots(slots)
         tdt = TemporalDictTensor(v, lengths)
         return (tdt,fvalues)
+
+
+def s_worker_thread(
+    buffer,
+    create_env,
+    env_parameters,
+    create_agent,
+    agent_parameters,
+    in_queue,
+    out_queue,
+):
+    env = create_env(**env_parameters)
+    n_envs = env.n_envs()
+    agent = create_agent(**agent_parameters)
+
+    agent_state = None
+    observation = None
+    env_running = None
+    agent_info = None
+    env_info = None
+    n_episodes = None
+    terminate_thread = False
+    while not terminate_thread:
+        order = in_queue.get()
+        assert isinstance(order, tuple)
+        order_name = order[0]
+        if order_name == "close":
+            logging.debug("\tClosing thread...")
+            terminate_thread = True
+            env.close()
+            agent.close()
+        elif order_name == "reset":
+            _, agent_info, env_info = order
+            agent_state = None
+            observation = None
+            env_running = None
+            assert agent_info.empty() or agent_info.n_elems()==env.n_envs()
+            assert env_info.empty() or env_info.n_elems()==env.n_envs()
+            observation, env_running = env.reset(env_info)
+        elif order_name == "slot":
+            if len(env_running)==0:
+                out_queue.put([])
+            else:
+                env_to_slot, agent_state, observation, agent_info,env_info, env_running = s_acquire_slot(
+                        buffer,
+                        env,
+                        agent,
+                        agent_state,
+                        observation,
+                        agent_info,
+                        env_info,
+                        env_running,
+                )
+                slots=[env_to_slot[k] for k in env_to_slot]
+                out_queue.put((slots,len(env_running)))
+        elif order_name == "update":
+            agent.update(order[1])
+            out_queue.put("ok")
+        else:
+            assert False, "Unknown order..."
+    out_queue.put("TERMINATED")
+
+
+class S_ThreadWorker:
+    def __init__(
+        self, worker_id, create_agent, agent_args, create_env, env_args, buffer
+    ):
+        self.worker_id = worker_id
+        ctx = mp.get_context("spawn")
+        self.inq = ctx.Queue()
+        self.outq = ctx.Queue()
+        self.inq.cancel_join_thread()
+        self.outq.cancel_join_thread()
+        p = ctx.Process(
+            target=s_worker_thread,
+            args=(
+                buffer,
+                create_env,
+                env_args,
+                create_agent,
+                agent_args,
+                self.inq,
+                self.outq,
+            ),
+        )
+        self.process = p
+        p.daemon = True
+        p.start()
+
+    def acquire_slot(self):
+        order = ("slot", None)
+        self.inq.put(order)
+
+    def reset(self,agent_info=None, env_info=None):
+        order = ("reset", agent_info, env_info)
+        self.inq.put(order)
+
+    def finished(self):
+        try:
+            r=self.outq.get(False)
+            self.outq.put(r)
+            return True
+        except:
+            return False
+
+    def get(self):
+        return self.outq.get()
+
+    def update_worker(self, info):
+        self.inq.put(("update", info))
+        self.outq.get()
+
+    def close(self):
+        logging.debug("Stop Thread " + str(self.worker_id))
+        self.inq.put(("close",))
+        self.outq.get()
+        time.sleep(0.1)
+        self.process.terminate()
+        self.process.join()
+        self.inq.close()
+        self.outq.close()
+        time.sleep(0.1)
+        del self.inq
+        del self.outq

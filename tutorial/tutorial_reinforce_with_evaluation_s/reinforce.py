@@ -6,19 +6,18 @@
 #
 
 
-from rlstructures.logger import Logger, TFLogger
-from rlstructures import DictTensor, TemporalDictTensor
-from rlstructures import logging
-from rlstructures.tools import weight_init
-from rlstructures.s_batchers import S_Batcher
+from rlalgos.logger import Logger, TFLogger
+from rlstructures import DictTensor, TemporalDictTensor,Trajectories
+from rlalgos.tools import weight_init
+from rlstructures.batcher import Batcher
 import torch.nn as nn
 import copy
 import torch
 import time
 import numpy as np
 import torch.nn.functional as F
-from tutorial.tutorial_reinforce_s.agent import *
-from rlstructures.s_agent import replay_agent
+from tutorial.tutorial_reinforce_with_evaluation_s.agent import *
+from rlstructures.agent import replay_agent
 
 class Reinforce:
     def __init__(self, config,create_env,create_agent):
@@ -45,7 +44,7 @@ class Reinforce:
 
         #We create a batcher dedicated to evaluation
         model=copy.deepcopy(self.learning_model)
-        self.evaluation_batcher=S_Batcher(
+        self.evaluation_batcher=Batcher(
             n_timesteps=self.config["max_episode_steps"],
             create_agent=self._create_agent,
             create_env=self._create_env,
@@ -66,7 +65,7 @@ class Reinforce:
         #The batcher will sample n_threads*n_envs trajectories at each call
         # To have a fast batcher, we have to configure it with n_timesteps=self.config["max_episode_steps"]
         model=copy.deepcopy(self.learning_model)
-        self.train_batcher=S_Batcher(
+        self.train_batcher=Batcher(
             n_timesteps=self.config["max_episode_steps"],
             create_agent=self._create_agent,
             create_env=self._create_env,
@@ -108,11 +107,11 @@ class Reinforce:
             self.train_batcher.execute()
 
             #2) We get the trajectories (and wait until the trajectories have been sampled)
-            (trajectories,info),n_env_running=self.train_batcher.get(blocking=True)
+            trajectories,n_env_running=self.train_batcher.get(blocking=True)
             assert n_env_running==0
 
             #3) Now, we compute the loss
-            dt=self.get_loss(trajectories,info)
+            dt=self.get_loss(trajectories)
             [self.logger.add_scalar(k,dt[k].item(),self.iteration) for k in dt.keys()]
 
             # Computation of final loss
@@ -129,16 +128,16 @@ class Reinforce:
             #Update the train batcher with the updated model
             self.train_batcher.update(self.learning_model.state_dict())
             print("At iteration %d, avg (discounted) reward is %f"%(self.iteration,dt["avg_reward"].item()))
-            print("\t Avg trajectory length is %f"%(trajectories.lengths.float().mean().item()))
+            print("\t Avg trajectory length is %f"%(trajectories.trajectories.lengths.float().mean().item()))
             print("\t Curves can be visualized using 'tensorboard --logdir=%s'"%self.config["logdir"])
             self.iteration+=1
 
             #We check the evaluation batcher
-            (evaluation_trajectories,info),n_env_running=self.evaluation_batcher.get(blocking=False)
+            evaluation_trajectories,n_env_running=self.evaluation_batcher.get(blocking=False)
             if not evaluation_trajectories is None: #trajectories are available
                 assert n_env_running==0
                 #Compute the cumulated reward
-                cumulated_reward=(evaluation_trajectories["_observation/reward"]*evaluation_trajectories.mask()).sum(1).mean()
+                cumulated_reward=(evaluation_trajectories.trajectories["_observation/reward"]*evaluation_trajectories.trajectories.mask()).sum(1).mean()
                 self.logger.add_scalar("evaluation_reward",cumulated_reward.item(),self.evaluation_iteration)
                 print("-- Iteration ",self.iteration," Evaluation reward = ",cumulated_reward.item())
                 #We reexecute the evaluation batcher (with same value of agent_info and same number of episodes)
@@ -156,7 +155,11 @@ class Reinforce:
         self.logger.close()
 
 
-    def get_loss(self,trajectories,info):
+    def get_loss(self,trajectories):
+            replayed=replay_agent(self.agent,trajectories)
+
+            info=trajectories.info
+            trajectories=trajectories.trajectories
             #First, we want to compute the cumulated reward per trajectory
             #The reward is a t+1 in each iteration (since it is btained after the aaction), so we use the '_reward' field in the trajectory
             # The 'reward' field corresopnds to the reward at time t
@@ -177,7 +180,7 @@ class Reinforce:
 
 
             # Now we do a forward pass, but also computing action_probabilites and the baseline
-            replayed=replay_agent(self.agent,trajectories,info)
+
             action_probabilities=replayed["action_probabilities"]
             baseline=replayed["baseline"].squeeze(-1)
             action_distribution=torch.distributions.Categorical(action_probabilities)

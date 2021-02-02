@@ -9,7 +9,6 @@
 import torch
 import time
 import torch
-import rlstructures.logging as logging
 from rlstructures import DictTensor
 
 class VecEnv:

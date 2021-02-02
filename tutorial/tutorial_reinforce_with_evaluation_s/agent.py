@@ -8,12 +8,11 @@
 
 import torch
 import torch.nn as nn
-from rlstructures import DictTensor
-from rlstructures import S_Agent
+from rlstructures import DictTensor,masked_tensor,masked_dicttensor
+from rlstructures import Agent
 import time
-from rlstructures.dicttensor import masked_tensor,masked_dicttensor
 
-class ReinforceAgent(S_Agent):
+class ReinforceAgent(Agent):
     def __init__(self,model=None, n_actions=None):
         super().__init__()
         self.model = model

@@ -8,7 +8,6 @@
 
 from rlstructures.logger import Logger, TFLogger
 from rlstructures import DictTensor, TemporalDictTensor
-from rlstructures import logging
 from rlstructures.tools import weight_init
 from rlstructures.s_batchers import S_EpisodeBatcher
 import torch.nn as nn
@@ -59,7 +58,7 @@ class Reinforce:
             agent_args={"n_actions": self.n_actions, "model": model},
             n_threads=self.config["n_threads"],
             seeds=[self.config["env_seed"]+k*10 for k in range(self.config["n_threads"])],
-            agent_info=DictTensor({"stochastic":torch.tensor([True]).repeat(self.config["n_envs"])}),
+            agent_info=DictTensor({"stochastic":torch.tensor([True])}),
             env_info=DictTensor({}),
         )
 

@@ -6,15 +6,14 @@
 #
 
 
-from rlstructures import TemporalDictTensor,  DictTensor
-from .s_buffers import S_Buffer
-from .s_threadworker import S_ThreadWorker
-import rlstructures.logging as logging
+from rlstructures import TemporalDictTensor,  DictTensor, Trajectories
+from .tools import S_Buffer
+from .tools import S_ThreadWorker
 import torch
 import numpy as np
 
 
-class S_Batcher:
+class Batcher:
     def reset(self,agent_info=DictTensor({}), env_info=DictTensor({})):
         n_workers = len(self.workers)
         pos=0
@@ -38,7 +37,7 @@ class S_Batcher:
         if not blocking:
             for w in range(len(self.workers)):
                 if not self.workers[w].finished():
-                    return (None,None),None
+                    return None,None
 
         buffer_slot_ids = []
         n_still_running=0
@@ -51,7 +50,7 @@ class S_Batcher:
 
         slots,info = self.buffer.get_single_slots(buffer_slot_ids, erase=True)
         assert not slots.lengths.eq(0).any()
-        return (slots,info),n_still_running
+        return Trajectories(info,slots),n_still_running
 
     def update(self, info):
         for w in self.workers:
@@ -110,18 +109,10 @@ class S_Batcher:
         self.workers = []
         self.n_per_worker = []
 
-        if seeds is None:
-            logging.info(
-                "Seeds for batcher environments has not been chosen. Default is None"
-            )
-            seeds = [None for k in range(n_threads)]
-
-        if (isinstance(seeds,int)):
-            s=seeds
-            seeds=[s+k*64 for k in range(n_threads)]
+        assert isinstance(seeds,list),"You have to choose one seed per thread"
         assert len(seeds)==n_threads,"You have to choose one seed per thread"
 
-        logging.info("[Batcher] Creating %d threads " % (n_threads))
+        print("[Batcher] Creating %d threads " % (n_threads))
         for k in range(n_threads):
             e_args = {**env_args, "seed": seeds[k]}
             worker = S_ThreadWorker(

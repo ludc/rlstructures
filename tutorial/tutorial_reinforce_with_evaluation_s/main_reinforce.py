@@ -6,16 +6,15 @@
 #
 
 
-from rlstructures import logging
 from rlstructures.env_wrappers import GymEnv
-from rlstructures.tools import weight_init
+from rlalgos.tools import weight_init
 import torch.nn as nn
 import copy
 import torch
 import time
 import numpy as np
 import torch.nn.functional as F
-from tutorial.tutorial_reinforce_s.agent import ReinforceAgent
+from tutorial.tutorial_reinforce_with_evaluation_s.agent import ReinforceAgent
 from tutorial.tutorial_reinforce_with_evaluation_s.reinforce import Reinforce
 import gym
 from gym.wrappers import TimeLimit

@@ -6,10 +6,9 @@
 #
 
 
-from rlstructures.logger import Logger, TFLogger
+from rlalgos.logger import Logger, TFLogger
 from rlstructures import DictTensor, TemporalDictTensor
-from rlstructures import logging
-from rlstructures.tools import weight_init
+from rlalgos.tools import weight_init
 import torch.nn as nn
 import copy
 import torch

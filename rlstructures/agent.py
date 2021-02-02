@@ -6,59 +6,70 @@
 #
 
 
-from rlstructures import logging
-from rlstructures import DictTensor,TemporalDictTensor
+from rlstructures import DictTensor,TemporalDictTensor,Trajectories
 import torch
 
 class Agent:
-    """
-    Describes an agent responsible for producing actions when receiving
-    observations and agent states.
-
-    At each time step, and agent receives observations (DictTensor of size B),
-    and agent states (DictTensor of size B) that reflect the agent's internal
-    state.
-
-    It then returns a triplet:
-        agent state when receiving the observation (DictTensor): it is the
-            agent state before computing anything. It is mainly used to
-            initialize the state of the agent when facing initial states from the environment.
-        action (DictTensor): the action + and additional outputs produced by
-            the agent
-        next agent state (DictTensor): the new state of the agent after all
-            the computation. This value will then be provided to the agent at
-            the next timestep.
-    """
     def __init__(self):
         pass
 
     def require_history(self):
-        """ if True, then the 'history' argument in the __call__ method will contain the set of previous transitions (e.g for transformers based policies)
-        """
         return False
 
-    def __call__(self, state:DictTensor, input:DictTensor,user_info:DictTensor,history:TemporalDictTensor = None):
-        """ Execute one step of the agent
+    def __call__(self, state:DictTensor, input:DictTensor,agent_info:DictTensor,history:TemporalDictTensor = None):
+        raise NotImplementedError
 
-        :param state: the previous state of the agent, or None if the agent needs to be initialized
-        :type state: DictTensor
-        :param input: The observation coming from the environment
-        :type input: DictTensor
-        :param user_info: An additional DictTensor (provided by the user such that the epsilon value in epsilon-greedy policies)
-        :type user_info: DictTensor
-        :param history: [description], None if require_history()==False or a set of previous transitions (as a TemporalDictTensor) if True
-        :type history: TemporalDictTensor, optional
-        """
+    def call_replay(self,trajectories:Trajectories,t:int,state):
+        assert not self.require_history()
+        info=trajectories.info
+        if state is None:
+            assert t==0
+            state=info.truncate_key("agent_state/")
+        agent_info=info.truncate_key("agent_info/")
+        tslice=trajectories.trajectories.temporal_index(t)
+        observation=tslice.truncate_key("observation/")
+        action,state=self.__call__(state,observation,agent_info,None)
+
+        return action,state
+
+    def initial_state(self,agent_info:DictTensor,B:int):
         raise NotImplementedError
 
     def update(self, info):
-        """
-        Update the agent. For instance, may update the pytorch model of this agent
-        """
         raise NotImplementedError
 
     def close(self):
-        """
-        Terminate the agent
-        """
         pass
+
+def replay_agent_stateless(agent,trajectories:Trajectories,replay_method_name:str):
+    """
+    Replay transitions all in one
+    returns a TDT
+    """
+    f=getattr(agent,replay_method_name)
+    return f(trajectories)
+
+def replay_agent(agent,trajectories:Trajectories,replay_method_name:str="call_replay"):
+    """
+    Replay transitions one by one in the temporal order, passing a state between each call
+    returns a TDT
+    """
+    T=trajectories.trajectories.lengths.max().item()
+    f=getattr(agent,replay_method_name)
+
+    output,state=f(trajectories,0,None)
+    variables={}
+
+    for k in output.keys():
+        s=output[k].size()
+        t=torch.zeros(s[0],T,*s[1:],dtype=output[k].dtype)
+        t[:,0]=output[k]
+        variables[k]=t
+
+    for t in range(1,T):
+        output,state=f(trajectories,t,state)
+        for k in output.keys():
+            variables[k][:,t]=output[k]
+    tdt=TemporalDictTensor(variables,lengths=trajectories.trajectories.lengths.clone())
+
+    return tdt

@@ -13,14 +13,13 @@ import csv
 import copy
 from datetime import datetime
 import torch
-from rlstructures import logging
 import numpy as np
 import time
 import pickle
 
 class Logger:
     """ A logger to store experimental measures in different formats.
-    """    
+    """
     def __init__(self, **config):
         self.date = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
         self.all_values = []
@@ -120,7 +119,7 @@ class Logger:
 
 class TFLogger(SummaryWriter, Logger):
     """ A logger that stores informations both in tensorboard and CSV formats
-    """    
+    """
     def __init__(self, log_dir=None, hps={}, save_every=1):
         SummaryWriter.__init__(self, log_dir=log_dir)
         Logger.__init__(self, **hps)
