@@ -11,7 +11,14 @@ import torch
 
 class Agent:
     def __init__(self):
+        self._device=torch.device("cpu")
         pass
+
+    def to(self,device):
+        self._device=torch.device(device)
+
+    def device(self):
+        return self._device
 
     def require_history(self):
         return False
@@ -54,6 +61,8 @@ def replay_agent(agent,trajectories:Trajectories,replay_method_name:str="call_re
     Replay transitions one by one in the temporal order, passing a state between each call
     returns a TDT
     """
+    assert agent.device()==trajectories.device()
+
     T=trajectories.trajectories.lengths.max().item()
     f=getattr(agent,replay_method_name)
 
@@ -62,7 +71,7 @@ def replay_agent(agent,trajectories:Trajectories,replay_method_name:str="call_re
 
     for k in output.keys():
         s=output[k].size()
-        t=torch.zeros(s[0],T,*s[1:],dtype=output[k].dtype)
+        t=torch.zeros(s[0],T,*s[1:],dtype=output[k].dtype).to(trajectories.device())
         t[:,0]=output[k]
         variables[k]=t
 
@@ -71,5 +80,5 @@ def replay_agent(agent,trajectories:Trajectories,replay_method_name:str="call_re
         for k in output.keys():
             variables[k][:,t]=output[k]
     tdt=TemporalDictTensor(variables,lengths=trajectories.trajectories.lengths.clone())
-
+    assert tdt.device()==agent.device()
     return tdt

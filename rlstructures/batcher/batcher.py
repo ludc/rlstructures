@@ -78,8 +78,10 @@ class Batcher:
         agent = create_agent(**agent_args)
         env = create_env(**{**env_args,"seed":0})
         if not agent_info.empty():
+            agent_info=agent_info.slice(0,1)
             agent_info=DictTensor.cat([agent_info for k in range(env.n_envs())])
         if not env_info.empty():
+            env_info=env_info.slice(0,1)
             env_info=DictTensor.cat([env_info for k in range(env.n_envs())])
 
         obs,who=env.reset(env_info)

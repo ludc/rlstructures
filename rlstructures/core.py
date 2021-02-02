@@ -75,17 +75,6 @@ class DictTensor:
             else:
                 assert s == v.size()[0]
 
-    # def _check_specs(self, specs)->bool:
-    #     """ Check that a DictTensor follow a particular specification
-
-    #     :param specs: specs (dict): a dictionary where each key is associated with
-    #                     'dtype' and 'size' values
-    #     :return: True or False
-    #     :rtype: bool
-    #     """
-    #     for k in specs:
-    #         assert k in self.variables, "Variable not found"
-
     def keys(self)-> Iterable[str]:
         """
         Return the keys of the DictTensor (as an iterator)
@@ -140,6 +129,7 @@ class DictTensor:
         Return the device of the tensors stored in the DictTensor.
         :rtype: torch.device
         """
+        assert not self.empty(),"Empty DictTensor does not have any device"
         return next(iter(self.variables.values())).device
 
     def n_elems(self)->int:
@@ -218,8 +208,11 @@ class DictTensor:
         """
         Create a copy of the DictTensor on a new device (if needed)
         """
+        if (self.empty()):
+            return DictTensor({})
+
         if device == self.device():
-            return self
+            return self.clone()
 
         v = {}
         for k in self.variables:
@@ -237,7 +230,7 @@ class DictTensor:
         """
         assert value.size()[0] == self.n_elems()
         assert isinstance(value, torch.Tensor)
-        assert value.device==self.device()
+        assert self.empty() or value.device==self.device()
         self.variables[key] = value
 
     def prepend_key(self, _str:str)->DictTensor:
@@ -279,6 +272,15 @@ class DictTensor:
             )
         v = {**self.variables, **dt}
         return DictTensor(v)
+
+    def copy_(self,source,source_indexes,destination_indexes):
+        """
+        Copy the values of a source TDT at given indexes to the current TDT at the specified indexes
+        """
+        assert source_indexes.size()==destination_indexes.size()
+        max_length_source=source.lengths.max().item()
+        for k in self.variables.keys():
+            self.variables[k][destination_indexes,0:max_length_source]=source[k][source_indexes,0:max_length_source]
 
 
 class TemporalDictTensor:
@@ -523,11 +525,16 @@ class TemporalDictTensor:
         r = ["TemporalDictTensor:"]
         for k in self.variables:
             r.append(k + ":" + str(self.variables[k].size()))
-        r.append("Length=" + str(self.lengths.numpy()))
+        r.append("Lengths =" + str(self.lengths.numpy()))
         return " ".join(r)
 
     def __contains__(self, item:str)->bool:
         return item in self.variables
+
+    def full(self):
+        """ returns True if self.lengths==self.lengts.max() => No empty element
+        """
+        return self.mask().sum()==0.0
 
     def expand(self,new_batch_size):
         """
@@ -561,4 +568,17 @@ class Trajectories:
     def __init__(self,info,trajectories):
         self.info=info
         self.trajectories=trajectories
+        assert info.empty() or self.info.device()==self.trajectories.device()
         assert self.info.empty() or self.info.n_elems()==self.trajectories.n_elems()
+
+    def to(self,device):
+        return Trajectories(self.info.to(device),self.trajectories.to(device))
+
+    def device(self):
+        return self.trajectories.device()
+
+    def cat(trajectories:Iterable[Trajectories]):
+        return Trajectories(DictTensor.cat([t.info for t in trajectories]),TemporalDictTensor([t.trajectories for t in trajectories]))
+
+    def sample(self,n):
+        raise NotImplementedError
