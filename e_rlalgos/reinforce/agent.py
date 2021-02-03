@@ -9,10 +9,10 @@
 import torch
 import torch.nn as nn
 from rlstructures import DictTensor,masked_tensor,masked_dicttensor
-from rlstructures import Agent
+from rlstructures import E_Agent
 import time
 
-class ReinforceAgent(Agent):
+class ReinforceAgent(E_Agent):
     def __init__(self,model=None, n_actions=None):
         super().__init__()
         self.model = model

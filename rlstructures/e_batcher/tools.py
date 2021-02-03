@@ -266,21 +266,25 @@ class S_Buffer:
         self._free_slots_queue.close()
         self._full_slots_queue.close()
 
-    def get_single_slots(self, slots, erase=True):
+    def get_single_slots(self, slots, erase=True, clone=True):
         assert isinstance(slots, list)
         assert isinstance(slots[0], int)
         idx = torch.tensor(slots).to(self._device).long()
         lengths = self.position_in_slot[idx]
         ml = lengths.max().item()
-        v = {k: self.buffers[k][idx, :ml] for k in self.buffers}
-        fvalues=DictTensor({k:self.fbuffers[k][idx] for k in self.fbuffers})
+        if not clone:
+            v = {k: self.buffers[k][idx, :ml] for k in self.buffers}
+            fvalues=DictTensor({k:self.fbuffers[k][idx] for k in self.fbuffers})
+        else:
+            v = {k: self.buffers[k][idx, :ml].clone() for k in self.buffers}
+            fvalues=DictTensor({k:self.fbuffers[k][idx].clone() for k in self.fbuffers})
         if erase:
             self.set_free_slots(slots)
         tdt = TemporalDictTensor(v, lengths)
         return (tdt,fvalues)
 
 
-def s_worker_thread(
+def s_worker_process(
     buffer,
     create_env,
     env_parameters,
@@ -299,18 +303,22 @@ def s_worker_thread(
     agent_info = None
     env_info = None
     n_episodes = None
-    terminate_thread = False
-    while not terminate_thread:
+    terminate_process = False
+    while not terminate_process:
         order = in_queue.get()
         assert isinstance(order, tuple)
         order_name = order[0]
         if order_name == "close":
-            logging.debug("\tClosing thread...")
-            terminate_thread = True
+            logging.debug("\tClosing process...")
+            terminate_process = True
             env.close()
             agent.close()
         elif order_name == "reset":
-            _, agent_info, env_info = order
+            _, _agent_info, _env_info = order
+            agent_info=_agent_info.clone()
+            env_info=_env_info.clone()
+            del(_agent_info)
+            del(_env_info)
             agent_state = None
             observation = None
             env_running = None
@@ -341,7 +349,7 @@ def s_worker_thread(
     out_queue.put("TERMINATED")
 
 
-class S_ThreadWorker:
+class S_ProcessWorker:
     def __init__(
         self, worker_id, create_agent, agent_args, create_env, env_args, buffer
     ):
@@ -352,7 +360,7 @@ class S_ThreadWorker:
         self.inq.cancel_join_thread()
         self.outq.cancel_join_thread()
         p = ctx.Process(
-            target=s_worker_thread,
+            target=s_worker_process,
             args=(
                 buffer,
                 create_env,
@@ -384,14 +392,15 @@ class S_ThreadWorker:
             return False
 
     def get(self):
-        return self.outq.get()
+        t=self.outq.get()
+        return t
 
     def update_worker(self, info):
         self.inq.put(("update", info))
         self.outq.get()
 
     def close(self):
-        logging.debug("Stop Thread " + str(self.worker_id))
+        logging.debug("Stop process " + str(self.worker_id))
         self.inq.put(("close",))
         self.outq.get()
         time.sleep(0.1)

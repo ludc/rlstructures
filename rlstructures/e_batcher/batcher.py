@@ -8,7 +8,7 @@
 
 from rlstructures import TemporalDictTensor,  DictTensor, Trajectories
 from .tools import S_Buffer
-from .tools import S_ThreadWorker
+from .tools import S_ProcessWorker
 import torch
 import numpy as np
 
@@ -72,7 +72,7 @@ class E_Batcher:
         agent_args,
         create_env,
         env_args,
-        n_threads,
+        n_processes,
         seeds,
         agent_info,
         env_info
@@ -94,7 +94,7 @@ class E_Batcher:
             b,a=agent(istate,obs,agent_info)
 
         self.n_envs=env.n_envs()
-        self._n_episodes=n_threads*self.n_envs
+        self._n_episodes=n_processes*self.n_envs
 
         specs_agent_state=a.specs()
         specs_agent_output=b.specs()
@@ -105,7 +105,7 @@ class E_Batcher:
         del agent
 
         self.buffer = S_Buffer(
-            n_slots=self.n_envs*n_threads,
+            n_slots=self.n_envs*n_processes,
             s_slots=n_timesteps,
             specs_agent_state=specs_agent_state,
             specs_agent_output=specs_agent_output,
@@ -116,13 +116,13 @@ class E_Batcher:
         self.workers = []
         self.n_per_worker = []
 
-        assert isinstance(seeds,list),"You have to choose one seed per thread"
-        assert len(seeds)==n_threads,"You have to choose one seed per thread"
+        assert isinstance(seeds,list),"You have to choose one seed per process"
+        assert len(seeds)==n_processes,"You have to choose one seed per process"
 
-        print("[Batcher] Creating %d threads " % (n_threads))
-        for k in range(n_threads):
+        print("[Batcher] Creating %d processes " % (n_processes))
+        for k in range(n_processes):
             e_args = {**env_args, "seed": seeds[k]}
-            worker = S_ThreadWorker(
+            worker = S_ProcessWorker(
                 len(self.workers),
                 create_agent,
                 agent_args,

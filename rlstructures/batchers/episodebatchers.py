@@ -11,7 +11,7 @@ from .buffers import Buffer,LocalBuffer
 from .threadworker import ThreadWorker
 import torch
 import numpy as np
-
+import rlstructures
 class MultiThreadEpisodeBatcher:
     def execute(self, n_episodes, agent_info=DictTensor({}),env_info=DictTensor({})):
         n_workers = len(self.workers)
@@ -86,6 +86,9 @@ class EpisodeBatcher(MultiThreadEpisodeBatcher):
         n_threads,
         seeds=None,
     ):
+        if (rlstructures.__deprecated_message__==False):
+            print("[DEPRECATED]: The current version of rlstructures is based on rlstructures.e_batcher implementation. We advise you to switch your codebase for using this new batcher, and the corresponding needed adaptations")
+            rlstructures.__deprecated_message__=True
         # Buffer creation:
         agent = create_agent(**agent_args)
         env = create_env(**{**env_args,"seed":0})

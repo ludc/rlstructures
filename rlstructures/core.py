@@ -579,5 +579,8 @@ class Trajectories:
     def cat(trajectories:Iterable[Trajectories]):
         return Trajectories(DictTensor.cat([t.info for t in trajectories]),TemporalDictTensor([t.trajectories for t in trajectories]))
 
+    def n_elems(self):
+        return self.trajectories.n_elems()
+
     def sample(self,n):
         raise NotImplementedError

@@ -12,6 +12,7 @@ from .threadworker import ThreadWorker
 #import rlstructures.logging as logging
 import torch
 import numpy as np
+import rlstructures
 
 class MultiThreadTrajectoryBatcher:
     def reset(self,agent_info=DictTensor({}), env_info=DictTensor({})):
@@ -71,6 +72,10 @@ class Batcher(MultiThreadTrajectoryBatcher):
         n_threads,
         seeds=None,
     ):
+        if (rlstructures.__deprecated_message__==False):
+            print("[DEPRECATED]: The current version of rlstructures is based on rlstructures.e_batcher implementation. We advise you to switch your codebase for using this new batcher, and the corresponding needed adaptations")
+            rlstructures.__deprecated_message__=True
+
         # Buffer creation:
         agent = create_agent(**agent_args)
         env = create_env(**{**env_args,"seed":0})

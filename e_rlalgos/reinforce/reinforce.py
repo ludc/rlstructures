@@ -9,15 +9,15 @@
 from rlalgos.logger import Logger, TFLogger
 from rlstructures import DictTensor, TemporalDictTensor,Trajectories
 from rlalgos.tools import weight_init
-from rlstructures.batcher import Batcher
+from rlstructures.e_batcher import E_Batcher
 import torch.nn as nn
 import copy
 import torch
 import time
 import numpy as np
 import torch.nn.functional as F
-from rlalgos2.reinforce.agent import *
-from rlstructures.agent import replay_agent
+from e_rlalgos.reinforce.agent import *
+from rlstructures import replay_agent
 
 class Reinforce:
     def __init__(self, config,create_env,create_agent):
@@ -47,7 +47,7 @@ class Reinforce:
 
         #We create a batcher dedicated to evaluation
         model=copy.deepcopy(self.learning_model)
-        self.evaluation_batcher=Batcher(
+        self.evaluation_batcher=E_Batcher(
             n_timesteps=self.config["max_episode_steps"],
             create_agent=self._create_agent,
             create_env=self._create_env,
@@ -57,15 +57,15 @@ class Reinforce:
                 "env_name":self.config["env_name"]
             },
             agent_args={"n_actions": self.n_actions, "model": model},
-            n_threads=self.config["n_evaluation_threads"],
-            seeds=[self.config["env_seed"]+k*10 for k in range(self.config["n_evaluation_threads"])],
+            n_processes=self.config["n_evaluation_processes"],
+            seeds=[self.config["env_seed"]+k*10 for k in range(self.config["n_evaluation_processes"])],
             agent_info=DictTensor({"stochastic":torch.tensor([True])}),
             env_info=DictTensor({}),
         )
 
         #Create a batcher to sample learning trajectories
         model=copy.deepcopy(self.learning_model)
-        self.train_batcher=Batcher(
+        self.train_batcher=E_Batcher(
             n_timesteps=self.config["max_episode_steps"],
             create_agent=self._create_agent,
             create_env=self._create_env,
@@ -75,8 +75,8 @@ class Reinforce:
                 "env_name":self.config["env_name"]
             },
             agent_args={"n_actions": self.n_actions, "model": model},
-            n_threads=self.config["n_threads"],
-            seeds=[self.config["env_seed"]+k*10 for k in range(self.config["n_threads"])],
+            n_processes=self.config["n_processes"],
+            seeds=[self.config["env_seed"]+k*10 for k in range(self.config["n_processes"])],
             agent_info=DictTensor({"stochastic":torch.tensor([True])}),
             env_info=DictTensor({}),
         )
@@ -89,7 +89,7 @@ class Reinforce:
         self.iteration=0
 
         #We launch the evaluation batcher, such that it starts to collect trajectories with the current model
-        n_episodes=self.config["n_evaluation_threads"]*self.config["n_evaluation_envs"]
+        n_episodes=self.config["n_evaluation_processes"]*self.config["n_evaluation_envs"]
         agent_info=DictTensor({"stochastic":torch.tensor([self.config["evaluation_mode"]=="stochastic"]).repeat(n_episodes)})
         self.evaluation_batcher.reset(agent_info=agent_info)
         self.evaluation_batcher.execute()
@@ -100,7 +100,7 @@ class Reinforce:
             self.train_batcher.update(self.learning_model.state_dict())
 
             #1) The policy will be executed in "stochastic' mode
-            n_episodes=self.config["n_envs"]*self.config["n_threads"]
+            n_episodes=self.config["n_envs"]*self.config["n_processes"]
             agent_info=DictTensor({"stochastic":torch.tensor([True]).repeat(n_episodes)})
             self.train_batcher.reset(agent_info=agent_info)
             self.train_batcher.execute()
@@ -145,7 +145,7 @@ class Reinforce:
                 #We reexecute the evaluation batcher to start the acquisition of new trajectories
                 self.evaluation_batcher.update(self.learning_model.state_dict())
                 self.evaluation_iteration=self.iteration
-                n_episodes=self.config["n_evaluation_threads"]*self.config["n_evaluation_envs"]
+                n_episodes=self.config["n_evaluation_processes"]*self.config["n_evaluation_envs"]
                 agent_info=DictTensor({"stochastic":torch.tensor([self.config["evaluation_mode"]=="stochastic"]).repeat(n_episodes)})
                 self.evaluation_batcher.reset(agent_info=agent_info)
                 self.evaluation_batcher.execute()

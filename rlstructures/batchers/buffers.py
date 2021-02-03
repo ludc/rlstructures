@@ -159,7 +159,7 @@ class LocalBuffer(Buffer):
         idx = torch.tensor(slots).to(self._device).long()
         lengths = self.position_in_slot[idx]
         ml = lengths.max().item()
-        v = {k: self.buffers[k][idx, :ml] for k in self.buffers}
+        v = {k: self.buffers[k][idx, :ml].clone() for k in self.buffers}
         if erase:
             self.set_free_slots(slots)
         return TemporalDictTensor(v, lengths)

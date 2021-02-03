@@ -1,4 +1,5 @@
 __version__="0.2"
+__deprecated_message__=False
 import sys
 from rlstructures.core import masked_tensor,masked_dicttensor,DictTensor,TemporalDictTensor,Trajectories
 import rlalgos.logger
@@ -11,3 +12,5 @@ from rlstructures.env import VecEnv
 from rlstructures.e_batcher import E_Batcher
 import rlstructures.core
 sys.modules["rlstructures.dicttensor"]=rlstructures.core
+import rlstructures.deprecated.logging
+sys.modules["rlstructures.logging"]=rlstructures.deprecated.logging
