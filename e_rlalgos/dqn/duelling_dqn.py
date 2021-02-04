@@ -165,9 +165,7 @@ class DQN:
         self.evaluation_batcher.update(self._state_dict(self.learning_model,torch.device("cpu")))
 
         n_episodes=self.config["n_envs"]*self.config["n_processes"]
-        e_max=self.config["epsilon_greedy_max"]
-        e_min=self.config["epsilon_greedy_min"]
-        self.train_batcher.reset(agent_info=DictTensor({"epsilon":torch.rand(n_episodes)*(e_max-e_min)+e_min}))
+        self.train_batcher.reset(agent_info=DictTensor({"epsilon":torch.ones(n_episodes)}))
 
         logging.info("Sampling initial transitions")
         for k in range(self.config["initial_buffer_epochs"]):
@@ -176,6 +174,11 @@ class DQN:
             assert not n==0
             self.replay_buffer.push(trajectories.trajectories)
             print(k,"/",self.config["initial_buffer_epochs"])
+
+        n_episodes=self.config["n_envs"]*self.config["n_processes"]
+        e_max=self.config["epsilon_greedy_max"]
+        e_min=self.config["epsilon_greedy_min"]
+        self.train_batcher.reset(agent_info=DictTensor({"epsilon":torch.rand(n_episodes)*(e_max-e_min)+e_min}))
 
         n_episodes=self.config["n_evaluation_envs"]*self.config["n_evaluation_processes"]
         self.evaluation_batcher.reset(agent_info=DictTensor({"epsilon":torch.zeros(n_episodes)}))
@@ -219,11 +222,11 @@ class DQN:
                 self.iteration+=1
                 optimizer.step()
 
-                # tau=self.config["tau"]
-                # self.soft_update_params(self.learning_model,self.target_model,tau)
-                if self.iteration%10000==0:
-                    self.target_model.load_state_dict(self.learning_model)
-                    self.soft_update_params(self.learning_model,self.target_model,1.0)
+                tau=self.config["tau"]
+                self.soft_update_params(self.learning_model,self.target_model,tau)
+                # if self.iteration%10000==0:
+                #     self.target_model.load_state_dict(self.learning_model)
+                #     self.soft_update_params(self.learning_model,self.target_model,1.0)
             tt=time.time()
             c_ps=consumed/(tt-_start_time)
             p_ps=produced/(tt-_start_time)
