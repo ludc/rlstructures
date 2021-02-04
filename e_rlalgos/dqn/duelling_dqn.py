@@ -252,7 +252,7 @@ class DQN:
 
         if (evaluation_trajectories is None):
             return
-        print(evaluation_trajectories.lengths)
+        print(evaluation_trajectories.trajectories.lengths)
         assert n==0
         avg_reward = (
                     (
