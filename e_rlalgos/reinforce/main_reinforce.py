@@ -41,6 +41,11 @@ class Experiment(Reinforce):
     def __init__(self, config, create_env, create_agent):
         super().__init__(config, create_env, create_agent)
 
+    def _create_model(self):
+        action_model=ActionModel(self.obs_dim,self.n_actions,16)
+        baseline_model=BaselineModel(self.obs_dim,16)
+        return Model(action_model,baseline_model)
+
 if __name__=="__main__":
     #We use spawn mode such that most of the environment will run in multiple processes
     import torch.multiprocessing as mp

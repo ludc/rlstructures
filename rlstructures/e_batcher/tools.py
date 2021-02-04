@@ -325,6 +325,24 @@ def s_worker_process(
             assert agent_info.empty() or agent_info.n_elems()==env.n_envs()
             assert env_info.empty() or env_info.n_elems()==env.n_envs()
             observation, env_running = env.reset(env_info)
+        elif order_name == "acquire_state":
+            if len(env_running)==0:
+                out_queue.put(None)
+            else:
+                env_to_slot, agent_state, observation, agent_info,env_info, env_running = s_acquire_slot(
+                        buffer,
+                        env,
+                        agent,
+                        agent_state,
+                        observation,
+                        agent_info,
+                        env_info,
+                        env_running,
+                )
+                slots=[env_to_slot[k] for k in env_to_slot]
+                out_queue.put((slots,len(env_running)))
+
+
         elif order_name == "slot":
             if len(env_running)==0:
                 out_queue.put([])
@@ -378,6 +396,14 @@ class S_ProcessWorker:
     def acquire_slot(self):
         order = ("slot", None)
         self.inq.put(order)
+
+    def acquire_state(self):
+        order = ("acquire_state")
+        self.inq.put(order)
+
+    def get_state(self):
+        t=self.outq.get()
+        return t
 
     def reset(self,agent_info=None, env_info=None):
         order = ("reset", agent_info, env_info)

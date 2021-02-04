@@ -23,12 +23,12 @@ def format_frame(frame):
         return r
     elif isinstance(frame, list):
         t=torch.tensor(frame).unsqueeze(0)
-        if t.dtype==torch.float64:
+        if t.dtype!=torch.float32:
             t=t.float()
         return t
     elif isinstance(frame, np.ndarray):
         t=torch.from_numpy(frame).unsqueeze(0)
-        if t.dtype==torch.float64:
+        if t.dtype!=torch.float32:
             t=t.float()
         return t
     elif isinstance(frame, torch.Tensor):
@@ -37,7 +37,6 @@ def format_frame(frame):
         return torch.tensor([frame]).unsqueeze(0).long()
     elif isinstance(frame, float):
         return torch.tensor([frame]).unsqueeze(0).float()
-        return t
 
     else:
         try:

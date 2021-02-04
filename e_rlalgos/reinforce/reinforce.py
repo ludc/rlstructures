@@ -38,9 +38,7 @@ class Reinforce:
         del env
 
         # Create the agent model
-        action_model=ActionModel(self.obs_dim,self.n_actions,16)
-        baseline_model=BaselineModel(self.obs_dim,16)
-        self.learning_model=Model(action_model,baseline_model)
+        self.learning_model=self._create_model()
 
         #Create one agent for loss computation (see get_loss)
         self.agent=self._create_agent(n_actions = self.n_actions, model = self.learning_model)
