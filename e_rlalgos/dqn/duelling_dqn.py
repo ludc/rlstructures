@@ -184,13 +184,17 @@ class DQN:
         logging.info("Starting Learning")
         _start_time=time.time()
         self.iteration=0
+        self.train_batcher.execute()
         while time.time()-_start_time <self.config["time_limit"]:
-
-            self.train_batcher.execute()
+            st=time.time()
             trajectories,n=self.train_batcher.get()
+            self.logger.add_scalar("Wait time",time.time()-st,self.iteration)
             assert n>0
             self.replay_buffer.push(trajectories.trajectories)
             self.logger.add_scalar("replay_buffer_size",self.replay_buffer.size(),self.iteration)
+            self.train_batcher.update(self._state_dict(self.learning_model,torch.device("cpu")))
+            self.train_batcher.execute()
+
             # avg_reward = 0
 
             for k in range(self.config["qvalue_epochs"]):
@@ -212,9 +216,9 @@ class DQN:
                 tau=self.config["tau"]
                 self.soft_update_params(self.learning_model,self.target_model,tau)
 
-            self.train_batcher.update(self._state_dict(self.learning_model,torch.device("cpu")))
             self.evaluate()
             self.iteration+=1
+        trajectories,n=self.train_batcher.get()
 
         self.train_batcher.close()
         self.evaluation_batcher.get() # To wait for the last trajectories
@@ -270,6 +274,11 @@ class DQN:
         _q_target = self.target_model(_frame).detach()
         _q_target_a= _q_target[Bv,actionp]
         _target_value=_q_target_a*(1-_done)*self.config["discount_factor"]+reward
+        m=reward.ne(0.0)
+        if m.any():
+            print("Q: ",qa[m])
+            print("T: ",_target_value[m])
+            print("R: ",reward[m])
         td = (_target_value-qa)**2
         dt = DictTensor(
             {

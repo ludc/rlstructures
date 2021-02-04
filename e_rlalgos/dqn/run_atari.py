@@ -23,16 +23,23 @@ from e_rlalgos.dqn.duelling_dqn import DQN
 from e_rlalgos.atari_wrappers import make_atari, wrap_deepmind, wrap_pytorch
 
 def create_env(n_envs, mode="train",max_episode_steps=None, seed=None,**args):
-    envs=[]
-    for k in range(n_envs):
-        e = make_atari(args["environment/env_name"], max_episode_steps=max_episode_steps)
-        e = wrap_deepmind(e)
-        e = wrap_pytorch(e)
-        envs.append(e)
+
 
     if mode=="train":
+        envs=[]
+        for k in range(n_envs):
+            e = make_atari(args["environment/env_name"])
+            e = wrap_deepmind(e)
+            e = wrap_pytorch(e)
+            envs.append(e)
         return GymEnvInf(envs, seed)
     else:
+        envs=[]
+        for k in range(n_envs):
+            e = make_atari(args["environment/env_name"], max_episode_steps=max_episode_steps)
+            e = wrap_deepmind(e)
+            e = wrap_pytorch(e)
+            envs.append(e)
         return GymEnv(envs, seed)
 
 def create_agent(n_actions=None, model=None, ):
@@ -64,12 +71,12 @@ if __name__=="__main__":
 
     config={"environment/env_name": "PongNoFrameskip-v4",
             "n_envs": 4,
-            "max_episode_steps": 10000,
+            "max_episode_steps": 100,
             "discount_factor": 0.99,
             "epsilon_greedy_max": 0.5,
             "epsilon_greedy_min": 0.01,
             "replay_buffer_size": 100000,
-            "n_batches": 64,
+            "n_batches": 32,
             "tau": 0.005,
             "initial_buffer_epochs": 100,
             "qvalue_epochs": 1,
@@ -82,7 +89,7 @@ if __name__=="__main__":
             "n_evaluation_envs": 16,
             "time_limit": 180000,
             "env_seed": 42,
-            "clip_grad": 40.0,
+            "clip_grad": 10.0,
             "learner_device": "cpu",
             "logdir":"./results"
     }
