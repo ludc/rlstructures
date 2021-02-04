@@ -75,7 +75,7 @@ if __name__=="__main__":
             "discount_factor": 0.95,
             "epsilon_greedy_max": 0.3,
             "epsilon_greedy_min": 0.01,
-            "replay_buffer_size": 100000,
+            "replay_buffer_size": 1000000,
             "n_batches": 64,
             "tau": 0.005,
             "initial_buffer_epochs": 1000,
