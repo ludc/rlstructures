@@ -51,7 +51,7 @@ class Experiment(DQN):
 
     def _create_model(self):
         module = DuelingCnnDQN(self.obs_shape,self.n_actions)
-        module.apply(weight_init)
+        #module.apply(weight_init)
         return module
 
 def flatten(d, parent_key='', sep='/'):
