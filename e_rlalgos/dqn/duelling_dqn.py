@@ -220,7 +220,7 @@ class DQN:
 
                 # tau=self.config["tau"]
                 # self.soft_update_params(self.learning_model,self.target_model,tau)
-                if self.iteration%200==0:
+                if self.iteration%1000==0:
                     self.soft_update_params(self.learning_model,self.target_model,1.0)
             tt=time.time()
             c_ps=consumed/(tt-_start_time)
