@@ -87,7 +87,7 @@ if __name__=="__main__":
             "n_evaluation_processes": 4,
             "verbose": True,
             "n_evaluation_envs": 4,
-            "time_limit": 1800000,
+            "time_limit": 28800,
             "env_seed": 42,
             "clip_grad": 10.0,
             "learner_device": "cuda",
