@@ -20,7 +20,6 @@ import torch.nn.functional as F
 import pickle
 import numpy as np
 from rlstructures.batchers import Batcher,EpisodeBatcher
-
 class ReplayBuffer:
     def __init__(self,N):
         self.N=N
@@ -38,7 +37,11 @@ class ReplayBuffer:
         self.pos=0
         self.full=False
 
-    def write(self,trajectories,default_priority):
+    def write(self,trajectories):
+        limit=self.pos
+        if self.full:
+            limit=self.N
+
         rs={}
         new_pos=None
         for k in trajectories.keys():
@@ -55,10 +58,10 @@ class ReplayBuffer:
                 new_pos=(new_pos*(1-mask)+mask*(nidx)).long()
 
             self.buffer[k][new_pos]=v
-        if (default_priority is None):
-            self.priorities[new_pos]=self.priorities.max()
+        if (limit==0):
+            self.priorities[new_pos]=1.0
         else:
-            self.priorities[new_pos]=default_priority
+            self.priorities[new_pos]=self.priorities[:limit].max()
 
         self.pos=self.pos+n
         if self.pos>=self.N:
@@ -73,7 +76,7 @@ class ReplayBuffer:
             return self.pos
 
 
-    def push(self,trajectories,default_priority=None):
+    def push(self,trajectories):
         '''
         Add transitions to the replay buffer
         '''
@@ -81,7 +84,7 @@ class ReplayBuffer:
         assert trajectories.lengths.eq(max_length).all()
         if self.buffer is None:
             self._init_buffer(trajectories)
-        self.write(trajectories,default_priority)
+        self.write(trajectories)
 
     def sample(self,n=1,alpha=0.6,beta=0.4):
         limit=self.pos
@@ -193,7 +196,7 @@ class DQN:
             self.train_batcher.execute()
             trajectories,n=self.train_batcher.get()
             assert not n==0
-            self.replay_buffer.push(trajectories.trajectories,default_priority=1.0)
+            self.replay_buffer.push(trajectories.trajectories)
             print(k,"/",self.config["initial_buffer_epochs"])
 
         n_episodes=self.config["n_evaluation_envs"]*self.config["n_evaluation_processes"]
@@ -203,15 +206,21 @@ class DQN:
         logging.info("Starting Learning")
         _start_time=time.time()
         self.iteration=0
+        self.train_batcher.execute()
+        produced=0
+        consumed=0
         while time.time()-_start_time <self.config["time_limit"]:
+            st=time.time()
+            trajectories,n=self.train_batcher.get(blocking=False)
+            if (not trajectories is None):
+                assert n>0
+                self.replay_buffer.push(trajectories.trajectories)
+                produced=produced+trajectories.trajectories.lengths.sum().item()
+                self.logger.add_scalar("replay_buffer_size",self.replay_buffer.size(),self.iteration)
+                self.train_batcher.update(self._state_dict(self.learning_model,torch.device("cpu")))
+                self.train_batcher.execute()
 
-            self.train_batcher.execute()
-            trajectories,n=self.train_batcher.get()
-            assert n>0
-            self.replay_buffer.push(trajectories.trajectories)
-            self.logger.add_scalar("replay_buffer_size",self.replay_buffer.size(),self.iteration)
             # avg_reward = 0
-
             for k in range(self.config["qvalue_epochs"]):
                 optimizer.zero_grad()
                 transitions,positions,weights=self.replay_buffer.sample(n=self.config["n_batches"],alpha=self.config["alpha"],beta=self.config["beta"])
@@ -226,6 +235,7 @@ class DQN:
                 self.replay_buffer.update_priorities(positions,dt["q_loss"].sqrt().detach())
 
                 floss=(dt["q_loss"]*weights).mean()
+                consumed+=transitions.n_elems()
                 floss.backward()
                 if self.config["clip_grad"] > 0:
                     n = torch.nn.utils.clip_grad_norm_(
@@ -237,10 +247,14 @@ class DQN:
 
                 tau=self.config["tau"]
                 self.soft_update_params(self.learning_model,self.target_model,tau)
-
-            self.train_batcher.update(self._state_dict(self.learning_model,torch.device("cpu")))
+            tt=time.time()
+            c_ps=consumed/(tt-_start_time)
+            p_ps=produced/(tt-_start_time)
+            self.logger.add_scalar("speed/consumed_per_seconds",c_ps,self.iteration)
+            self.logger.add_scalar("speed/produced_per_seconds",p_ps,self.iteration)
             self.evaluate()
             self.iteration+=1
+        trajectories,n=self.train_batcher.get()
 
         self.train_batcher.close()
         self.evaluation_batcher.get() # To wait for the last trajectories
@@ -278,12 +292,10 @@ class DQN:
             self.evaluation_batcher.execute()
         return avg_reward
 
-    def get_loss(self, transitions, device):
-        #
-
+    def get_loss(self, transitions,device):
         transitions = transitions.to(device)
         B=transitions.n_elems()
-        Bv=torch.arange(B)
+        Bv=torch.arange(B).to(device)
         action = transitions["action/action"]
         reward = transitions["_observation/reward"]
         frame = transitions["observation/frame"]
@@ -297,15 +309,15 @@ class DQN:
         _q_target = self.target_model(_frame).detach()
         _q_target_a= _q_target[Bv,actionp]
         _target_value=_q_target_a*(1-_done)*self.config["discount_factor"]+reward
-        # print("QT ",qa)
-        # print("TV ",_target_value)
-        # print(
-        #     "R ",reward)
-        # print("Done ",_done)
+        m=reward.ne(0.0)
+        if m.any():
+            print("Q: ",qa[m])
+            print("T: ",_target_value[m])
+            print("R: ",reward[m])
         td = (_target_value-qa)**2
         dt = DictTensor(
             {
-                "q_loss": td
+                "q_loss": td,
             }
         )
         return dt
