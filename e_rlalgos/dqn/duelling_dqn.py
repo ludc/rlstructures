@@ -187,6 +187,7 @@ class DQN:
         self.train_batcher.execute()
         produced=0
         consumed=0
+        n_interactions=self.replay_buffer.size()
         while time.time()-_start_time <self.config["time_limit"]:
             st=time.time()
             trajectories,n=self.train_batcher.get(blocking=False)
@@ -223,6 +224,7 @@ class DQN:
             c_ps=consumed/(tt-_start_time)
             p_ps=produced/(tt-_start_time)
             self.logger.add_scalar("speed/consumed_per_seconds",c_ps,self.iteration)
+            self.logger.add_scalar("speed/n_interactions",n_interactions+produced,self.iteration)
             self.logger.add_scalar("speed/produced_per_seconds",p_ps,self.iteration)
             self.evaluate()
             self.iteration+=1
