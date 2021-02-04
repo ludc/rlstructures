@@ -71,7 +71,7 @@ if __name__=="__main__":
 
     config={"environment/env_name": "PongNoFrameskip-v4",
             "n_envs": 1,
-            "max_episode_steps": 100,
+            "max_episode_steps": 10000,
             "discount_factor": 0.99,
             "epsilon_greedy_max": 0.3,
             "epsilon_greedy_min": 0.01,
