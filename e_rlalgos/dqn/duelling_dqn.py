@@ -286,9 +286,9 @@ class DQN:
 
         q=self.learning_model(frame)
         qa=q[Bv,action]
-        #qp = self.learning_model(_frame)
+        qp = self.learning_model(_frame)
         _q_target = self.target_model(_frame).detach()
-        actionp=_q_target.max(1)[1]
+        actionp=qp.max(1)[1]
         _q_target_a= _q_target[Bv,actionp]
         _target_value=_q_target_a*(1-_done)*self.config["discount_factor"]+reward
         # print(qa[:4]," vs ",_target_value[:4])
