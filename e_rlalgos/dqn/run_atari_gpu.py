@@ -78,7 +78,7 @@ if __name__=="__main__":
             "replay_buffer_size": 100000,
             "n_batches": 32,
             "tau": 0.005,
-            "initial_buffer_epochs": 12500,
+            "initial_buffer_epochs": 1250,
             "qvalue_epochs": 1,
             "batch_timesteps": 1,
             "use_duelling": True,
