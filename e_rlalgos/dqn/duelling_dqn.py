@@ -194,9 +194,9 @@ class DQN:
         self.target_model.load_state_dict(self.learning_model.state_dict())
         while time.time()-_start_time <self.config["time_limit"]:
             st=time.time()
-            trajectories,n=self.train_batcher.get(blocking=True)
+            trajectories,n=self.train_batcher.get(blocking=False)
             if (not trajectories is None):
-                assert n>0
+                assert n==self.config["n_envs"]*self.config["n_processes"]
                 self.replay_buffer.push(trajectories.trajectories)
                 produced=produced+trajectories.trajectories.lengths.sum().item()
                 self.logger.add_scalar("replay_buffer_size",self.replay_buffer.size(),self.iteration)
