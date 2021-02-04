@@ -200,8 +200,11 @@ class DQN:
                 self.replay_buffer.push(trajectories.trajectories)
                 produced=produced+trajectories.trajectories.lengths.sum().item()
                 self.logger.add_scalar("replay_buffer_size",self.replay_buffer.size(),self.iteration)
+                n_episodes=self.config["n_envs"]*self.config["n_processes"]
+                e_max=self.config["epsilon_greedy_max"]
+                e_min=self.config["epsilon_greedy_min"]
                 self.train_batcher.update(self._state_dict(self.learning_model,torch.device("cpu")))
-                self.train_batcher.execute()
+                self.train_batcher.execute(agent_info=DictTensor({"epsilon":torch.rand(n_episodes)*(e_max-e_min)+e_min}))
 
             # avg_reward = 0
             for k in range(self.config["qvalue_epochs"]):

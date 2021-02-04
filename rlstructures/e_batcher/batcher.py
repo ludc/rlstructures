@@ -28,10 +28,18 @@ class E_Batcher:
         assert agent_info.empty() or agent_info.n_elems()==pos
         assert env_info.empty() or env_info.n_elems()==pos
 
-    def execute(self):
+    def execute(self,agent_info=None):
         n_workers = len(self.workers)
+        pos=0
         for k in range(n_workers):
-                self.workers[k].acquire_slot()
+                n=self.n_envs
+                wi=None
+                if not agent_info is None:
+                    wi=agent_info.slice(pos,pos+n)
+                self.workers[k].acquire_slot(wi)
+                pos+=n
+
+
 
     def get(self,blocking=True):
         if not blocking:
