@@ -286,7 +286,7 @@ class DQN:
 
         q=self.learning_model(frame)
         qa=q[Bv,action]
-        qp = self.learning_model(_frame)
+        qp = self.learning_model(_frame).detach()
         _q_target = self.target_model(_frame).detach()
         actionp=qp.max(1)[1]
         _q_target_a= _q_target[Bv,actionp]
