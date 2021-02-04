@@ -185,12 +185,15 @@ class DQN:
         _start_time=time.time()
         self.iteration=0
         self.train_batcher.execute()
+        produced=0
+        consumed=0
         while time.time()-_start_time <self.config["time_limit"]:
             st=time.time()
             trajectories,n=self.train_batcher.get(blocking=False)
             if (not trajectories is None):
                 assert n>0
                 self.replay_buffer.push(trajectories.trajectories)
+                produced=produced+trajectories.trajectories.lengths.sum().item()
                 self.logger.add_scalar("replay_buffer_size",self.replay_buffer.size(),self.iteration)
                 self.train_batcher.update(self._state_dict(self.learning_model,torch.device("cpu")))
                 self.train_batcher.execute()
@@ -198,7 +201,9 @@ class DQN:
             # avg_reward = 0
             for k in range(self.config["qvalue_epochs"]):
                 optimizer.zero_grad()
-                dt = self.get_loss(device)
+                transitions=self.replay_buffer.sample(n=self.config["n_batches"])
+                consumed+=transitions.n_elems()
+                dt = self.get_loss(transitions,device)
 
                 [self.logger.add_scalar(k,dt[k].item(),self.iteration) for k in dt.keys()]
 
@@ -214,7 +219,9 @@ class DQN:
 
                 tau=self.config["tau"]
                 self.soft_update_params(self.learning_model,self.target_model,tau)
-
+            tt=time.time()
+            self.logger.add_scalar("speed/consumed_per_seconds",consumed/(tt-_start_time),self.iteration()
+            self.logger.add_scalar("speed/produced_per_seconds",produced/(tt-_start_time),self.iteration()
             self.evaluate()
             self.iteration+=1
         trajectories,n=self.train_batcher.get()
@@ -255,8 +262,7 @@ class DQN:
             self.evaluation_batcher.execute()
         return avg_reward
 
-    def get_loss(self, device):
-        transitions=self.replay_buffer.sample(n=self.config["n_batches"])
+    def get_loss(self, transitions,device):
         transitions = transitions.to(device)
         B=transitions.n_elems()
         Bv=torch.arange(B).to(device)
