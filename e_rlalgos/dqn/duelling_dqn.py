@@ -188,6 +188,7 @@ class DQN:
         produced=0
         consumed=0
         n_interactions=self.replay_buffer.size()
+
         while time.time()-_start_time <self.config["time_limit"]:
             st=time.time()
             trajectories,n=self.train_batcher.get(blocking=False)
