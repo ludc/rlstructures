@@ -194,7 +194,7 @@ class DQN:
         self.target_model.load_state_dict(self.learning_model.state_dict())
         while time.time()-_start_time <self.config["time_limit"]:
             st=time.time()
-            trajectories,n=self.train_batcher.get(blocking=False)
+            trajectories,n=self.train_batcher.get(blocking=True)
             if (not trajectories is None):
                 assert n>0
                 self.replay_buffer.push(trajectories.trajectories)
@@ -286,9 +286,9 @@ class DQN:
 
         q=self.learning_model(frame)
         qa=q[Bv,action]
-        qp = self.learning_model(_frame).detach()
+        #qp = self.learning_model(_frame).detach()
         _q_target = self.target_model(_frame).detach()
-        actionp=qp.max(1)[1]
+        actionp=_q_target.max(1)[1]
         _q_target_a= _q_target[Bv,actionp]
         _target_value=_q_target_a*(1-_done)*self.config["discount_factor"]+reward
         # print(qa[:4]," vs ",_target_value[:4])
