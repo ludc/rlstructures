@@ -191,7 +191,7 @@ class DQN:
         produced=0
         consumed=0
         n_interactions=self.replay_buffer.size()
-
+        self.target_model.load_state_dict(self.learning_model.state_dict())
         while time.time()-_start_time <self.config["time_limit"]:
             st=time.time()
             trajectories,n=self.train_batcher.get(blocking=False)
@@ -222,10 +222,10 @@ class DQN:
                 self.iteration+=1
                 optimizer.step()
 
-                tau=self.config["tau"]
-                self.soft_update_params(self.learning_model,self.target_model,tau)
-                # if self.iteration%10000==0:
-                #     self.target_model.load_state_dict(self.learning_model)
+                #tau=self.config["tau"]
+                #self.soft_update_params(self.learning_model,self.target_model,tau)
+                if self.iteration%1000==0:
+                    self.target_model.load_state_dict(self.learning_model)
                 #     self.soft_update_params(self.learning_model,self.target_model,1.0)
             tt=time.time()
             c_ps=consumed/(tt-_start_time)
@@ -285,16 +285,17 @@ class DQN:
 
         q=self.learning_model(frame)
         qa=q[Bv,action]
-        qp = self.learning_model(_frame)
-        actionp=qp.max(1)[1]
+        #qp = self.learning_model(_frame)
         _q_target = self.target_model(_frame).detach()
+        actionp=_q_target.max(1)[1]
         _q_target_a= _q_target[Bv,actionp]
         _target_value=_q_target_a*(1-_done)*self.config["discount_factor"]+reward
-        m=reward.ne(0.0)
-        if m.any():
-            print("Q: ",qa[m])
-            print("T: ",_target_value[m])
-            print("R: ",reward[m])
+        print(qa[:4]," vs ",_target_value[:4])
+        # m=reward.ne(0.0)
+        # if m.any():
+        #     print("Q: ",qa[m])
+        #     print("T: ",_target_value[m])
+        #     print("R: ",reward[m])
         td = (_target_value-qa)**2
         dt = DictTensor(
             {

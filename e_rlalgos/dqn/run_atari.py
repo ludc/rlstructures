@@ -51,7 +51,7 @@ class Experiment(DQN):
 
     def _create_model(self):
         module = DuelingCnnDQN(self.obs_shape,self.n_actions)
-        module.apply(weight_init)
+        #module.apply(weight_init)
         return module
 
 def flatten(d, parent_key='', sep='/'):
@@ -70,26 +70,26 @@ if __name__=="__main__":
     mp.set_start_method("spawn")
 
     config={"environment/env_name": "PongNoFrameskip-v4",
-            "n_envs": 4,
-            "max_episode_steps": 100,
+            "n_envs": 1,
+            "max_episode_steps": 10000,
             "discount_factor": 0.99,
-            "epsilon_greedy_max": 0.5,
-            "epsilon_greedy_min": 0.01,
+            "epsilon_greedy_max": 0.1,
+            "epsilon_greedy_min": 0.1,
             "replay_buffer_size": 100000,
             "n_batches": 32,
             "tau": 0.005,
-            "initial_buffer_epochs": 100,
+            "initial_buffer_epochs": 1000,
             "qvalue_epochs": 1,
             "batch_timesteps": 1,
             "use_duelling": True,
-            "lr": 0.0003,
-            "n_processes": 4,
-            "n_evaluation_processes": 4,
+            "lr": 0.0001,
+            "n_processes": 1,
+            "n_evaluation_processes": 1,
             "verbose": True,
-            "n_evaluation_envs": 16,
-            "time_limit": 180000,
+            "n_evaluation_envs": 4,
+            "time_limit": 1800000,
             "env_seed": 42,
-            "clip_grad": 10.0,
+            "clip_grad": 0.0,
             "learner_device": "cpu",
             "logdir":"./results"
     }
