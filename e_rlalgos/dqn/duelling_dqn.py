@@ -252,6 +252,7 @@ class DQN:
 
         if (evaluation_trajectories is None):
             return
+        print(evaluation_trajectories.lengths)
         assert n==0
         avg_reward = (
                     (
@@ -290,7 +291,7 @@ class DQN:
         actionp=_q_target.max(1)[1]
         _q_target_a= _q_target[Bv,actionp]
         _target_value=_q_target_a*(1-_done)*self.config["discount_factor"]+reward
-        print(qa[:4]," vs ",_target_value[:4])
+        # print(qa[:4]," vs ",_target_value[:4])
         # m=reward.ne(0.0)
         # if m.any():
         #     print("Q: ",qa[m])
