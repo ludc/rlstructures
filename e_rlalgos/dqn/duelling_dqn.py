@@ -218,8 +218,10 @@ class DQN:
                 self.iteration+=1
                 optimizer.step()
 
-                tau=self.config["tau"]
-                self.soft_update_params(self.learning_model,self.target_model,tau)
+                # tau=self.config["tau"]
+                # self.soft_update_params(self.learning_model,self.target_model,tau)
+                if self.iteration%200==0:
+                    self.soft_update_params(self.learning_model,self.target_model,1.0)
             tt=time.time()
             c_ps=consumed/(tt-_start_time)
             p_ps=produced/(tt-_start_time)
