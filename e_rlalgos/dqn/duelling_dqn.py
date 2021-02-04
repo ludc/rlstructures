@@ -220,8 +220,10 @@ class DQN:
                 tau=self.config["tau"]
                 self.soft_update_params(self.learning_model,self.target_model,tau)
             tt=time.time()
-            self.logger.add_scalar("speed/consumed_per_seconds",consumed/(tt-_start_time),self.iteration)
-            self.logger.add_scalar("speed/produced_per_seconds",produced/(tt-_start_time),self.iteration)
+            c_ps=consumed/(tt-_start_time)
+            p_ps=produced/(tt-_start_time)
+            self.logger.add_scalar("speed/consumed_per_seconds",c_ps,self.iteration)
+            self.logger.add_scalar("speed/produced_per_seconds",p_ps,self.iteration)
             self.evaluate()
             self.iteration+=1
         trajectories,n=self.train_batcher.get()
