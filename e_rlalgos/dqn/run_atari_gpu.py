@@ -90,7 +90,7 @@ if __name__=="__main__":
             "time_limit": 1800000,
             "env_seed": 42,
             "clip_grad": 10.0,
-            "learner_device": "cuda",
+            "learner_device": "cpu",
             "logdir":"./results"
     }
     exp=Experiment(config,create_env,create_agent)
