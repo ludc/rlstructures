@@ -16,7 +16,7 @@ import torch
 import time
 import numpy as np
 import torch.nn.functional as F
-from e_rlalgos.dqn_prioritized.agent import QAgent, QMLP, DQMLP, DuelingCnnDQN, CnnDQN
+from e_rlalgos.dqn.agent import QAgent, QMLP, DQMLP, DuelingCnnDQN, CnnDQN
 import gym
 from gym.wrappers import TimeLimit
 from e_rlalgos.dqn.duelling_dqn import DQN
