@@ -103,7 +103,6 @@ class E_Batcher:
         specs_env_info=env_info.specs()
         del env
         del agent
-
         self.buffer = S_Buffer(
             n_slots=self.n_envs*n_processes,
             s_slots=n_timesteps,

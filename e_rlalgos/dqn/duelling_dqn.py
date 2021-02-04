@@ -187,16 +187,15 @@ class DQN:
         self.train_batcher.execute()
         while time.time()-_start_time <self.config["time_limit"]:
             st=time.time()
-            trajectories,n=self.train_batcher.get()
-            self.logger.add_scalar("Wait time",time.time()-st,self.iteration)
-            assert n>0
-            self.replay_buffer.push(trajectories.trajectories)
-            self.logger.add_scalar("replay_buffer_size",self.replay_buffer.size(),self.iteration)
-            self.train_batcher.update(self._state_dict(self.learning_model,torch.device("cpu")))
-            self.train_batcher.execute()
+            trajectories,n=self.train_batcher.get(blocking=False)
+            if (not trajectories is None):
+                assert n>0
+                self.replay_buffer.push(trajectories.trajectories)
+                self.logger.add_scalar("replay_buffer_size",self.replay_buffer.size(),self.iteration)
+                self.train_batcher.update(self._state_dict(self.learning_model,torch.device("cpu")))
+                self.train_batcher.execute()
 
             # avg_reward = 0
-
             for k in range(self.config["qvalue_epochs"]):
                 optimizer.zero_grad()
                 dt = self.get_loss(device)
