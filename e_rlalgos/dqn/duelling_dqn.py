@@ -166,7 +166,7 @@ class DQN:
         self.evaluation_batcher.update(self._state_dict(self.learning_model,torch.device("cpu")))
 
         n_episodes=self.config["n_envs"]*self.config["n_processes"]
-        self.train_batcher.reset(agent_info=DictTensor({"epsilon":torch.ones(n_episodes)}))
+        self.train_batcher.reset(agent_info=DictTensor({"epsilon":torch.ones(n_episodes).float()}))
 
         logging.info("Sampling initial transitions")
         for k in range(self.config["initial_buffer_epochs"]):
@@ -175,7 +175,7 @@ class DQN:
             assert not n==0
             self.replay_buffer.push(trajectories.trajectories)
             print(k,"/",self.config["initial_buffer_epochs"])
-
+        exit()
         self.iteration=0
         n_episodes=self.config["n_envs"]*self.config["n_processes"]
         e_max=self.config["epsilon_greedy_max"]
