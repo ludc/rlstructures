@@ -5,13 +5,13 @@
             "discount_factor": 0.99,
             "epsilon_greedy_max": 0.9,
             "epsilon_greedy_min": 0.01,
-            "epsilon_min_epoch": [1000000],
+            "epsilon_min_epoch": [200000,1000000],
             "replay_buffer_size": [100000],
             "n_batches": 32,
             "use_duelling": [True],
             "use_double": [False,True],
             "lr": [3e-5,1e-5,3e-6],
-            "update_target_epoch":[1000,2000],
+            "update_target_epoch":[1000,2000,5000],
             "n_evaluation_processes": 4,
             "verbose": True,
             "n_evaluation_envs": 4,
@@ -39,11 +39,16 @@
         ,
         {
             "initial_buffer_epochs": 250,
-            "qvalue_epochs": 10,
+            "qvalue_epochs": 1,
             "batch_timesteps": 10,
             "n_processes": 4,
         }
         ,
-
+        {
+            "initial_buffer_epochs": 25,
+            "qvalue_epochs": 1,
+            "batch_timesteps": 100,
+            "n_processes": 4,
+        }
     ]
 )

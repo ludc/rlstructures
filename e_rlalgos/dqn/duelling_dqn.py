@@ -192,36 +192,49 @@ class DQN:
         n_interactions=self.replay_buffer.size()
         self.target_model.load_state_dict(self.learning_model.state_dict())
         cumulated_reward=torch.zeros(self.config["n_envs"]*self.config["n_processes"])
-        while time.time()-_start_time <self.config["time_limit"]:
-            epsilon_step=(self.config["epsilon_greedy_max"]-self.config["epsilon_greedy_min"])/self.config["epsilon_min_epoch"]
-            self.epsilon=self.config["epsilon_greedy_max"]-epsilon_step*self.iteration
-            self.epsilon=max(self.epsilon,self.config["epsilon_greedy_min"])
-            if (self.epsilon<0.01):
-                self.epsilon=0.01
-            self.logger.add_scalar("epsilon",self.epsilon,self.iteration)
 
-            st=time.time()
-            n_episodes=self.config["n_envs"]*self.config["n_processes"]
-            self.train_batcher.execute(agent_info=DictTensor({"epsilon":torch.tensor([self.epsilon]).repeat(n_episodes).float()}))
+        epsilon_step=(self.config["epsilon_greedy_max"]-self.config["epsilon_greedy_min"])/self.config["epsilon_min_epoch"]
+        self.epsilon=self.config["epsilon_greedy_max"]-epsilon_step*self.iteration
+        self.epsilon=max(self.epsilon,self.config["epsilon_greedy_min"])
+        if (self.epsilon<0.01):
+            self.epsilon=0.01
+        self.logger.add_scalar("epsilon",self.epsilon,self.iteration)
+        n_episodes=self.config["n_envs"]*self.config["n_processes"]
+        self.train_batcher.update(self._state_dict(self.learning_model,torch.device("cpu")))
+        self.train_batcher.execute(agent_info=DictTensor({"epsilon":torch.tensor([self.epsilon]).repeat(n_episodes).float()}))
+
+
+        while time.time()-_start_time <self.config["time_limit"]:
             trajectories,n=self.train_batcher.get(blocking=True)
 
-            reward=trajectories.trajectories["_observation/reward"]
-            _is=trajectories.trajectories["observation/initial_state"]
-            crs=[]
-            for t in range(reward.size(1)):
-                cr=cumulated_reward[_is[:,t]]
-                for ii in range(cr.size()[0]):
-                    print("CR = ",cr[ii].item())
-                    crs.append(cr[ii].item())
-                cumulated_reward=torch.zeros_like(cumulated_reward)*_is[:,t].float()+(1-_is[:,t].float())*cumulated_reward
-                cumulated_reward+=reward[:,t]
-            if len(crs)>0:
-                self.logger.add_scalar("train_cumulated_reward",np.mean(crs),self.iteration)
+            if not trajectories is None:
+                epsilon_step=(self.config["epsilon_greedy_max"]-self.config["epsilon_greedy_min"])/self.config["epsilon_min_epoch"]
+                self.epsilon=self.config["epsilon_greedy_max"]-epsilon_step*self.iteration
+                self.epsilon=max(self.epsilon,self.config["epsilon_greedy_min"])
+                if (self.epsilon<0.01):
+                    self.epsilon=0.01
+                self.logger.add_scalar("epsilon",self.epsilon,self.iteration)
+                n_episodes=self.config["n_envs"]*self.config["n_processes"]
+                self.train_batcher.execute(agent_info=DictTensor({"epsilon":torch.tensor([self.epsilon]).repeat(n_episodes).float()}))
 
-            assert n==self.config["n_envs"]*self.config["n_processes"]
-            self.replay_buffer.push(trajectories.trajectories)
-            produced+=trajectories.trajectories.lengths.sum().item()
-            self.logger.add_scalar("replay_buffer_size",self.replay_buffer.size(),self.iteration)
+
+                reward=trajectories.trajectories["_observation/reward"]
+                _is=trajectories.trajectories["observation/initial_state"]
+                crs=[]
+                for t in range(reward.size(1)):
+                    cr=cumulated_reward[_is[:,t]]
+                    for ii in range(cr.size()[0]):
+                        print("CR = ",cr[ii].item())
+                        crs.append(cr[ii].item())
+                    cumulated_reward=torch.zeros_like(cumulated_reward)*_is[:,t].float()+(1-_is[:,t].float())*cumulated_reward
+                    cumulated_reward+=reward[:,t]
+                if len(crs)>0:
+                    self.logger.add_scalar("train_cumulated_reward",np.mean(crs),self.iteration)
+
+                assert n==self.config["n_envs"]*self.config["n_processes"]
+                self.replay_buffer.push(trajectories.trajectories)
+                produced+=trajectories.trajectories.lengths.sum().item()
+                self.logger.add_scalar("stats/replay_buffer_size",self.replay_buffer.size(),self.iteration)
 
             # avg_reward = 0
             assert self.config["qvalue_epochs"]>0
@@ -249,13 +262,13 @@ class DQN:
                     self.target_model.load_state_dict(self.learning_model.state_dict())
                 #     self.soft_update_params(self.learning_model,self.target_model,1.0)
 
-                #if time.time()-_start_time > 600 and self.iteration%1000==0:
-                if self.iteration%10==0:
+                if time.time()-_start_time > 600 and self.iteration%1000==0:
                     self.logger.update_csv()
 
             tt=time.time()
             c_ps=consumed/(tt-_start_time)
             p_ps=produced/(tt-_start_time)
+            print(p_ps,c_ps)
             self.logger.add_scalar("speed/consumed_per_seconds",c_ps,self.iteration)
             self.logger.add_scalar("speed/n_interactions",n_interactions+produced,self.iteration)
             self.logger.add_scalar("speed/produced_per_seconds",p_ps,self.iteration)

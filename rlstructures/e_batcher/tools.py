@@ -277,6 +277,7 @@ class S_Buffer:
         else:
             v = {k: self.buffers[k][idx, :ml].clone() for k in self.buffers}
             fvalues=DictTensor({k:self.fbuffers[k][idx].clone() for k in self.fbuffers})
+            lengths=lengths.clone()
         if erase:
             self.set_free_slots(slots)
         tdt = TemporalDictTensor(v, lengths)
