@@ -52,7 +52,10 @@ class Experiment(DQN):
         super().__init__(config, create_env, create_agent)
 
     def _create_model(self):
-        module = DuelingCnnDQN(self.obs_shape,self.n_actions)
+        if (self.config["use_duelling"]):
+            module = DuelingCnnDQN(self.obs_shape,self.n_actions)
+        else:
+            module = CnnDQN(self.obs_shape,self.n_actions)
         #module.apply(weight_init)
         return module
 
@@ -75,17 +78,19 @@ if __name__=="__main__":
             "n_envs": 1,
             "max_episode_steps": 10000,
             "discount_factor": 0.99,
-            "epsilon_greedy_max": 0.7,
+            "epsilon_greedy_max": 0.5,
             "epsilon_greedy_min": 0.1,
+            "epsilon_min_epoch": 1000000,
             "replay_buffer_size": 100000,
             "n_batches": 32,
             "tau": 0.005,
-            "initial_buffer_epochs": 1000,
-            "qvalue_epochs": 1,
-            "batch_timesteps": 4,
-            "use_duelling": True,
-            "lr": 0.0001,
-            "n_processes": 1,
+            "initial_buffer_epochs": 1,
+            "qvalue_epochs": 10,
+            "batch_timesteps": 10,
+            "use_duelling": False,
+            "use_double":False,
+            "lr": 0.00001,
+            "n_processes": 4,
             "n_evaluation_processes": 4,
             "verbose": True,
             "n_evaluation_envs": 4,

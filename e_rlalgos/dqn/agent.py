@@ -47,7 +47,8 @@ class QAgent(E_Agent):
         qs,action = q.max(1)
         raction = torch.tensor(np.random.randint(low=0,high=self.n_actions,size=(action.size()[0])))
         epsilon=agent_info["epsilon"]
-        mask=torch.rand(action.size()[0]).lt(epsilon).float()
+        r=torch.rand(action.size()[0])
+        mask=r.lt(epsilon).float()
         action=mask*raction+(1-mask)*action
         action=action.long()
 

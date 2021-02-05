@@ -180,7 +180,7 @@ class DQN:
         self.iteration=0
 
         n_episodes=self.config["n_evaluation_envs"]*self.config["n_evaluation_processes"]
-        self.evaluation_batcher.reset(agent_info=DictTensor({"epsilon":torch.tensor([1.0]).repeat(n_episodes).float()}))
+        self.evaluation_batcher.reset(agent_info=DictTensor({"epsilon":torch.zeros(n_episodes).float()}))
         #self.evaluation_batcher.reset(agent_info=DictTensor({"epsilon":torch.zeros(n_episodes)}))
         self.evaluation_batcher.execute()
 
@@ -191,9 +191,11 @@ class DQN:
         consumed=0
         n_interactions=self.replay_buffer.size()
         self.target_model.load_state_dict(self.learning_model.state_dict())
-
+        cumulated_reward=torch.zeros(self.config["n_envs"]*self.config["n_processes"])
         while time.time()-_start_time <self.config["time_limit"]:
-            self.epsilon=(1.0)*(200000-self.iteration)/200000
+            epsilon_step=(self.config["epsilon_greedy_max"]-self.config["epsilon_greedy_min"])/self.config["epsilon_min_epoch"]
+            self.epsilon=self.config["epsilon_greedy_max"]-epsilon_step*self.iteration
+            self.epsilon=max(self.epsilon,self.config["epsilon_greedy_min"])
             if (self.epsilon<0.01):
                 self.epsilon=0.01
             self.logger.add_scalar("epsilon",self.epsilon,self.iteration)
@@ -202,6 +204,19 @@ class DQN:
             n_episodes=self.config["n_envs"]*self.config["n_processes"]
             self.train_batcher.execute(agent_info=DictTensor({"epsilon":torch.tensor([self.epsilon]).repeat(n_episodes).float()}))
             trajectories,n=self.train_batcher.get(blocking=True)
+
+            reward=trajectories.trajectories["_observation/reward"]
+            _is=trajectories.trajectories["observation/initial_state"]
+            crs=[]
+            for t in range(reward.size(1)):
+                cr=cumulated_reward[_is[:,t]]
+                for ii in range(cr.size()[0]):
+                    print("CR = ",cr[ii].item())
+                    crs.append(cr[ii].item())
+                cumulated_reward=torch.zeros_like(cumulated_reward)*_is[:,t].float()+(1-_is[:,t].float())*cumulated_reward
+                cumulated_reward+=reward[:,t]
+            if len(crs)>0:
+                self.logger.add_scalar("train_cumulated_reward",np.mean(crs),self.iteration)
 
             assert n==self.config["n_envs"]*self.config["n_processes"]
             self.replay_buffer.push(trajectories.trajectories)
@@ -277,7 +292,7 @@ class DQN:
             self.evaluation_batcher.update(self._state_dict(self.learning_model,torch.device("cpu")))
             n_episodes=self.config["n_evaluation_envs"]*self.config["n_evaluation_processes"]
             #self.evaluation_batcher.reset(agent_info=DictTensor({"epsilon":torch.zeros(n_episodes)}))
-            self.evaluation_batcher.reset(agent_info=DictTensor({"epsilon":torch.tensor([self.epsilon]).repeat(n_episodes).float()}))
+            self.evaluation_batcher.reset(agent_info=DictTensor({"epsilon":torch.zeros(n_episodes).float()}))
             self.evaluation_batcher.execute()
         return avg_reward
 
@@ -293,10 +308,17 @@ class DQN:
 
         q=self.learning_model(frame)
         qa=q[Bv,action]
+
         #qp = self.learning_model(_frame).detach()
         _q_target = self.target_model(_frame).detach()
-        actionp=_q_target.max(1)[1]
-        _q_target_a= _q_target[Bv,actionp]
+        _q_target_a= None
+        if not self.config["use_double"]:
+            actionp=_q_target.max(1)[1]
+            _q_target_a= _q_target[Bv,actionp]
+        else:
+            qp = self.learning_model(_frame).detach()
+            actionp=qp.max(1)[1]
+            _q_target_a= _q_target[Bv,actionp]
         _target_value=_q_target_a*(1-_done)*self.config["discount_factor"]+reward
         # print(qa[:4]," vs ",_target_value[:4])
         # m=reward.ne(0.0)

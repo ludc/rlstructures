@@ -261,7 +261,6 @@ class GymEnvInf(VecEnv):
                 if "set" in dir(self.gym_envs[b]):
                     self.gym_envs[b].set(self.env_info[b])
 
-
                 if self.env_info.empty():
                     frame = self.gym_envs[b].reset()
                 else:

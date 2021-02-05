@@ -1,11 +1,3 @@
-#
-# Copyright (c) Facebook, Inc. and its affiliates.
-#
-# This source code is licensed under the MIT license found in the
-# LICENSE file in the root directory of this source tree.
-#
-
-
 from rlstructures import logging
 from rlstructures.env_wrappers import GymEnv, GymEnvInf
 from rlstructures.tools import weight_init
@@ -52,7 +44,10 @@ class Experiment(DQN):
         super().__init__(config, create_env, create_agent)
 
     def _create_model(self):
-        module = DuelingCnnDQN(self.obs_shape,self.n_actions)
+        if (self.config["use_duelling"]):
+            module = DuelingCnnDQN(self.obs_shape,self.n_actions)
+        else:
+            module = CnnDQN(self.obs_shape,self.n_actions)
         #module.apply(weight_init)
         return module
 
@@ -75,25 +70,41 @@ if __name__=="__main__":
             "n_envs": 1,
             "max_episode_steps": 10000,
             "discount_factor": 0.99,
-            "epsilon_greedy_max": 0.7,
+            "epsilon_greedy_max": 0.5,
             "epsilon_greedy_min": 0.1,
+            "epsilon_min_epoch": 1000000,
             "replay_buffer_size": 100000,
             "n_batches": 32,
             "tau": 0.005,
-            "initial_buffer_epochs": 10000,
-            "qvalue_epochs": 1,
-            "batch_timesteps": 1,
-            "use_duelling": True,
-            "lr": 0.00001,
+            "initial_buffer_epochs": 1,
+            "qvalue_epochs": 10,
+            "batch_timesteps": 10,
+            "use_duelling": False,
+            "use_double":False,
+            "lr": 0.0001,
             "n_processes": 1,
             "n_evaluation_processes": 4,
             "verbose": True,
-            "n_evaluation_envs": 16,
+            "n_evaluation_envs": 4,
             "time_limit": 28800,
-            "env_seed": 42,
+            "env_seed": 48,
             "clip_grad": 0.0,
-            "learner_device": "cuda",
+            "learner_device": "gpu",
             "logdir":"./results"
     }
+    import sys
+    for a in sys.argv:
+        if a.startswith("-"):
+            t=a[1:].split("=")
+            k=t[0]
+            assert k in config
+            v=t[1]
+            r=type(config[k])(v)
+            if type(config[k])==bool:
+                r=v=="True"
+            config[k]=r
+    print(config)
+    exit()
+
     exp=Experiment(config,create_env,create_agent)
     exp.run()
