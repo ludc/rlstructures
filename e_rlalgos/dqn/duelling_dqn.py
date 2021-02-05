@@ -182,13 +182,6 @@ class DQN:
         epsilon_final = 0.01
         epsilon_decay = 500
 
-        n_episodes=self.config["n_envs"]*self.config["n_processes"]
-        e_max=self.config["epsilon_greedy_max"]
-        e_min=self.config["epsilon_greedy_min"]
-        epsilon_by_frame = lambda frame_idx: epsilon_final + (epsilon_start - epsilon_final) * math.exp(-1. * frame_idx / epsilon_decay)
-        self.train_batcher.reset(agent_info=DictTensor({"epsilon":torch.tensor([epsilon_by_frame(self.iteration)]).repeat(n_episodes).float()}))
-        self.train_batcher.execute()
-
         n_episodes=self.config["n_evaluation_envs"]*self.config["n_evaluation_processes"]
         epsilon_by_frame = lambda frame_idx: epsilon_final + (epsilon_start - epsilon_final) * math.exp(-1. * frame_idx / epsilon_decay)
         self.evaluation_batcher.reset(agent_info=DictTensor({"epsilon":torch.tensor([epsilon_by_frame(self.iteration)]).repeat(n_episodes).float()}))
@@ -207,18 +200,17 @@ class DQN:
         epsilon_by_frame = lambda frame_idx: epsilon_final + (epsilon_start - epsilon_final) * math.exp(-1. * frame_idx / epsilon_decay)
         while time.time()-_start_time <self.config["time_limit"]:
             st=time.time()
+            n_episodes=self.config["n_envs"]*self.config["n_processes"]
+            e_max=self.config["epsilon_greedy_max"]
+            e_min=self.config["epsilon_greedy_min"]
+            epsilon_by_frame = lambda frame_idx: epsilon_final + (epsilon_start - epsilon_final) * math.exp(-1. * frame_idx / epsilon_decay)
+            self.train_batcher.execute(agent_info=DictTensor({"epsilon":torch.tensor([epsilon_by_frame(self.iteration)]).repeat(n_episodes).float()}))
             trajectories,n=self.train_batcher.get(blocking=True)
-            if (not trajectories is None):
-                assert n==self.config["n_envs"]*self.config["n_processes"]
-                self.replay_buffer.push(trajectories.trajectories)
-                produced=produced+trajectories.trajectories.lengths.sum().item()
-                self.logger.add_scalar("replay_buffer_size",self.replay_buffer.size(),self.iteration)
-                n_episodes=self.config["n_envs"]*self.config["n_processes"]
-                e_max=self.config["epsilon_greedy_max"]
-                e_min=self.config["epsilon_greedy_min"]
-                self.train_batcher.update(self._state_dict(self.learning_model,torch.device("cpu")))
-                #self.train_batcher.execute(agent_info=DictTensor({"epsilon":torch.rand(n_episodes)*(e_max-e_min)+e_min}))
-                self.train_batcher.execute(agent_info=DictTensor({"epsilon":torch.tensor([epsilon_by_frame(self.iteration)]).repeat(n_episodes).float()}))
+
+            assert n==self.config["n_envs"]*self.config["n_processes"]
+            self.replay_buffer.push(trajectories.trajectories)
+            produced=produced+trajectories.trajectories.lengths.sum().item()
+            self.logger.add_scalar("replay_buffer_size",self.replay_buffer.size(),self.iteration)
 
             # avg_reward = 0
             for k in range(self.config["qvalue_epochs"]):
