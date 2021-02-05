@@ -88,7 +88,7 @@ if __name__=="__main__":
             "n_processes": 1,
             "n_evaluation_processes": 4,
             "verbose": True,
-            "n_evaluation_envs": 4,
+            "n_evaluation_envs": 16,
             "time_limit": 28800,
             "env_seed": 42,
             "clip_grad": 0.0,
