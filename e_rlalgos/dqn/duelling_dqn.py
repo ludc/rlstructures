@@ -192,6 +192,11 @@ class DQN:
         consumed=0
         n_interactions=self.replay_buffer.size()
         self.target_model.load_state_dict(self.learning_model.state_dict())
+        epsilon_start = 1.0
+        epsilon_final = 0.01
+        epsilon_decay = 500
+
+        epsilon_by_frame = lambda frame_idx: epsilon_final + (epsilon_start - epsilon_final) * math.exp(-1. * frame_idx / epsilon_decay)
         while time.time()-_start_time <self.config["time_limit"]:
             st=time.time()
             trajectories,n=self.train_batcher.get(blocking=False)
@@ -204,7 +209,8 @@ class DQN:
                 e_max=self.config["epsilon_greedy_max"]
                 e_min=self.config["epsilon_greedy_min"]
                 self.train_batcher.update(self._state_dict(self.learning_model,torch.device("cpu")))
-                self.train_batcher.execute(agent_info=DictTensor({"epsilon":torch.rand(n_episodes)*(e_max-e_min)+e_min}))
+                #self.train_batcher.execute(agent_info=DictTensor({"epsilon":torch.rand(n_episodes)*(e_max-e_min)+e_min}))
+                self.train_batcher.execute(agent_info=DictTensor({"epsilon":epsilon_by_frame(self.iteration)}))
 
             # avg_reward = 0
             for k in range(self.config["qvalue_epochs"]):
