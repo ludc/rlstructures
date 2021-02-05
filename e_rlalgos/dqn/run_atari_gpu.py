@@ -127,8 +127,5 @@ if __name__=="__main__":
         config=r[int(os.environ.get("SLURM_ARRAY_TASK_ID"))]
         config["logdir"]=logdir+"/"+str(int(os.environ.get("SLURM_ARRAY_TASK_ID")))
 
-    print(config)
-    exit()
-
     exp=Experiment(config,create_env,create_agent)
     exp.run()
