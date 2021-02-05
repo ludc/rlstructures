@@ -207,7 +207,7 @@ class DQN:
         epsilon_by_frame = lambda frame_idx: epsilon_final + (epsilon_start - epsilon_final) * math.exp(-1. * frame_idx / epsilon_decay)
         while time.time()-_start_time <self.config["time_limit"]:
             st=time.time()
-            trajectories,n=self.train_batcher.get(blocking=False)
+            trajectories,n=self.train_batcher.get(blocking=True)
             if (not trajectories is None):
                 assert n==self.config["n_envs"]*self.config["n_processes"]
                 self.replay_buffer.push(trajectories.trajectories)
