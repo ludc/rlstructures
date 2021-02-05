@@ -1,7 +1,7 @@
 (
     {"environment/env_name": "PongNoFrameskip-v4",
             "n_envs": 1,
-            "max_episode_steps": 10000,
+            "max_episode_steps": 15000,
             "discount_factor": 0.99,
             "epsilon_greedy_max": 0.9,
             "epsilon_greedy_min": 0.01,
@@ -19,7 +19,7 @@
             "env_seed": 48,
             "clip_grad": [2.0],
             "learner_device": "cuda",
-            "logdir":"./results"
+            "logdir":"/checkpoint/denoyer/pong"
     }
 ,
     [

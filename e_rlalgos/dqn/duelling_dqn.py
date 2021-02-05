@@ -296,7 +296,7 @@ class DQN:
         if (evaluation_trajectories is None):
             return
         print(evaluation_trajectories.trajectories.lengths)
-        assert n==0
+        #assert n==0
         avg_reward = (
                     (
                         evaluation_trajectories.trajectories["_observation/reward"]
