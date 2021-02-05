@@ -209,7 +209,7 @@ class DQN:
 
             assert n==self.config["n_envs"]*self.config["n_processes"]
             self.replay_buffer.push(trajectories.trajectories)
-            produced=produced+trajectories.trajectories.lengths.sum().item()
+            produced+=trajectories.trajectories.lengths.sum().item()
             self.logger.add_scalar("replay_buffer_size",self.replay_buffer.size(),self.iteration)
 
             # avg_reward = 0

@@ -85,7 +85,7 @@ if __name__=="__main__":
             "batch_timesteps": 1,
             "use_duelling": True,
             "lr": 0.0001,
-            "n_processes": 4,
+            "n_processes": 1,
             "n_evaluation_processes": 4,
             "verbose": True,
             "n_evaluation_envs": 4,
