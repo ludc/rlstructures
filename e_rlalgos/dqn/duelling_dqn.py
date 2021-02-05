@@ -211,7 +211,7 @@ class DQN:
                 e_min=self.config["epsilon_greedy_min"]
                 self.train_batcher.update(self._state_dict(self.learning_model,torch.device("cpu")))
                 #self.train_batcher.execute(agent_info=DictTensor({"epsilon":torch.rand(n_episodes)*(e_max-e_min)+e_min}))
-                self.train_batcher.execute(agent_info=DictTensor({"epsilon":epsilon_by_frame(self.iteration)}))
+                self.train_batcher.execute(agent_info=DictTensor({"epsilon":torch.tensor([epsilon_by_frame(self.iteration)]).repeat(n_episodes)}))
 
             # avg_reward = 0
             for k in range(self.config["qvalue_epochs"]):
