@@ -18,7 +18,7 @@
             "time_limit": 28800,
             "env_seed": 48,
             "clip_grad": [10.0],
-            "learner_device": "gpu",
+            "learner_device": "cuda",
             "logdir":"./results"
     }
 ,
