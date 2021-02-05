@@ -158,7 +158,7 @@ class DQN:
         device = torch.device(self.config["learner_device"])
         self.learning_model.to(device)
         self.target_model.to(device)
-        optimizer = torch.optim.RMSprop(
+        optimizer = torch.optim.Adam(
             self.learning_model.parameters(), lr=self.config["lr"]
         )
 
@@ -206,7 +206,6 @@ class DQN:
             assert n==self.config["n_envs"]*self.config["n_processes"]
             self.replay_buffer.push(trajectories.trajectories)
             produced+=trajectories.trajectories.lengths.sum().item()
-            print(produced)
             self.logger.add_scalar("replay_buffer_size",self.replay_buffer.size(),self.iteration)
 
             # avg_reward = 0
