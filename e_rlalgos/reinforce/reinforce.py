@@ -93,9 +93,10 @@ class Reinforce:
         self.evaluation_batcher.execute()
         self.evaluation_iteration=self.iteration
 
+        #Update the batcher with the last version of the learning model
+        self.train_batcher.update(self.learning_model.state_dict())
+
         while(time.time()-_start_time<self.config["time_limit"]):
-            #Update the batcher with the last version of the learning model
-            self.train_batcher.update(self.learning_model.state_dict())
 
             #1) The policy will be executed in "stochastic' mode
             n_episodes=self.config["n_envs"]*self.config["n_processes"]
@@ -115,7 +116,6 @@ class Reinforce:
             ld = self.config["baseline_coef"] * dt["baseline_loss"]
             lr = self.config["reinforce_coef"] * dt["reinforce_loss"]
             le = self.config["entropy_coef"] * dt["entropy_loss"]
-
             floss = ld - le - lr
 
             #5) Update the parameters of the model

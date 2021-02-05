@@ -117,7 +117,7 @@ if __name__=="__main__":
     import os
     print(len(sys.argv))
     if len(sys.argv)==2:
-        logdir=config["logdir"]
+
         print("opening ",sys.argv[1])
         _file = open(sys.argv[1], "r")
         c=_file.read()
@@ -127,6 +127,7 @@ if __name__=="__main__":
         if os.environ.get("SLURM_ARRAY_TASK_ID")==None:
             exit()
         config=r[int(os.environ.get("SLURM_ARRAY_TASK_ID"))]
+        logdir=config["logdir"]
         config["logdir"]=logdir+"/"+str(int(os.environ.get("SLURM_ARRAY_TASK_ID")))
 
     exp=Experiment(config,create_env,create_agent)

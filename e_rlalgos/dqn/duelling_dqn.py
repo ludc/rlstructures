@@ -162,7 +162,6 @@ class DQN:
             self.learning_model.parameters(), lr=self.config["lr"]
         )
 
-        self.train_batcher.update(self._state_dict(self.learning_model,torch.device("cpu")))
         self.evaluation_batcher.update(self._state_dict(self.learning_model,torch.device("cpu")))
 
         n_episodes=self.config["n_envs"]*self.config["n_processes"]
@@ -179,10 +178,10 @@ class DQN:
 
         self.iteration=0
 
-        n_episodes=self.config["n_evaluation_envs"]*self.config["n_evaluation_processes"]
-        self.evaluation_batcher.reset(agent_info=DictTensor({"epsilon":torch.zeros(n_episodes).float()}))
-        #self.evaluation_batcher.reset(agent_info=DictTensor({"epsilon":torch.zeros(n_episodes)}))
-        self.evaluation_batcher.execute()
+        # n_episodes=self.config["n_evaluation_envs"]*self.config["n_evaluation_processes"]
+        # self.evaluation_batcher.reset(agent_info=DictTensor({"epsilon":torch.zeros(n_episodes).float()}))
+        # #self.evaluation_batcher.reset(agent_info=DictTensor({"epsilon":torch.zeros(n_episodes)}))
+        # self.evaluation_batcher.execute()
 
         logging.info("Starting Learning")
         _start_time=time.time()
@@ -205,7 +204,7 @@ class DQN:
 
 
         while time.time()-_start_time <self.config["time_limit"]:
-            trajectories,n=self.train_batcher.get(blocking=True)
+            trajectories,n=self.train_batcher.get(blocking=False)
 
             if not trajectories is None:
                 epsilon_step=(self.config["epsilon_greedy_max"]-self.config["epsilon_greedy_min"])/self.config["epsilon_min_epoch"]
@@ -215,6 +214,7 @@ class DQN:
                     self.epsilon=0.01
                 self.logger.add_scalar("epsilon",self.epsilon,self.iteration)
                 n_episodes=self.config["n_envs"]*self.config["n_processes"]
+                self.train_batcher.update(self._state_dict(self.learning_model,torch.device("cpu")))
                 self.train_batcher.execute(agent_info=DictTensor({"epsilon":torch.tensor([self.epsilon]).repeat(n_episodes).float()}))
 
 
@@ -272,7 +272,7 @@ class DQN:
             self.logger.add_scalar("speed/consumed_per_seconds",c_ps,self.iteration)
             self.logger.add_scalar("speed/n_interactions",n_interactions+produced,self.iteration)
             self.logger.add_scalar("speed/produced_per_seconds",p_ps,self.iteration)
-            self.evaluate()
+            # self.evaluate()
 
 
 

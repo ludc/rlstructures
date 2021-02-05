@@ -80,7 +80,7 @@ if __name__=="__main__":
             "discount_factor": 0.99,
             "epsilon_greedy_max": 0.5,
             "epsilon_greedy_min": 0.1,
-            "epsilon_min_epoch": 1000000,
+            "epsilon_min_epoch": 1000,
             "replay_buffer_size": 100000,
             "n_batches": 32,
             "tau": 0.005,
