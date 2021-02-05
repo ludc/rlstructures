@@ -154,6 +154,7 @@ class TFLogger(SummaryWriter, Logger):
         values = []
         for i in range(len(values_to_save)):
             l = values_to_save[i]
+            print("Wrting at ",i + self.last_csv_update_iteration)
             vv = {**l, "training_iteration": i + self.last_csv_update_iteration}
             vv = {**{"_hp_" + k: self.config[k] for k in self.config}, **vv}
             values.append(vv)

@@ -98,7 +98,8 @@ if __name__=="__main__":
             "env_seed": 42,
             "clip_grad": 0.0,
             "learner_device": "cpu",
-            "logdir":"./results"
+            "logdir":"./results",
+            "update_target_epoch":1000
     }
     exp=Experiment(config,create_env,create_agent)
     exp.run()

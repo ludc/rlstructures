@@ -108,8 +108,10 @@ if __name__=="__main__":
             "time_limit": 28800,
             "env_seed": 48,
             "clip_grad": 0.0,
-            "learner_device": "gpu",
-            "logdir":"./results"
+            "learner_device": "cuda",
+            "logdir":"./results",
+            "update_target_epoch":1000
+
     }
     import sys
     import os

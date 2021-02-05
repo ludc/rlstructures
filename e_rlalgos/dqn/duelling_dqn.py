@@ -249,7 +249,8 @@ class DQN:
                     self.target_model.load_state_dict(self.learning_model.state_dict())
                 #     self.soft_update_params(self.learning_model,self.target_model,1.0)
 
-                if time.time()-_start_time > 600 and self.iteration%1000==0:
+                #if time.time()-_start_time > 600 and self.iteration%1000==0:
+                if self.iteration%10==0:
                     self.logger.update_csv()
 
             tt=time.time()
