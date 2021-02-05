@@ -14,7 +14,7 @@ from gym.wrappers import TimeLimit
 from e_rlalgos.dqn.duelling_dqn import DQN
 from e_rlalgos.atari_wrappers import make_atari, wrap_deepmind, wrap_pytorch
 import math
-
+import itertools
 
 def create_env(n_envs, mode="train",max_episode_steps=None, seed=None,**args):
 
@@ -51,15 +51,33 @@ class Experiment(DQN):
         #module.apply(weight_init)
         return module
 
-def flatten(d, parent_key='', sep='/'):
-    items = []
-    for k, v in d.items():
-        new_key = parent_key + sep + k if parent_key else k
-        if isinstance(v, DictConfig):
-            items.extend(flatten(v, new_key, sep=sep).items())
+def product_dict(**kwargs):
+    keys = kwargs.keys()
+    vals = kwargs.values()
+    for instance in itertools.product(*vals):
+        yield dict(zip(keys, instance))
+
+def generate_grid_search(config):
+    c = {}
+    for k in config:
+        if not isinstance(config[k], list):
+            c[k] = [config[k]]
         else:
-            items.append((new_key, v))
-    return dict(items)
+            c[k] = config[k]
+    return product_dict(**c)
+
+def generate(common,specifics):
+    gs=list(generate_grid_search(common))
+    print("Common ",len(gs)," Specific ",len(specifics))
+    r=[]
+    for s in specifics:
+        for c in gs:
+            cc=copy.deepcopy(c)
+            for k in s:
+                cc[k]=s[k]
+            r.append(cc)
+    print("== Total ",len(r))
+    return r
 
 if __name__=="__main__":
     #We use spawn mode such that most of the environment will run in multiple processes
@@ -75,6 +93,7 @@ if __name__=="__main__":
             "epsilon_min_epoch": 1000000,
             "replay_buffer_size": 100000,
             "n_batches": 32,
+            "update_target_epoch":1000,
             "tau": 0.005,
             "initial_buffer_epochs": 1,
             "qvalue_epochs": 10,
@@ -93,16 +112,21 @@ if __name__=="__main__":
             "logdir":"./results"
     }
     import sys
-    for a in sys.argv:
-        if a.startswith("-"):
-            t=a[1:].split("=")
-            k=t[0]
-            assert k in config
-            v=t[1]
-            r=type(config[k])(v)
-            if type(config[k])==bool:
-                r=v=="True"
-            config[k]=r
+    import os
+    print(len(sys.argv))
+    if len(sys.argv)==2:
+        logdir=config["logdir"]
+        print("opening ",sys.argv[1])
+        _file = open(sys.argv[1], "r")
+        c=_file.read()
+        _file.close()
+        common,specifics=eval(c)
+        r=generate(common,specifics)
+        if os.environ.get("SLURM_ARRAY_TASK_ID")==None:
+            exit()
+        config=r[int(os.environ.get("SLURM_ARRAY_TASK_ID"))]
+        config["logdir"]=logdir+"/"+str(int(os.environ.get("SLURM_ARRAY_TASK_ID")))
+
     print(config)
     exit()
 
