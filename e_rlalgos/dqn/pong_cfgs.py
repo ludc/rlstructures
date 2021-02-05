@@ -15,7 +15,7 @@
             "n_evaluation_processes": 4,
             "verbose": True,
             "n_evaluation_envs": 4,
-            "time_limit": 28800,
+            "time_limit": 7200,
             "env_seed": 48,
             "clip_grad": [2.0],
             "learner_device": "cuda",
