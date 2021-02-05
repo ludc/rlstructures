@@ -176,6 +176,7 @@ class DQN:
             self.replay_buffer.push(trajectories.trajectories)
             print(k,"/",self.config["initial_buffer_epochs"])
 
+        self.iteration=0
         n_episodes=self.config["n_envs"]*self.config["n_processes"]
         e_max=self.config["epsilon_greedy_max"]
         e_min=self.config["epsilon_greedy_min"]
@@ -191,7 +192,7 @@ class DQN:
 
         logging.info("Starting Learning")
         _start_time=time.time()
-        self.iteration=0
+
         self.train_batcher.execute()
         produced=0
         consumed=0
@@ -215,7 +216,7 @@ class DQN:
                 e_min=self.config["epsilon_greedy_min"]
                 self.train_batcher.update(self._state_dict(self.learning_model,torch.device("cpu")))
                 #self.train_batcher.execute(agent_info=DictTensor({"epsilon":torch.rand(n_episodes)*(e_max-e_min)+e_min}))
-                self.train_batcher.execute(agent_info=DictTensor({"epsilon":torch.tensor([epsilon_by_frame(self.iteration)]).repeat(n_episodes)}))
+                self.train_batcher.execute(agent_info=DictTensor({"epsilon":torch.tensor([epsilon_by_frame(self.iteration)]).repeat(n_episodes).float()}))
 
             # avg_reward = 0
             for k in range(self.config["qvalue_epochs"]):
@@ -285,6 +286,7 @@ class DQN:
             self.evaluation_batcher.update(self._state_dict(self.learning_model,torch.device("cpu")))
             n_episodes=self.config["n_evaluation_envs"]*self.config["n_evaluation_processes"]
             #self.evaluation_batcher.reset(agent_info=DictTensor({"epsilon":torch.zeros(n_episodes)}))
+            epsilon_by_frame = lambda frame_idx: epsilon_final + (epsilon_start - epsilon_final) * math.exp(-1. * frame_idx / epsilon_decay)
             self.evaluation_batcher.reset(agent_info=DictTensor({"epsilon":torch.tensor([epsilon_by_frame(self.iteration)]).repeat(n_episodes).float()}))
             self.evaluation_batcher.execute()
         return avg_reward
