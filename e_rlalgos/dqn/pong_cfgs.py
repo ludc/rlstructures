@@ -38,16 +38,16 @@
         }
         ,
         {
-            "initial_buffer_epochs": 250,
+            "initial_buffer_epochs": 600,
             "qvalue_epochs": 1,
-            "batch_timesteps": 10,
+            "batch_timesteps": 4,
             "n_processes": 4,
         }
         ,
         {
-            "initial_buffer_epochs": 25,
+            "initial_buffer_epochs": 120,
             "qvalue_epochs": 1,
-            "batch_timesteps": 100,
+            "batch_timesteps": 20,
             "n_processes": 4,
         }
     ]
