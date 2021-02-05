@@ -265,6 +265,9 @@ class DQN:
             target_param.data.copy_(tau * param.data +(1 - tau) * target_param.data)
 
     def evaluate(self,relaunch=True):
+        epsilon_start = 1.0
+        epsilon_final = 0.01
+        epsilon_decay = 500
         evaluation_trajectories,n = self.evaluation_batcher.get(blocking=False)
 
         if (evaluation_trajectories is None):
