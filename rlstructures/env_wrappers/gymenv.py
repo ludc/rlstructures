@@ -121,7 +121,7 @@ class GymEnv(VecEnv):
             act = action
 
             frame, reward, done, unused_info = self.gym_envs[idx_env].step(act)
-            reward = torch.tensor([reward])
+            reward = torch.tensor([reward]).float()
             frame = format_frame(frame)
             if isinstance(frame, torch.Tensor):
                 frame = {"frame": frame}
@@ -240,7 +240,7 @@ class GymEnvInf(VecEnv):
             act = action
 
             frame, reward, done, unused_info = self.gym_envs[b].step(act)
-            reward = torch.tensor([reward])
+            reward = torch.tensor([reward]).float()
             frame = format_frame(frame)
             if isinstance(frame, torch.Tensor):
                 frame = {"frame": frame}

@@ -166,8 +166,7 @@ class DQN:
         self.evaluation_batcher.update(self._state_dict(self.learning_model,torch.device("cpu")))
 
         n_episodes=self.config["n_envs"]*self.config["n_processes"]
-        agent_info=DictTensor({"epsilon":torch.ones(n_episodes).float()}))
-        print(agent_info)
+        agent_info=DictTensor({"epsilon":torch.ones(n_episodes).float()})
         self.train_batcher.reset(agent_info=agent_info)
 
         logging.info("Sampling initial transitions")
@@ -177,15 +176,19 @@ class DQN:
             assert not n==0
             self.replay_buffer.push(trajectories.trajectories)
             print(k,"/",self.config["initial_buffer_epochs"])
-        exit()
+
         self.iteration=0
+        epsilon_start = 1.0
+        epsilon_final = 0.01
+        epsilon_decay = 500
+
         n_episodes=self.config["n_envs"]*self.config["n_processes"]
         e_max=self.config["epsilon_greedy_max"]
         e_min=self.config["epsilon_greedy_min"]
         epsilon_by_frame = lambda frame_idx: epsilon_final + (epsilon_start - epsilon_final) * math.exp(-1. * frame_idx / epsilon_decay)
         self.train_batcher.reset(agent_info=DictTensor({"epsilon":torch.tensor([epsilon_by_frame(self.iteration)]).repeat(n_episodes).float()}))
         self.train_batcher.execute()
-        exit()
+
         n_episodes=self.config["n_evaluation_envs"]*self.config["n_evaluation_processes"]
         epsilon_by_frame = lambda frame_idx: epsilon_final + (epsilon_start - epsilon_final) * math.exp(-1. * frame_idx / epsilon_decay)
         self.evaluation_batcher.reset(agent_info=DictTensor({"epsilon":torch.tensor([epsilon_by_frame(self.iteration)]).repeat(n_episodes).float()}))
@@ -195,14 +198,11 @@ class DQN:
         logging.info("Starting Learning")
         _start_time=time.time()
 
-        self.train_batcher.execute()
         produced=0
         consumed=0
         n_interactions=self.replay_buffer.size()
         self.target_model.load_state_dict(self.learning_model.state_dict())
-        epsilon_start = 1.0
-        epsilon_final = 0.01
-        epsilon_decay = 500
+
 
         epsilon_by_frame = lambda frame_idx: epsilon_final + (epsilon_start - epsilon_final) * math.exp(-1. * frame_idx / epsilon_decay)
         while time.time()-_start_time <self.config["time_limit"]:

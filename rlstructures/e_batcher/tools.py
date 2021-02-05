@@ -240,7 +240,6 @@ class S_Buffer:
         a = torch.arange(len(slots)).to(self._device)
         # print("Write in "+str(slot)+" at positions "+str(position))
         for n in variables.keys():
-            #print("Write ",n,":", variables[n]," in ",slots)
             # assert variables[n].size()[0] == 1
             # print(self.buffers[n][slots].size())
             self.buffers[n][slots, positions] = variables[n][a].detach()
@@ -325,9 +324,10 @@ def s_worker_process(
             assert agent_info.empty() or agent_info.n_elems()==env.n_envs()
             assert env_info.empty() or env_info.n_elems()==env.n_envs()
             observation, env_running = env.reset(env_info)
+            out_queue.put("ok")
         elif order_name == "slot":
             if len(env_running)==0:
-                out_queue.put([])
+                out_queue.put(([],0))
             else:
                 if not order[1] is None:
                     agent_info=order[1]
@@ -393,6 +393,7 @@ class S_ProcessWorker:
     def reset(self,agent_info=None, env_info=None):
         order = ("reset", agent_info, env_info)
         self.inq.put(order)
+        self.outq.get()
 
     def finished(self):
         try:

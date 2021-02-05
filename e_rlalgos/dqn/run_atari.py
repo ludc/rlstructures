@@ -36,7 +36,7 @@ def create_env(n_envs, mode="train",max_episode_steps=None, seed=None,**args):
     else:
         envs=[]
         for k in range(n_envs):
-            e = make_atari(args["environment/env_name"], max_episode_steps=max_episode_steps)
+            e = make_atari(args["environment/env_name"])
             e = wrap_deepmind(e)
             e = wrap_pytorch(e)
             envs.append(e)
