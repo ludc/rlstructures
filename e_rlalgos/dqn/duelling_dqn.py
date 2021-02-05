@@ -248,6 +248,10 @@ class DQN:
                 if self.iteration%self.config["update_target_epoch"]==0:
                     self.target_model.load_state_dict(self.learning_model.state_dict())
                 #     self.soft_update_params(self.learning_model,self.target_model,1.0)
+
+                if time.time()-_start_time > 600 and self.iteration%1000==0:
+                    self.logger.update_csv()
+
             tt=time.time()
             c_ps=consumed/(tt-_start_time)
             p_ps=produced/(tt-_start_time)
@@ -255,6 +259,10 @@ class DQN:
             self.logger.add_scalar("speed/n_interactions",n_interactions+produced,self.iteration)
             self.logger.add_scalar("speed/produced_per_seconds",p_ps,self.iteration)
             self.evaluate()
+
+
+
+
         trajectories,n=self.train_batcher.get()
 
         self.train_batcher.close()
