@@ -21,6 +21,8 @@ import gym
 from gym.wrappers import TimeLimit
 from e_rlalgos.dqn.duelling_dqn import DQN
 from e_rlalgos.atari_wrappers import make_atari, wrap_deepmind, wrap_pytorch
+import math
+
 
 def create_env(n_envs, mode="train",max_episode_steps=None, seed=None,**args):
 
@@ -73,7 +75,7 @@ if __name__=="__main__":
             "n_envs": 1,
             "max_episode_steps": 10000,
             "discount_factor": 0.99,
-            "epsilon_greedy_max": 0.1,
+            "epsilon_greedy_max": 0.7,
             "epsilon_greedy_min": 0.1,
             "replay_buffer_size": 100000,
             "n_batches": 32,
@@ -84,10 +86,10 @@ if __name__=="__main__":
             "use_duelling": True,
             "lr": 0.0001,
             "n_processes": 1,
-            "n_evaluation_processes": 1,
+            "n_evaluation_processes": 4,
             "verbose": True,
             "n_evaluation_envs": 4,
-            "time_limit": 1800000,
+            "time_limit": 28800,
             "env_seed": 42,
             "clip_grad": 0.0,
             "learner_device": "cpu",
