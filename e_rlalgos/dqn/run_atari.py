@@ -82,7 +82,7 @@ if __name__=="__main__":
             "tau": 0.005,
             "initial_buffer_epochs": 1000,
             "qvalue_epochs": 1,
-            "batch_timesteps": 1,
+            "batch_timesteps": 4,
             "use_duelling": True,
             "lr": 0.0001,
             "n_processes": 1,

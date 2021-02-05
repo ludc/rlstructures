@@ -200,17 +200,17 @@ class DQN:
 
             st=time.time()
             n_episodes=self.config["n_envs"]*self.config["n_processes"]
-            e_max=self.config["epsilon_greedy_max"]
-            e_min=self.config["epsilon_greedy_min"]
             self.train_batcher.execute(agent_info=DictTensor({"epsilon":torch.tensor([self.epsilon]).repeat(n_episodes).float()}))
             trajectories,n=self.train_batcher.get(blocking=True)
 
             assert n==self.config["n_envs"]*self.config["n_processes"]
             self.replay_buffer.push(trajectories.trajectories)
             produced+=trajectories.trajectories.lengths.sum().item()
+            print(produced)
             self.logger.add_scalar("replay_buffer_size",self.replay_buffer.size(),self.iteration)
 
             # avg_reward = 0
+            assert self.config["qvalue_epochs"]>0
             for k in range(self.config["qvalue_epochs"]):
                 optimizer.zero_grad()
                 transitions=self.replay_buffer.sample(n=self.config["n_batches"])
@@ -241,7 +241,6 @@ class DQN:
             self.logger.add_scalar("speed/n_interactions",n_interactions+produced,self.iteration)
             self.logger.add_scalar("speed/produced_per_seconds",p_ps,self.iteration)
             self.evaluate()
-            self.iteration+=1
         trajectories,n=self.train_batcher.get()
 
         self.train_batcher.close()
