@@ -183,7 +183,7 @@ class DQN:
         epsilon_by_frame = lambda frame_idx: epsilon_final + (epsilon_start - epsilon_final) * math.exp(-1. * frame_idx / epsilon_decay)
         self.train_batcher.reset(agent_info=DictTensor({"epsilon":torch.tensor([epsilon_by_frame(self.iteration)]).repeat(n_episodes).float()}))
         self.train_batcher.execute()
-
+        exit()
         n_episodes=self.config["n_evaluation_envs"]*self.config["n_evaluation_processes"]
         epsilon_by_frame = lambda frame_idx: epsilon_final + (epsilon_start - epsilon_final) * math.exp(-1. * frame_idx / epsilon_decay)
         self.evaluation_batcher.reset(agent_info=DictTensor({"epsilon":torch.tensor([epsilon_by_frame(self.iteration)]).repeat(n_episodes).float()}))
