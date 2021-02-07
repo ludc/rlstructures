@@ -35,7 +35,6 @@ def s_acquire_slot(
                 +env_info.prepend_key("env_info/")
                 +agent_state.prepend_key("agent_state/")
         )
-        print(to_write)
         buffer.fwrite(id_slots, to_write)
         require_history=agent.require_history()
 
@@ -332,7 +331,6 @@ def s_worker_process(
                 out_queue.put(([],0))
             else:
                 if not order[1] is None:
-                    print("la ",agent_info)
                     agent_info=order[1]
                     assert agent_info.n_elems()==len(env_running)
                 env_to_slot, agent_state, observation, agent_info,env_info, env_running = s_acquire_slot(

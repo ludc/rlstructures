@@ -126,7 +126,6 @@ class CnnDQN(nn.Module):
 
     def features_size(self):
         a=self.features(torch.zeros(1, *self.inut_shape[1:]))
-        print(a.size())
         a=a.view(1, -1).size(1)
         return a
 

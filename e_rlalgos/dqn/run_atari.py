@@ -83,7 +83,6 @@ if __name__=="__main__":
             "epsilon_min_epoch": 1000,
             "replay_buffer_size": 100000,
             "n_batches": 32,
-            "tau": 0.005,
             "initial_buffer_epochs": 1,
             "qvalue_epochs": 1,
             "batch_timesteps": 1,
@@ -92,14 +91,24 @@ if __name__=="__main__":
             "lr": 0.00001,
             "n_processes": 1,
             "n_evaluation_processes": 4,
-            "verbose": True,
+            "verbose": False,
             "n_evaluation_envs": 4,
             "time_limit": 28800,
             "env_seed": 42,
             "clip_grad": 0.0,
             "learner_device": "cpu",
+            "as_fast_as_possible":True,
+
+            "update_target_hard":True,
+            "update_target_epoch":1000,
+            "update_target_tau": 0.005,
+
+            "buffer/alpha":0.6,
+            "buffer/beta":0.4,
+
             "logdir":"./results",
-            "update_target_epoch":1000
+            "save_every":100,
+
     }
     exp=Experiment(config,create_env,create_agent)
     exp.run()

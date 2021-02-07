@@ -22,10 +22,74 @@ import numpy as np
 from rlstructures.batchers import Batcher,EpisodeBatcher
 import math
 
+# class ReplayBuffer:
+#     def __init__(self,N):
+#         self.N=N
+#         self.buffer=None
+
+#     def _init_buffer(self,trajectories):
+#         self.buffer={}
+#         for k in trajectories.keys():
+#             dtype=trajectories[k].dtype
+#             size=trajectories[k].size()
+#             b_size=(self.N,)+size[2:]
+#             self.buffer[k]=torch.zeros(*b_size,dtype=dtype)
+#         self.pos=0
+#         self.full=False
+
+#     def write(self,trajectories):
+#         rs={}
+#         new_pos=None
+#         for k in trajectories.keys():
+#             v=trajectories[k]
+#             size=v.size()
+#             b_size=(size[0]*size[1],)+size[2:]
+#             v=v.reshape(*b_size)
+#             n=v.size()[0]
+#             overhead=self.N-(self.pos+n)
+#             if new_pos is None:
+#                 new_pos=torch.arange(n)+self.pos
+#                 mask=new_pos.ge(self.N).float()
+#                 nidx=torch.arange(n)+self.pos-self.N
+#                 new_pos=(new_pos*(1-mask)+mask*(nidx)).long()
+
+#             self.buffer[k][new_pos]=v
+#         self.pos=self.pos+n
+#         if self.pos>=self.N:
+#             self.pos=self.pos-self.N
+#             self.full=True
+#         assert self.pos<self.N
+
+#     def size(self):
+#         if self.full:
+#             return self.N
+#         else:
+#             return self.pos
+
+
+#     def push(self,trajectories):
+#         '''
+#         Add transitions to the replay buffer
+#         '''
+#         max_length=trajectories.lengths.max().item()
+#         assert trajectories.lengths.eq(max_length).all()
+#         if self.buffer is None:
+#             self._init_buffer(trajectories)
+#         self.write(trajectories)
+
+#     def sample(self,n=1):
+#         limit=self.pos
+#         if self.full:
+#             limit=self.N
+#         transitions=torch.randint(0,high=limit,size=(n,))
+#         d={k:self.buffer[k][transitions] for k in self.buffer}
+#         return DictTensor(d)
+
 class ReplayBuffer:
     def __init__(self,N):
         self.N=N
         self.buffer=None
+        self.priorities=None
 
     def _init_buffer(self,trajectories):
         self.buffer={}
@@ -34,10 +98,15 @@ class ReplayBuffer:
             size=trajectories[k].size()
             b_size=(self.N,)+size[2:]
             self.buffer[k]=torch.zeros(*b_size,dtype=dtype)
+        self.priorities=torch.zeros(self.N)
         self.pos=0
         self.full=False
 
     def write(self,trajectories):
+        limit=self.pos
+        if self.full:
+            limit=self.N
+
         rs={}
         new_pos=None
         for k in trajectories.keys():
@@ -54,6 +123,11 @@ class ReplayBuffer:
                 new_pos=(new_pos*(1-mask)+mask*(nidx)).long()
 
             self.buffer[k][new_pos]=v
+        if (limit==0):
+            self.priorities[new_pos]=1.0
+        else:
+            self.priorities[new_pos]=self.priorities[:limit].max()
+
         self.pos=self.pos+n
         if self.pos>=self.N:
             self.pos=self.pos-self.N
@@ -77,20 +151,33 @@ class ReplayBuffer:
             self._init_buffer(trajectories)
         self.write(trajectories)
 
-    def sample(self,n=1):
+    def sample(self,n=1,alpha=0.0,beta=0.0):
         limit=self.pos
         if self.full:
             limit=self.N
-        transitions=torch.randint(0,high=limit,size=(n,))
+        distribution=self.priorities[:limit]**alpha
+        distribution=distribution/distribution.sum()
+        #print(distribution)
+        d=torch.distributions.Categorical(distribution.unsqueeze(0).repeat(n,1))
+        transitions=d.sample()
+        del(d)
+        imax=self.priorities.max(0)[1]
+        weights  = (limit * distribution[transitions]) ** (-beta)
+        weights /= weights.max()
+
         d={k:self.buffer[k][transitions] for k in self.buffer}
-        return DictTensor(d)
+        #print(weights)
+        return DictTensor(d),transitions, weights
+
+    def update_priorities(self,transitions,priorities):
+        self.priorities[transitions]=priorities
 
 class DQN:
     def __init__(self, config, create_env, create_agent):
         self.config = config
 
         # Creation of the Logger (that saves in tensorboard and CSV)
-        self.logger = TFLogger(log_dir=self.config["logdir"], hps=self.config)
+        self.logger = TFLogger(log_dir=self.config["logdir"], hps=self.config,save_every=self.config["save_every"])
 
         self._create_env=create_env
         self._create_agent=create_agent
@@ -178,10 +265,10 @@ class DQN:
 
         self.iteration=0
 
-        # n_episodes=self.config["n_evaluation_envs"]*self.config["n_evaluation_processes"]
-        # self.evaluation_batcher.reset(agent_info=DictTensor({"epsilon":torch.zeros(n_episodes).float()}))
-        # #self.evaluation_batcher.reset(agent_info=DictTensor({"epsilon":torch.zeros(n_episodes)}))
-        # self.evaluation_batcher.execute()
+        n_episodes=self.config["n_evaluation_envs"]*self.config["n_evaluation_processes"]
+        self.evaluation_batcher.reset(agent_info=DictTensor({"epsilon":torch.zeros(n_episodes).float()}))
+        #self.evaluation_batcher.reset(agent_info=DictTensor({"epsilon":torch.zeros(n_episodes)}))
+        self.evaluation_batcher.execute()
 
         logging.info("Starting Learning")
         _start_time=time.time()
@@ -204,14 +291,12 @@ class DQN:
 
 
         while time.time()-_start_time <self.config["time_limit"]:
-            trajectories,n=self.train_batcher.get(blocking=False)
+            trajectories,n=self.train_batcher.get(blocking=not self.config["as_fast_as_possible"])
 
             if not trajectories is None:
                 epsilon_step=(self.config["epsilon_greedy_max"]-self.config["epsilon_greedy_min"])/self.config["epsilon_min_epoch"]
                 self.epsilon=self.config["epsilon_greedy_max"]-epsilon_step*self.iteration
                 self.epsilon=max(self.epsilon,self.config["epsilon_greedy_min"])
-                if (self.epsilon<0.01):
-                    self.epsilon=0.01
                 self.logger.add_scalar("epsilon",self.epsilon,self.iteration)
                 n_episodes=self.config["n_envs"]*self.config["n_processes"]
                 self.train_batcher.update(self._state_dict(self.learning_model,torch.device("cpu")))
@@ -224,7 +309,7 @@ class DQN:
                 for t in range(reward.size(1)):
                     cr=cumulated_reward[_is[:,t]]
                     for ii in range(cr.size()[0]):
-                        print("CR = ",cr[ii].item())
+                        #print("CR = ",cr[ii].item())
                         crs.append(cr[ii].item())
                     cumulated_reward=torch.zeros_like(cumulated_reward)*_is[:,t].float()+(1-_is[:,t].float())*cumulated_reward
                     cumulated_reward+=reward[:,t]
@@ -240,14 +325,14 @@ class DQN:
             assert self.config["qvalue_epochs"]>0
             for k in range(self.config["qvalue_epochs"]):
                 optimizer.zero_grad()
-                transitions=self.replay_buffer.sample(n=self.config["n_batches"])
+                transitions,idx,weights=self.replay_buffer.sample(n=self.config["n_batches"],alpha=self.config["buffer/alpha"],beta=self.config["buffer/beta"])
                 consumed+=transitions.n_elems()
                 dt = self.get_loss(transitions,device)
+                self.replay_buffer.update_priorities(idx,dt["q_loss"].sqrt().detach())
+                _loss=(dt["q_loss"]*weights).mean()
+                self.logger.add_scalar("q_loss",_loss.item(),self.iteration)
 
-                [self.logger.add_scalar(k,dt[k].item(),self.iteration) for k in dt.keys()]
-
-                floss=dt["q_loss"]
-                floss.backward()
+                _loss.backward()
                 if self.config["clip_grad"] > 0:
                     n = torch.nn.utils.clip_grad_norm_(
                         self.learning_model.parameters(), self.config["clip_grad"]
@@ -256,11 +341,12 @@ class DQN:
                 self.iteration+=1
                 optimizer.step()
 
-                #tau=self.config["tau"]
-                #self.soft_update_params(self.learning_model,self.target_model,tau)
-                if self.iteration%self.config["update_target_epoch"]==0:
-                    self.target_model.load_state_dict(self.learning_model.state_dict())
-                #     self.soft_update_params(self.learning_model,self.target_model,1.0)
+                if self.config["update_target_hard"]:
+                    if self.iteration%self.config["update_target_epoch"]==0:
+                        self.target_model.load_state_dict(self.learning_model.state_dict())
+                else:
+                    tau=self.config["update_target_tau"]
+                    self.soft_update_params(self.learning_model,self.target_model,tau)
 
                 if time.time()-_start_time > 600 and self.iteration%1000==0:
                     self.logger.update_csv()
@@ -268,11 +354,11 @@ class DQN:
             tt=time.time()
             c_ps=consumed/(tt-_start_time)
             p_ps=produced/(tt-_start_time)
-            print(p_ps,c_ps)
+            #print(p_ps,c_ps)
             self.logger.add_scalar("speed/consumed_per_seconds",c_ps,self.iteration)
             self.logger.add_scalar("speed/n_interactions",n_interactions+produced,self.iteration)
             self.logger.add_scalar("speed/produced_per_seconds",p_ps,self.iteration)
-            # self.evaluate()
+            self.evaluate()
 
 
 
@@ -295,7 +381,7 @@ class DQN:
 
         if (evaluation_trajectories is None):
             return
-        print(evaluation_trajectories.trajectories.lengths)
+        #print(evaluation_trajectories.trajectories.lengths)
         #assert n==0
         avg_reward = (
                     (
@@ -351,7 +437,7 @@ class DQN:
         td = (_target_value-qa)**2
         dt = DictTensor(
             {
-                "q_loss": td.mean(),
+                "q_loss": td,
             }
         )
         return dt

@@ -123,6 +123,7 @@ class TFLogger(SummaryWriter, Logger):
     def __init__(self, log_dir=None, hps={}, save_every=1):
         SummaryWriter.__init__(self, log_dir=log_dir)
         Logger.__init__(self, **hps)
+        self.for_save_every={}
         self.save_every = save_every
         f = open(log_dir + "/params.json", "wt")
         f.write(str(hps) + "\n")
@@ -141,11 +142,23 @@ class TFLogger(SummaryWriter, Logger):
         SummaryWriter.add_images(self, name, value, iteration)
 
     def add_scalar(self, name, value, iteration):
-        if not iteration % self.save_every == 0:
-            return
-        if isinstance(value, int) or isinstance(value, float):
-            SummaryWriter.add_scalar(self, name, value, iteration)
-        Logger.add_scalar(self, name, value, iteration)
+        to_save=True
+        if (self.save_every>1):
+            if not name in self.for_save_every:
+                if isinstance(value, int) or isinstance(value, float):
+                    SummaryWriter.add_scalar(self, name, value, iteration)
+                Logger.add_scalar(self, name, value, iteration)
+                self.for_save_every[name]=iteration
+            else:
+                if iteration-self.for_save_every[name]>self.save_every:
+                    if isinstance(value, int) or isinstance(value, float):
+                        SummaryWriter.add_scalar(self, name, value, iteration)
+                    Logger.add_scalar(self, name, value, iteration)
+                    self.for_save_every[name]=iteration
+        else:
+            if isinstance(value, int) or isinstance(value, float):
+                SummaryWriter.add_scalar(self, name, value, iteration)
+            Logger.add_scalar(self, name, value, iteration)
 
     def update_csv(self):
         length = len(self.all_values)
