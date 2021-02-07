@@ -142,7 +142,6 @@ class TFLogger(SummaryWriter, Logger):
         SummaryWriter.add_images(self, name, value, iteration)
 
     def add_scalar(self, name, value, iteration):
-        to_save=True
         if (self.save_every>1):
             if not name in self.for_save_every:
                 if isinstance(value, int) or isinstance(value, float):
@@ -167,9 +166,10 @@ class TFLogger(SummaryWriter, Logger):
         values = []
         for i in range(len(values_to_save)):
             l = values_to_save[i]
-            vv = {**l, "training_iteration": i + self.last_csv_update_iteration}
-            vv = {**{"_hp_" + k: self.config[k] for k in self.config}, **vv}
-            values.append(vv)
+            if len(l)>0:
+                vv = {**l, "training_iteration": i + self.last_csv_update_iteration}
+                vv = {**{"_hp_" + k: self.config[k] for k in self.config}, **vv}
+                values.append(vv)
 
         with open(self.csvname, "a+") as output_file:
             dict_writer = csv.DictWriter(output_file, fieldnames=list(self.keys.keys()))

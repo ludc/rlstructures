@@ -359,6 +359,7 @@ class DQN:
             self.logger.add_scalar("speed/n_interactions",n_interactions+produced,self.iteration)
             self.logger.add_scalar("speed/produced_per_seconds",p_ps,self.iteration)
             self.evaluate()
+        self.logger.update_csv() # To save as a CSV file in logdir
 
 
 
@@ -368,7 +369,6 @@ class DQN:
         self.train_batcher.close()
         self.evaluation_batcher.get() # To wait for the last trajectories
         self.evaluation_batcher.close()
-        self.logger.update_csv() # To save as a CSV file in logdir
         self.logger.close()
 
     def soft_update_params(self,net, target_net, tau):
