@@ -328,7 +328,7 @@ class DQN:
                 transitions,idx,weights=self.replay_buffer.sample(n=self.config["n_batches"],alpha=self.config["buffer/alpha"],beta=self.config["buffer/beta"])
                 consumed+=transitions.n_elems()
                 dt = self.get_loss(transitions,device)
-                self.replay_buffer.update_priorities(idx,dt["q_loss"].sqrt().detach()/to("cpu"))
+                self.replay_buffer.update_priorities(idx,dt["q_loss"].sqrt().detach().to("cpu"))
                 _loss=(dt["q_loss"]*weights.to(self.config["learner_device"])).mean()
                 self.logger.add_scalar("q_loss",_loss.item(),self.iteration)
 
