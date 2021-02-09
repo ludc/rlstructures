@@ -5,7 +5,7 @@
             "discount_factor": 0.99,
             "epsilon_greedy_max": 0.99,
             "epsilon_greedy_min": 0.01,
-            "epsilon_min_epoch": [200000],
+            "epsilon_min_epoch": [100000,200000],
             "replay_buffer_size": [100000],
             "n_batches": 32,
             "use_duelling": [False,True],
