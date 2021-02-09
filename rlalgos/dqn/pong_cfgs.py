@@ -13,7 +13,7 @@
             "lr": [3e-4,1e-4,3e-5],
             "n_evaluation_processes": 4,
             "verbose": True,
-            "optim":["Adam","AdamW"]
+            "optim":["Adam","AdamW"],
             "n_evaluation_envs": 4,
             "time_limit": 28800,
             "env_seed": 48,
