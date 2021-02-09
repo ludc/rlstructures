@@ -10,11 +10,11 @@ import torch
 import torch.nn as nn
 #import rlstructures.logging as logging
 from rlstructures import DictTensor
-from rlstructures import S_Agent
+from rlstructures import RL_Agent
 import time
 from rlstructures.dicttensor import masked_tensor,masked_dicttensor
 
-class RecurrentAgent(S_Agent):
+class RecurrentAgent(RL_Agent):
     def __init__(self,model=None, n_actions=None):
         super().__init__()
         self.model = model
@@ -55,10 +55,12 @@ class RecurrentAgent(S_Agent):
         )
         return agent_do, new_state
 
-    def call_replay(self,trajectories,info,t,state):
+    def call_replay(self,trajectories,t,state):
         """
         Executing one step of the agent
         """
+        info=trajectories.info
+        trajectories=trajectories.trajectories
         if state is None:
             state=info.truncate_key("agent_state/")
 
@@ -75,9 +77,10 @@ class RecurrentAgent(S_Agent):
         new_z,action_proba = self.model.action_model(state["agent_state"],observation["frame"])
 
         diff=(action_proba-tslice.truncate_key("action/")["action_probabilities"]).abs().mean()
-        if diff>1e-7:
-            print("Problem ?")
-            exit()
+        #Check  that there is no computation error: replay is computing the same action probabilities than the batcher agents
+        # if diff>1e-7:
+        #     print("Problem ?")
+        #     exit()
 
         critic=self.model.critic_model(state["agent_state"],observation["frame"])
         _critic=self.model.critic_model(new_z,observation["frame"]).detach()

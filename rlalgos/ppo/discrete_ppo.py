@@ -4,24 +4,22 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 #
-
-
 from rlstructures.logger import Logger, TFLogger
 from rlstructures import DictTensor, TemporalDictTensor
-from rlstructures import logging
+from rlstructures.batchers import Batcher,EpisodeBatcher
+from rlstructures import logging,replay_agent
 from rlstructures.tools import weight_init
-from rlstructures.rl_batchers import RL_Batcher
 import torch.nn as nn
 import copy
 import torch
 import time
 import numpy as np
 import torch.nn.functional as F
-from rlstructures import replay_agent
-from rlalgos.a2c_gae.agent import ActionModel,CriticModel,Model
+import pickle
+from rlstructures.dicttensor import masked_tensor
+from rlstructures.rl_batchers import RL_Batcher
 
-
-class A2C:
+class PPO:
     def __init__(self, config, create_train_env, create_env,create_agent):
         self.config = config
 
@@ -38,9 +36,14 @@ class A2C:
         self.obs_dim = env.reset()[0]["frame"].size()[1]
         del env
 
-    def run(self):
-        # Instantiate the learning model abd the baseline model
+    def _state_dict(self,model,device):
+        sd = model.state_dict()
+        for k, v in sd.items():
+            sd[k] = v.to(device)
+        return sd
 
+    def run(self):
+        self.learning_model=self._create_model()
         self.agent=self._create_agent(n_actions = self.n_actions, model = self.learning_model)
 
         #We create a batcher dedicated to evaluation
@@ -61,12 +64,9 @@ class A2C:
             env_info=DictTensor({}),
         )
 
-        #Creation of the batcher for sampling complete pieces of trajectories (i.e Batcher)
-        #The batcher will sample n_threads*n_envs trajectories at each call
-        # To have a fast batcher, we have to configure it with n_timesteps=self.config["max_episode_steps"]
         model=copy.deepcopy(self.learning_model)
         self.train_batcher=RL_Batcher(
-            n_timesteps=self.config["a2c_timesteps"],
+            n_timesteps=self.config["ppo_timesteps"],
             create_agent=self._create_agent,
             create_env=self._create_train_env,
             env_args={
@@ -103,33 +103,36 @@ class A2C:
 
         while(time.time()-_start_time<self.config["time_limit"]):
             self.train_batcher.execute()
-            trajectories,n=self.train_batcher.get(blocking=True)
+            trajectories,n=self.train_batcher.get()
             assert n==self.config["n_envs"]*self.config["n_processes"]
+            avg_reward = 0
+            for K in range(self.config["k_epochs"]):
+                optimizer.zero_grad()
+                dt = self.get_loss(trajectories)
+                [
+                    self.logger.add_scalar("loss/" + k, dt[k].item(), self.iteration)
+                    for k in dt.keys()
+                ]
 
-            dt=self.get_loss(trajectories)
-            [self.logger.add_scalar("loss/"+k,dt[k].item(),self.iteration) for k in dt.keys()]
-            ld = self.config["critic_coef"] * dt["critic_loss"]
-            lr = self.config["a2c_coef"] * dt["a2c_loss"]
-            le = self.config["entropy_coef"] * dt["entropy_loss"]
+                # Computation of final loss
+                ld = self.config["coef_critic"] * dt["critic_loss"]
+                lr = self.config["coef_ppo"] * dt["a2c_loss"]
+                le = self.config["coef_entropy"] * dt["entropy_loss"]
 
-            floss = ld - le - lr
+                floss = ld - le - lr
+                floss.backward()
+                if self.config["clip_grad"] > 0:
+                    n = torch.nn.utils.clip_grad_norm_(
+                        self.learning_model.parameters(), self.config["clip_grad"]
+                    )
+                    self.logger.add_scalar("grad_norm", n.item(), self.iteration)
+                optimizer.step()
+                self.iteration+=1
 
-            optimizer.zero_grad()
-            floss.backward()
-
-            if self.config["clip_grad"] > 0:
-                n = torch.nn.utils.clip_grad_norm_(
-                    self.learning_model.parameters(), self.config["clip_grad"]
-                )
-                self.logger.add_scalar("grad_norm", n.item(), self.iteration)
-
-            optimizer.step()
-
-            #Update the train batcher with the updated model
-            self.train_batcher.update(self.learning_model.state_dict())
+            cpu_parameters=self._state_dict(self.learning_model,torch.device("cpu"))
+            self.train_batcher.update(cpu_parameters)
             self.iteration+=1
 
-            #We check the evaluation batcher
             evaluation_trajectories,n=self.evaluation_batcher.get(blocking=False)
             if not evaluation_trajectories is None: #trajectories are available
                 #Compute the cumulated reward
@@ -143,13 +146,6 @@ class A2C:
                 agent_info=DictTensor({"stochastic":torch.tensor([False]).repeat(n_episodes)})
                 self.evaluation_batcher.reset(agent_info=agent_info)
                 self.evaluation_batcher.execute()
-
-        self.train_batcher.close()
-        self.evaluation_batcher.get() # To wait for the last trajectories
-        self.evaluation_batcher.close()
-        self.logger.update_csv() # To save as a CSV file in logdir
-        self.logger.close()
-
 
     def get_loss(self,trajectories):
             replayed=replay_agent(self.agent,trajectories)

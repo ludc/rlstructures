@@ -20,16 +20,13 @@ import gym
 from gym.wrappers import TimeLimit
 from rlalgos.ppo.discrete_ppo import PPO
 
-import hydra
-from omegaconf import DictConfig, OmegaConf
-
 def create_gym_env(args):
     return gym.make(args["environment/env_name"])
 
 def create_env(n_envs, mode="train",max_episode_steps=None, seed=None,**args):
     envs=[]
     for k in range(n_envs):
-        e = create_gym_env(args)        
+        e = create_gym_env(args)
         e = TimeLimit(e, max_episode_steps=max_episode_steps)
         envs.append(e)
     if mode=="train":
@@ -57,7 +54,7 @@ def flatten(d, parent_key='', sep='/'):
             items.extend(flatten(v, new_key, sep=sep).items())
         else:
             items.append((new_key, v))
-    return dict(items)         
+    return dict(items)
 
 @hydra.main()
 def my_app(cfg : DictConfig) -> None:
@@ -71,4 +68,3 @@ if __name__ == "__main__":
     mp.set_start_method("spawn")
 
     my_app()
-

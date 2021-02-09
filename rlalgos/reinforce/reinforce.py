@@ -96,6 +96,7 @@ class Reinforce:
         #Update the batcher with the last version of the learning model
         self.train_batcher.update(self.learning_model.state_dict())
 
+        n_interactions=0
         while(time.time()-_start_time<self.config["time_limit"]):
 
             #1) The policy will be executed in "stochastic' mode
@@ -103,14 +104,15 @@ class Reinforce:
             agent_info=DictTensor({"stochastic":torch.tensor([True]).repeat(n_episodes)})
             self.train_batcher.reset(agent_info=agent_info)
             self.train_batcher.execute()
-
             #2) We get the trajectories (and wait until the trajectories have been sampled)
             trajectories,n_env_running=self.train_batcher.get(blocking=True)
             assert n_env_running==0 #Assert that all trajectories are finished
+            n_interactions+=trajectories.trajectories.mask().sum().item()
+            self.logger.add_scalar("n_interactions_per_seconds",n_interactions/(time.time()-_start_time),self.iteration)
 
             #3) Compute the loss
             dt=self.get_loss(trajectories)
-            [self.logger.add_scalar(k,dt[k].item(),self.iteration) for k in dt.keys()]
+            [self.logger.add_scalar("loss/"+k,dt[k].item(),self.iteration) for k in dt.keys()]
 
             #4) Compute the final loss by linear combination of the different individual losses
             ld = self.config["baseline_coef"] * dt["baseline_loss"]
@@ -155,44 +157,44 @@ class Reinforce:
         self.logger.close()
 
     def get_loss(self,trajectories):
-            """ Compute the different individual losses needed for REINFORCE
-                    - baseline loss for updating the baseline
-                    - reinforce loss for updating the policy
-                    - entropy loss for entropy regularization
-            """
-            #Use self.agent to replay the trajectories computation on the batch of trajectories
-            replayed=replay_agent(self.agent,trajectories)
+                """ Compute the different individual losses needed for REINFORCE
+                        - baseline loss for updating the baseline
+                        - reinforce loss for updating the policy
+                        - entropy loss for entropy regularization
+                """
+                #Use self.agent to replay the trajectories computation on the batch of trajectories
+                replayed = replay_agent(self.agent,trajectories)
 
-            info=trajectories.info
-            trajectories=trajectories.trajectories
+                info=trajectories.info
+                trajectories=trajectories.trajectories
 
-            #Compute the cumulated future reward
-            reward=trajectories["_observation/reward"]
-            mask=trajectories.mask()
-            reward=reward*mask
-            max_length=trajectories.lengths.max().item()
-            cumulated_reward=torch.zeros_like(reward)
-            cumulated_reward[:,max_length-1]=reward[:,max_length-1]
-            for t in range(max_length-2,-1,-1):
-                cumulated_reward[:,t]=reward[:,t]+self.config["discount_factor"]*cumulated_reward[:,t+1]
+                #Compute the cumulated future reward
+                reward=trajectories["_observation/reward"]
+                mask=trajectories.mask()
+                reward=reward*mask
+                max_length=trajectories.lengths.max().item()
+                cumulated_reward=torch.zeros_like(reward)
+                cumulated_reward[:,max_length-1]=reward[:,max_length-1]
+                for t in range(max_length-2,-1,-1):
+                    cumulated_reward[:,t]=reward[:,t]+self.config["discount_factor"]*cumulated_reward[:,t+1]
 
-            # Compute reinforce loss
-            action_probabilities=replayed["action_probabilities"]
-            action_distribution=torch.distributions.Categorical(action_probabilities)
-            baseline=replayed["baseline"].squeeze(-1)
-            log_proba=action_distribution.log_prob(trajectories["action/action"])
-            reinforce_loss = log_proba * (cumulated_reward-baseline).detach()
-            reinforce_loss = (reinforce_loss*mask).sum(1)/mask.sum(1)
-            avg_reinforce_loss=reinforce_loss.mean()
+                # Compute reinforce loss
+                action_probabilities=replayed["action_probabilities"]
+                action_distribution=torch.distributions.Categorical(action_probabilities)
+                baseline=replayed["baseline"].squeeze(-1)
+                log_proba=action_distribution.log_prob(trajectories["action/action"])
+                reinforce_loss = log_proba * (cumulated_reward-baseline).detach()
+                reinforce_loss = (reinforce_loss*mask).sum(1)/mask.sum(1)
+                avg_reinforce_loss=reinforce_loss.mean()
 
-            # Compute entropy loss
-            entropy=action_distribution.entropy()
-            entropy=(entropy*mask).sum(1)/mask.sum(1)
-            avg_entropy=entropy.mean()
+                # Compute entropy loss
+                entropy=action_distribution.entropy()
+                entropy=(entropy*mask).sum(1)/mask.sum(1)
+                avg_entropy=entropy.mean()
 
-            #Compute baseline loss
-            baseline_loss=(baseline-cumulated_reward)**2
-            baseline_loss= (baseline_loss*mask).sum(1)/mask.sum(1)
-            avg_baseline_loss = baseline_loss.mean()
+                #Compute baseline loss
+                baseline_loss=(baseline-cumulated_reward)**2
+                baseline_loss= (baseline_loss*mask).sum(1)/mask.sum(1)
+                avg_baseline_loss = baseline_loss.mean()
 
-            return DictTensor({"avg_reward":cumulated_reward[:,0].mean(),"baseline_loss":avg_baseline_loss,"reinforce_loss":avg_reinforce_loss,"entropy_loss":avg_entropy})
+                return DictTensor({"avg_reward":cumulated_reward[:,0].mean(),"baseline_loss":avg_baseline_loss,"reinforce_loss":avg_reinforce_loss,"entropy_loss":avg_entropy})
