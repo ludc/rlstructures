@@ -7,7 +7,7 @@
 
 
 
-from rlstructures.logger import Logger, TFLogger
+from rlalgos.logger import Logger, TFLogger
 from rlstructures import DictTensor, TemporalDictTensor, E_Batcher
 from rlstructures import logging
 from rlstructures.tools import weight_init
@@ -84,6 +84,47 @@ import math
 #         transitions=torch.randint(0,high=limit,size=(n,))
 #         d={k:self.buffer[k][transitions] for k in self.buffer}
 #         return DictTensor(d)
+
+
+"""
+A DQN Implementation with prioritized experience replay. It implements also double an duelling Q-Learning
+
+Parameters:
+    "environment/env_name": openai gym environment name
+    "n_envs": Nb single envs per process
+    "max_episode_steps": Max Number of environment steps (for evaluation)
+    "discount_factor": The discount factor
+    "epsilon_greedy_max": The epsilon (greedy) value at the beginning of training
+    "epsilon_greedy_min": The epsilon (greedy) value at the end of the linear decay
+    "epsilon_min_epoch": The epoch at which the min epsilon greedy value is reached
+    "replay_buffer_size": The nubmer of transitions in the replay buffer
+    "n_batches": The size of the batch when updating Q
+    "initial_buffer_epochs": The number of epochs made to initialize the replay buffer with a uniform policiy
+    "qvalue_epochs": The number of q updates between two acquistion of transitions
+    "batch_timesteps": The number of timesteps executed at each acquisition step
+    "use_duelling": False,
+    "use_double":False,
+    "lr": 0.00001,
+    "n_processes": Number of learning processes for acquisition
+    "n_evaluation_processes": Number of processes for evaluation
+    "verbose": False,
+    "n_evaluation_envs": Number of single envs per evaluation process
+    "time_limit": in seconds
+    "env_seed": 42,
+    "clip_grad": 0.0,
+    "learner_device": "cpu",
+    "as_fast_as_possible": if True: execute as many update iteration as possible between two acquisitions. The min numboer is q_epochs
+
+    "update_target_hard":True,
+    "update_target_epoch":1000,
+    "update_target_tau": 0.005,
+
+    "buffer/alpha":0.6,
+    "buffer/beta":0.4,
+
+    "logdir":"./results",
+    "save_every":100,
+"""
 
 class ReplayBuffer:
     def __init__(self,N):

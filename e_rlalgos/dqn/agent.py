@@ -15,18 +15,7 @@ import time
 import numpy as np
 
 class QAgent(E_Agent):
-    """
-    Describes a discrete agent based on a model that produces a score for each
-    possible action, and an estimation of the value function in the current
-    state.
-    """
-
     def __init__(self, model=None,n_actions=None):
-        """
-        Args:
-            model (nn.Module): a module producing a tuple: (actions scores, value)
-            n_actions (int): the number of possible actions
-        """
         super().__init__()
         self.model = model
         self.n_actions = n_actions
@@ -67,8 +56,6 @@ class QMLP(nn.Module):
         z = torch.tanh(self.linear(frame))
         score_actions = self.linear2(z)
         return score_actions
-
-
 
 class DQMLP(nn.Module):
     def __init__(self, n_observations, n_actions, n_hidden):
@@ -128,9 +115,6 @@ class CnnDQN(nn.Module):
         a=self.features(torch.zeros(1, *self.inut_shape[1:]))
         a=a.view(1, -1).size(1)
         return a
-
-
-
 
 class DuelingCnnDQN(nn.Module):
     def __init__(self, input_shape, num_outputs):

@@ -5,12 +5,12 @@
             "discount_factor": 0.99,
             "epsilon_greedy_max": 0.99,
             "epsilon_greedy_min": 0.01,
-            "epsilon_min_epoch": [200000,1000000],
+            "epsilon_min_epoch": [200000],
             "replay_buffer_size": [100000],
             "n_batches": 32,
             "use_duelling": [False,True],
             "use_double": [False,True],
-            "lr": [3e-5,1e-5,3e-6],
+            "lr": [1e-4,3e-5,1e-5],
             "n_evaluation_processes": 4,
             "verbose": True,
             "n_evaluation_envs": 4,
@@ -21,7 +21,7 @@
 
             "as_fast_as_possible":[True,False],
 
-            "update_target_hard":[True,False],
+            "update_target_hard":[True],
             "update_target_epoch":1000,
             "update_target_tau": 0.005,
 
@@ -31,15 +31,6 @@
 ,
     [
         {
-            "initial_buffer_epochs": 10000,
-            "qvalue_epochs": 1,
-            "batch_timesteps": 1,
-            "n_processes": 1,
-            "buffer/alpha":0.0,
-            "buffer/beta":0.0,
-        }
-        ,
-        {
             "initial_buffer_epochs": 2500,
             "qvalue_epochs": 1,
             "batch_timesteps": 1,
@@ -49,8 +40,17 @@
         }
         ,
         {
+            "initial_buffer_epochs": 2500,
+            "qvalue_epochs": 1,
+            "batch_timesteps": 1,
+            "n_processes": 4,
+            "buffer/alpha":0.4,
+            "buffer/beta":0.6,
+        }
+        ,
+        {
             "initial_buffer_epochs": 600,
-            "qvalue_epochs": 2,
+            "qvalue_epochs": 4,
             "batch_timesteps": 4,
             "n_processes": 4,
             "buffer/alpha":0.0,
@@ -58,28 +58,29 @@
         }
         ,
         {
-            "initial_buffer_epochs": 120,
-            "qvalue_epochs": 10,
-            "batch_timesteps": 20,
-            "n_processes": 4,
-            "buffer/alpha":0.0,
-            "buffer/beta":0.0,
-        },
-        {
-            "initial_buffer_epochs": 2500,
-            "qvalue_epochs": 1,
-            "batch_timesteps": 1,
+            "initial_buffer_epochs": 600,
+            "qvalue_epochs": 4,
+            "batch_timesteps": 4,
             "n_processes": 4,
             "buffer/alpha":0.6,
             "buffer/beta":0.4,
-        },
+        }
+        ,
         {
             "initial_buffer_epochs": 120,
-            "qvalue_epochs": 10,
+            "qvalue_epochs": 1,
             "batch_timesteps": 20,
             "n_processes": 4,
             "buffer/alpha":0.0,
             "buffer/beta":0.0,
+        },
+        {
+            "initial_buffer_epochs": 120,
+            "qvalue_epochs": 1,
+            "batch_timesteps": 20,
+            "n_processes": 4,
+            "buffer/alpha":0.6,
+            "buffer/beta":0.4,
         },
     ]
 )
