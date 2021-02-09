@@ -1,3 +1,11 @@
+#
+# Copyright (c) Facebook, Inc. and its affiliates.
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
+#
+
+
 from rlstructures import logging
 from rlstructures.env_wrappers import GymEnv, GymEnvInf
 from rlstructures.tools import weight_init
@@ -8,13 +16,13 @@ import torch
 import time
 import numpy as np
 import torch.nn.functional as F
-from e_rlalgos.dqn.agent import QAgent, QMLP, DQMLP, DuelingCnnDQN, CnnDQN
+from rlalgos.dqn.agent import QAgent, QMLP, DQMLP, DuelingCnnDQN, CnnDQN
 import gym
 from gym.wrappers import TimeLimit
-from e_rlalgos.dqn.duelling_dqn import DQN
-from e_rlalgos.atari_wrappers import make_atari, wrap_deepmind, wrap_pytorch
+from rlalgos.dqn.duelling_dqn import DQN
+from rlalgos.atari_wrappers import make_atari, wrap_deepmind, wrap_pytorch
 import math
-import itertools
+
 
 def create_env(n_envs, mode="train",max_episode_steps=None, seed=None,**args):
 
@@ -51,33 +59,15 @@ class Experiment(DQN):
         #module.apply(weight_init)
         return module
 
-def product_dict(**kwargs):
-    keys = kwargs.keys()
-    vals = kwargs.values()
-    for instance in itertools.product(*vals):
-        yield dict(zip(keys, instance))
-
-def generate_grid_search(config):
-    c = {}
-    for k in config:
-        if not isinstance(config[k], list):
-            c[k] = [config[k]]
+def flatten(d, parent_key='', sep='/'):
+    items = []
+    for k, v in d.items():
+        new_key = parent_key + sep + k if parent_key else k
+        if isinstance(v, DictConfig):
+            items.extend(flatten(v, new_key, sep=sep).items())
         else:
-            c[k] = config[k]
-    return product_dict(**c)
-
-def generate(common,specifics):
-    gs=list(generate_grid_search(common))
-    print("Common ",len(gs)," Specific ",len(specifics))
-    r=[]
-    for s in specifics:
-        for c in gs:
-            cc=copy.deepcopy(c)
-            for k in s:
-                cc[k]=s[k]
-            r.append(cc)
-    print("== Total ",len(r))
-    return r
+            items.append((new_key, v))
+    return dict(items)
 
 if __name__=="__main__":
     #We use spawn mode such that most of the environment will run in multiple processes
@@ -90,45 +80,35 @@ if __name__=="__main__":
             "discount_factor": 0.99,
             "epsilon_greedy_max": 0.5,
             "epsilon_greedy_min": 0.1,
-            "epsilon_min_epoch": 1000000,
+            "epsilon_min_epoch": 1000,
             "replay_buffer_size": 100000,
             "n_batches": 32,
-            "update_target_epoch":1000,
-            "tau": 0.005,
             "initial_buffer_epochs": 1,
-            "qvalue_epochs": 10,
-            "batch_timesteps": 10,
+            "qvalue_epochs": 1,
+            "batch_timesteps": 1,
             "use_duelling": False,
             "use_double":False,
-            "lr": 0.0001,
+            "lr": 0.00001,
             "n_processes": 1,
             "n_evaluation_processes": 4,
-            "verbose": True,
+            "verbose": False,
             "n_evaluation_envs": 4,
             "time_limit": 28800,
-            "env_seed": 48,
+            "env_seed": 42,
             "clip_grad": 0.0,
-            "learner_device": "cuda",
+            "learner_device": "cpu",
+            "as_fast_as_possible":True,
+
+            "update_target_hard":True,
+            "update_target_epoch":1000,
+            "update_target_tau": 0.005,
+
+            "buffer/alpha":0.6,
+            "buffer/beta":0.4,
+
             "logdir":"./results",
-            "update_target_epoch":1000
+            "save_every":100,
 
     }
-    import sys
-    import os
-    print(len(sys.argv))
-    if len(sys.argv)==2:
-
-        print("opening ",sys.argv[1])
-        _file = open(sys.argv[1], "r")
-        c=_file.read()
-        _file.close()
-        common,specifics=eval(c)
-        r=generate(common,specifics)
-        if os.environ.get("SLURM_ARRAY_TASK_ID")==None:
-            exit()
-        config=r[int(os.environ.get("SLURM_ARRAY_TASK_ID"))]
-        logdir=config["logdir"]
-        config["logdir"]=logdir+"/"+str(int(os.environ.get("SLURM_ARRAY_TASK_ID")))
-
     exp=Experiment(config,create_env,create_agent)
     exp.run()

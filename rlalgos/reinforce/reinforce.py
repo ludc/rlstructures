@@ -9,14 +9,14 @@
 from rlalgos.logger import Logger, TFLogger
 from rlstructures import DictTensor, TemporalDictTensor,Trajectories
 from rlalgos.tools import weight_init
-from rlstructures.e_batcher import E_Batcher
+from rlstructures.rl_batchers import RL_Batcher
 import torch.nn as nn
 import copy
 import torch
 import time
 import numpy as np
 import torch.nn.functional as F
-from e_rlalgos.reinforce.agent import *
+from rlalgos.reinforce.agent import *
 from rlstructures import replay_agent
 
 class Reinforce:
@@ -45,7 +45,7 @@ class Reinforce:
 
         #We create a batcher dedicated to evaluation
         model=copy.deepcopy(self.learning_model)
-        self.evaluation_batcher=E_Batcher(
+        self.evaluation_batcher=RL_Batcher(
             n_timesteps=self.config["max_episode_steps"],
             create_agent=self._create_agent,
             create_env=self._create_env,
@@ -63,7 +63,7 @@ class Reinforce:
 
         #Create a batcher to sample learning trajectories
         model=copy.deepcopy(self.learning_model)
-        self.train_batcher=E_Batcher(
+        self.train_batcher=RL_Batcher(
             n_timesteps=self.config["max_episode_steps"],
             create_agent=self._create_agent,
             create_env=self._create_env,

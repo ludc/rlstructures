@@ -14,8 +14,8 @@ import torch
 import time
 import numpy as np
 import torch.nn.functional as F
-from e_rlalgos.reinforce.agent import ReinforceAgent
-from e_rlalgos.reinforce.reinforce import Reinforce
+from rlalgos.reinforce.agent import ReinforceAgent
+from rlalgos.reinforce.reinforce import Reinforce
 import gym
 from gym.wrappers import TimeLimit
 

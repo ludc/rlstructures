@@ -21,9 +21,6 @@ import gym
 from gym.wrappers import TimeLimit
 from rlalgos.dqn.duelling_dqn import DQN
 
-import hydra
-from omegaconf import DictConfig, OmegaConf
-
 def create_gym_env(args):
     return gym.make(args["environment/env_name"])
 
@@ -33,7 +30,7 @@ def create_env(n_envs, mode="train",max_episode_steps=None, seed=None,**args):
         e = create_gym_env(args)
         e = TimeLimit(e, max_episode_steps=max_episode_steps)
         envs.append(e)
-        
+
     if mode=="train":
         return GymEnvInf(envs, seed)
     else:
@@ -49,9 +46,9 @@ class Experiment(DQN):
     def _create_model(self):
         module=None
         if (not self.config["use_duelling"]):
-            module = QMLP(self.obs_dim, self.n_actions, 64)
+            module = QMLP(self.obs_shape[0], self.n_actions, 64)
         else:
-            module = DQMLP(self.obs_dim, self.n_actions, 64)
+            module = DQMLP(self.obs_shape[0], self.n_actions, 64)
 
         module.apply(weight_init)
         return module
@@ -64,17 +61,36 @@ def flatten(d, parent_key='', sep='/'):
             items.extend(flatten(v, new_key, sep=sep).items())
         else:
             items.append((new_key, v))
-    return dict(items)         
+    return dict(items)
 
-@hydra.main()
-def my_app(cfg : DictConfig) -> None:
-    f=flatten(cfg)
-    print(f)
-    exp = Experiment(f, create_env, create_agent)
-    exp.go()
-
-if __name__ == "__main__":
+if __name__=="__main__":
+    #We use spawn mode such that most of the environment will run in multiple processes
     import torch.multiprocessing as mp
     mp.set_start_method("spawn")
 
-    my_app()
+    config={"environment/env_name": "CartPole-v0",
+            "n_envs": 4,
+            "max_episode_steps": 100,
+            "discount_factor": 0.9,
+            "epsilon_greedy_max": 0.3,
+            "epsilon_greedy_min": 0.01,
+            "replay_buffer_size": 1000,
+            "n_batches": 64,
+            "tau": 0.005,
+            "initial_buffer_epochs": 10,
+            "qvalue_epochs": 10,
+            "batch_timesteps": 1,
+            "use_duelling": True,
+            "lr": 0.001,
+            "n_processes": 4,
+            "n_evaluation_processes": 4,
+            "verbose": True,
+            "n_evaluation_envs": 16,
+            "time_limit": 1800,
+            "env_seed": 42,
+            "clip_grad": 40.0,
+            "learner_device": "cpu",
+            "logdir":"./results"
+    }
+    exp=Experiment(config,create_env,create_agent)
+    exp.run()

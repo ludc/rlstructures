@@ -13,7 +13,7 @@ import torch
 import numpy as np
 
 
-class E_Batcher:
+class RL_Batcher:
     def reset(self,agent_info=DictTensor({}), env_info=DictTensor({})):
         n_workers = len(self.workers)
         pos=0

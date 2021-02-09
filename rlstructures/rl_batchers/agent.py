@@ -9,7 +9,7 @@
 from rlstructures import DictTensor,TemporalDictTensor,Trajectories
 import torch
 
-class E_Agent:
+class RL_Agent:
     def __init__(self):
         self._device=torch.device("cpu")
         pass
@@ -22,6 +22,13 @@ class E_Agent:
 
     def require_history(self):
         return False
+
+
+    def initial_state(self,agent_info:DictTensor,B:int):
+        raise NotImplementedError
+
+    def update(self, info):
+        raise NotImplementedError
 
     def __call__(self, state:DictTensor, input:DictTensor,agent_info:DictTensor,history:TemporalDictTensor = None):
         raise NotImplementedError
@@ -39,11 +46,6 @@ class E_Agent:
 
         return action,state
 
-    def initial_state(self,agent_info:DictTensor,B:int):
-        raise NotImplementedError
-
-    def update(self, info):
-        raise NotImplementedError
 
     def close(self):
         pass

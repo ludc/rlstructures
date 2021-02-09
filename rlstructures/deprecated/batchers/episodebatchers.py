@@ -87,7 +87,7 @@ class EpisodeBatcher(MultiThreadEpisodeBatcher):
         seeds=None,
     ):
         if (rlstructures.__deprecated_message__==False):
-            print("[DEPRECATED]: The current version of rlstructures is based on rlstructures.e_batcher implementation. We advise you to switch your codebase for using this new batcher, and the corresponding needed adaptations")
+            print("[DEPRECATED]: The current version of rlstructures is based on rlstructures.rl_batchers implementation. We advise you to switch your codebase for using this new batcher, and the corresponding needed adaptations")
             rlstructures.__deprecated_message__=True
         # Buffer creation:
         agent = create_agent(**agent_args)
