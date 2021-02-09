@@ -286,7 +286,7 @@ class DQN:
         device = torch.device(self.config["learner_device"])
         self.learning_model.to(device)
         self.target_model.to(device)
-        optimizer = torch.optim.Adam(
+        optimizer = getattr(torch.optim,self.config["optim"])(
             self.learning_model.parameters(), lr=self.config["lr"]
         )
 
