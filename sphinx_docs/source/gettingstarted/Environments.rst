@@ -95,7 +95,7 @@ When executing the `step` method:
 Interacting with the Environment
 --------------------------------
 
-Interaction with the environment is easy, the agent and environment exchange `DictTensor`s
+Interaction with the environment is easy, the agent and environment exchanges `DictTensor`s
 
 .. code-block:: python
     obs,who_is_still_running=env.reset()

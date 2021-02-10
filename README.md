@@ -1,3 +1,16 @@
+# IMPORTANT NOTE
+
+**Due to feedback, the API of the batcher has been improved with the following consequences:**
+* The EpisodeBatcher and Batcher, associated with the Agent classes are still working but will print a deprecated message
+* The new Batcher is called RL_Batcher (see documentation) and associated with a RL_Agent with a simplified API
+* Learning algorithms using the old version are now in 'rlalgos/deprecated' and the algorithms using the new API are located in 'rlalgos/'
+
+What you gain by using the new API:
+* The batcher returns a **Trajectories** object that contains both fixed information (as a DictTensor e.g agent_info, env_info, agent state at the beginning of the trajectories, ...) and sequence of transitions in a TemporalDictTensor
+* We provide a *replay* function to replay an agent on trajectories, allowing a faster and simpler implementation of algorithms
+
+All these changes are documented in the HTML documentation at [http://facebookresearch.github.io/rlstructures](http://facebookresearch.github.io/rlstructures)
+
 # TL;DR
 
 TL;DR: RLStructures is a lightweight Python library that provides simple APIs as well as data structures that make as few assumptions as possible about the structure of your agent or your task, while allowing for transparently executing multiple policies on multiple environments in parallel (incl. multiple GPUs). It thus facilitates the implementation of RL algorithms while avoiding complex abstractions.
@@ -23,7 +36,7 @@ pip install .
 
 * [http://facebookresearch.github.io/rlstructures](http://facebookresearch.github.io/rlstructures)
 
-The complete documentation is available at [http://facebookresearch.github.io/rlstructures](http://facebookresearch.github.io/rlstructures) and **tutorials** can be found in the *tutorial/* directory. The example algorithms are provided in *raglos/*.
+The complete documentation is available at [http://facebookresearch.github.io/rlstructures](http://facebookresearch.github.io/rlstructures). The example algorithms are provided in *raglos/*.
 
 A facebook group is also open for discussion.
 

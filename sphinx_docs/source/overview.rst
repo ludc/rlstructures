@@ -39,10 +39,9 @@ Learning `rlstructures` can be done in close to an hour (based on the feedback f
 
 * Learning about mapping a Gym Environment to a **RLStructure Environment** **(5 minutes)**
 
-* Learning about the **Agent API** allowing one to implement any agent, including recurrent agents **(30 minutes)**. Note that an agent may be parameterized such that one implementation may correspond to different agents :math:`\pi_z`.
+* Learning about the **RL_Agent API** allowing one to implement any agent, including recurrent agents **(30 minutes)**. Note that an agent may be parameterized such that one implementation may correspond to different agents :math:`\pi_z`.
 
-* Learning about creating and using **multi-processes batchers** (i.e Batcher and EpisodeBatcher) **(15 minutes)** . These batchers are the core objects that will allow you to work at scale.
-
+* Learning about creating and using **multi-processes batchers** (i.e RL_Batcher) **(15 minutes)** . These batchers are the core objects that will allow you to work at scale.
 
 Now, you can execute a complex policy over an environment in a multi-threaded way, and get a simple data structure as an output on which you can compute any complex loss and gradients.
 
@@ -62,7 +61,7 @@ We provide multiple implementations of RL algorithms in the `rlaglos` package as
 
 * PPO for discrete action space (using recurrent or not recurrent architectures)
 
-* Dueling DQN for discrete action space (using not recurrent architectures)
+* Double and Dueling DQN with prioritized experience replay buffer for discrete action space (no recurrent architectures)
 
 * SAC for continuous action space (using not recurrent architectures)
 
