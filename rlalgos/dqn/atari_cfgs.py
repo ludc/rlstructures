@@ -1,5 +1,5 @@
 (
-    {"environment/env_name": ["PongNoFrameskip-v4","AsteroidsNoFrameskip-v4","BoxingNoFrameskip-v4","SeaquestNoFrameskip-v4","TennisNoFrameskip-v4","JamesbondNoFrameskip-v4"]
+    {"environment/env_name": ["PongNoFrameskip-v4","AsteroidsNoFrameskip-v4","BoxingNoFrameskip-v4","SeaquestNoFrameskip-v4","TennisNoFrameskip-v4","JamesbondNoFrameskip-v4"],
             "n_envs": 1,
             "max_episode_steps": 15000,
             "discount_factor": 0.99,
