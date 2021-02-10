@@ -15,7 +15,7 @@
             "verbose": True,
             "optim":["RMSprop","Adam"],
             "n_evaluation_envs": 4,
-            "time_limit": 28800,
+            "time_limit": 36000,
             "env_seed": 48,
             "clip_grad": [2.0],
             "learner_device": "cuda",
