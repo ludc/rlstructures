@@ -73,6 +73,10 @@ class RecurrentAgent(RL_Agent):
         B = observation.n_elems()
 
         istate=self.initial_state(agent_info,B).to(initial_state.device)
+        print(state.device)
+        print(istate.device)
+        print(initial_state.device)
+        print("+++")
         state=masked_dicttensor(state,istate,initial_state)
         new_z,action_proba = self.model.action_model(state["agent_state"],observation["frame"])
 
