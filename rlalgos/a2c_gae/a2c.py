@@ -167,7 +167,9 @@ class A2C:
     def get_loss(self,trajectories):
             print("loss ",trajectories.trajectories.lengths)
             trajectories=trajectories.to(self.config["learner_device"])
+            print("replay ",trajectories.trajectories.lengths)
             replayed=replay_agent(self.agent,trajectories)
+            print("end replay ",trajectories.trajectories.lengths)
             info=trajectories.info
             trajectories=trajectories.trajectories
             #First, we want to compute the cumulated reward per trajectory
