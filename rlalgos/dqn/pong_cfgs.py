@@ -11,9 +11,9 @@
             #Epsilon value at the end of the decay
             "epsilon_greedy_min": [0.01],
             #Learning epoch when the min epsilon value is reached
-            "epsilon_min_epoch": [100000],
+            "epsilon_min_epoch": [100000,200000],
             # Size of the replay buffer (number of transitions)
-            "replay_buffer_size": [100000],
+            "replay_buffer_size": [100000,1000000],
             # Size of the learning batches
             "n_batches": [32,128,512],
             #Duelling architecture ?
@@ -68,7 +68,7 @@
         }
         ,
         {
-            "initial_buffer_epochs": 600,
+            "initial_buffer_epochs": 2500,
             "qvalue_epochs": 1,
             "batch_timesteps": 4,
             "n_processes": 4,
@@ -86,7 +86,7 @@
         }
         ,
         {
-            "initial_buffer_epochs": 600,
+            "initial_buffer_epochs": 300,
             "qvalue_epochs": 1,
             "batch_timesteps": 20,
             "n_processes": 4,
