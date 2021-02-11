@@ -32,9 +32,7 @@ class ReinforceAgent(RL_Agent):
         """
         Executing one step of the agent
         """
-        assert observation.device()==self.device()
         assert state.empty()
-        assert agent_info.device()==self.device()
 
         # Verify that the batch size is 1
         B = observation.n_elems()
