@@ -74,5 +74,4 @@ def replay_agent(agent,trajectories:Trajectories,replay_method_name:str="call_re
         for k in output.keys():
             variables[k][:,t]=output[k]
     tdt=TemporalDictTensor(variables,lengths=trajectories.trajectories.lengths.clone())
-    assert tdt.device()==agent.device()
     return tdt
