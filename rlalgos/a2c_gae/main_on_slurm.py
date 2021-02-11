@@ -53,30 +53,54 @@ class Experiment(A2C):
         model.apply(weight_init)
         return model
 
+def product_dict(**kwargs):
+    keys = kwargs.keys()
+    vals = kwargs.values()
+    for instance in itertools.product(*vals):
+        yield dict(zip(keys, instance))
+
+def generate_grid_search(config):
+    c = {}
+    for k in config:
+        if not isinstance(config[k], list):
+            c[k] = [config[k]]
+        else:
+            c[k] = config[k]
+    return product_dict(**c)
+
+def generate(common,specifics):
+    gs=list(generate_grid_search(common))
+    print("Common ",len(gs)," Specific ",len(specifics))
+    r=[]
+    for s in specifics:
+        for c in gs:
+            cc=copy.deepcopy(c)
+            for k in s:
+                cc[k]=s[k]
+            r.append(cc)
+    print("== Total ",len(r))
+    return r
+
 if __name__=="__main__":
     #We use spawn mode such that most of the environment will run in multiple processes
     import torch.multiprocessing as mp
     mp.set_start_method("spawn")
 
-    config={"env_name": "PongNoFrameskip-v4",
-            "a2c_timesteps": 20,
-            "n_envs": 1,
-            "max_episode_steps": 15000,
-            "env_seed": 42,
-            "n_processes": 8,
-            "n_evaluation_processes": 4,
-            "n_evaluation_envs": 1,
-            "time_limit": 3600,
-            "lr": 0.001,
-            "discount_factor": 0.99,
-            "critic_coef": 1.0,
-            "entropy_coef": 0.01,
-            "a2c_coef": 0.1,
-            "gae_coef":0.3,
-            "logdir":"./results",
-            "clip_grad":40,
-            "learner_device":"cuda",
-            "save_every":100
-    }
-    exp=Experiment(config,create_train_env,create_env,create_agent)
+    import sys
+    import os
+    print(len(sys.argv))
+    if len(sys.argv)==2:
+        print("opening ",sys.argv[1])
+        _file = open(sys.argv[1], "r")
+        c=_file.read()
+        _file.close()
+        common,specifics=eval(c)
+        r=generate(common,specifics)
+        if os.environ.get("SLURM_ARRAY_TASK_ID")==None:
+            exit()
+        config=r[int(os.environ.get("SLURM_ARRAY_TASK_ID"))]
+        logdir=config["logdir"]
+        config["logdir"]=logdir+"/"+str(int(os.environ.get("SLURM_ARRAY_TASK_ID")))
+
+    exp=Experiment(config,create_env,create_agent)
     exp.run()

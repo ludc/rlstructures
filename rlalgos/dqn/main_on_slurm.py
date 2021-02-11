@@ -84,35 +84,6 @@ if __name__=="__main__":
     import torch.multiprocessing as mp
     mp.set_start_method("spawn")
 
-    config={"environment/env_name": "PongNoFrameskip-v4",
-            "n_envs": 1,
-            "max_episode_steps": 10000,
-            "discount_factor": 0.99,
-            "epsilon_greedy_max": 0.5,
-            "epsilon_greedy_min": 0.1,
-            "epsilon_min_epoch": 1000000,
-            "replay_buffer_size": 100000,
-            "n_batches": 32,
-            "update_target_epoch":1000,
-            "tau": 0.005,
-            "initial_buffer_epochs": 1,
-            "qvalue_epochs": 10,
-            "batch_timesteps": 10,
-            "use_duelling": False,
-            "use_double":False,
-            "lr": 0.0001,
-            "n_processes": 1,
-            "n_evaluation_processes": 4,
-            "verbose": True,
-            "n_evaluation_envs": 4,
-            "time_limit": 28800,
-            "env_seed": 48,
-            "clip_grad": 0.0,
-            "learner_device": "cuda",
-            "logdir":"./results",
-            "update_target_epoch":1000
-
-    }
     import sys
     import os
     print(len(sys.argv))
