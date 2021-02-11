@@ -60,7 +60,7 @@ if __name__=="__main__":
 
     config={"env_name": "PongNoFrameskip-v4",
             "a2c_timesteps": 20,
-            "n_envs": 1,
+            "n_envs": 4,
             "max_episode_steps": 1000,
             "env_seed": 42,
             "n_processes": 4,
