@@ -163,7 +163,7 @@ class A2C:
 
 
     def get_loss(self,trajectories):
-            print("loss")
+            print("loss ",trajectories.trajectories.lengths)
             trajectories=trajectories.to(self.config["learner_device"])
             replayed=replay_agent(self.agent,trajectories)
             info=trajectories.info
