@@ -18,7 +18,6 @@ import time
 import numpy as np
 import torch.nn.functional as F
 from rlstructures import replay_agent
-from rlalgos.a2c_gae.agent import ActionModel,CriticModel,Model
 
 
 class A2C:
@@ -26,7 +25,7 @@ class A2C:
         self.config = config
 
         # Creation of the Logger (that saves in tensorboard and CSV)
-        self.logger = TFLogger(log_dir=self.config["logdir"], hps=self.config)
+        self.logger = TFLogger(log_dir=self.config["logdir"], hps=self.config,save_every=self.config["save_every"])
 
         self._create_env=create_env
         self._create_train_env=create_train_env
@@ -35,11 +34,18 @@ class A2C:
         #Creation of one env instance to get the dimensionnality of observations and number of actions
         env = self._create_env(self.config["n_envs"], seed=0,env_name=self.config["env_name"])
         self.n_actions = env.action_space.n
-        self.obs_dim = env.reset()[0]["frame"].size()[1]
+        self.obs_shape = env.reset()[0]["frame"].size()
         del env
+
+    def _state_dict(self,model,device="cpu"):
+        sd = model.state_dict()
+        for k, v in sd.items():
+            sd[k] = v.to(device)
+        return sd
 
     def run(self):
         # Instantiate the learning model abd the baseline model
+        self.learning_model=self._create_model()
 
         self.agent=self._create_agent(n_actions = self.n_actions, model = self.learning_model)
 
@@ -82,6 +88,7 @@ class A2C:
         )
 
         #Creation of the optimizer
+        self.learning_model.to(self.config["learner_device"])
         optimizer = torch.optim.Adam(self.learning_model.parameters(), lr=self.config["lr"])
 
         #Training Loop:
@@ -96,7 +103,7 @@ class A2C:
         self.evaluation_iteration=self.iteration
 
         #Initialize the training batcher such that agents will start to acqire pieces of episodes
-        self.train_batcher.update(self.learning_model.state_dict())
+        self.train_batcher.update(self._state_dict(self.learning_model))
         n_episodes=self.config["n_envs"]*self.config["n_processes"]
         agent_info=DictTensor({"stochastic":torch.tensor([True]).repeat(n_episodes)})
         self.train_batcher.reset(agent_info=agent_info)
@@ -126,7 +133,7 @@ class A2C:
             optimizer.step()
 
             #Update the train batcher with the updated model
-            self.train_batcher.update(self.learning_model.state_dict())
+            self.train_batcher.update(self._state_dict(self.learning_model))
             self.iteration+=1
 
             #We check the evaluation batcher
@@ -137,12 +144,16 @@ class A2C:
                 self.logger.add_scalar("evaluation_reward",cumulated_reward.item(),self.evaluation_iteration)
                 print("At iteration %d, reward is %f"%(self.evaluation_iteration,cumulated_reward.item()))
                 #We reexecute the evaluation batcher (with same value of agent_info and same number of episodes)
-                self.evaluation_batcher.update(self.learning_model.state_dict())
+                self.evaluation_batcher.update(self._state_dict(self.learning_model))
                 self.evaluation_iteration=self.iteration
                 n_episodes=self.config["n_evaluation_processes"]*self.config["n_evaluation_envs"]
                 agent_info=DictTensor({"stochastic":torch.tensor([False]).repeat(n_episodes)})
                 self.evaluation_batcher.reset(agent_info=agent_info)
                 self.evaluation_batcher.execute()
+
+            if time.time()-_start_time > 600 and self.iteration%1000==0:
+                self.logger.update_csv()
+
 
         self.train_batcher.close()
         self.evaluation_batcher.get() # To wait for the last trajectories
@@ -152,6 +163,8 @@ class A2C:
 
 
     def get_loss(self,trajectories):
+            print("loss")
+            trajectories=trajectories.to(self.config["learner_device"])
             replayed=replay_agent(self.agent,trajectories)
             info=trajectories.info
             trajectories=trajectories.trajectories

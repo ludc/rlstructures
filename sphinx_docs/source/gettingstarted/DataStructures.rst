@@ -82,4 +82,4 @@ We recently introduced the `Trajectories` structure as a pair of one DictTensor 
     trajectories.info #A DictTensor
     trajectories.trajectories #A TemporalDictTensor of transitions
 
-See the RL_Batcher documentation for additional informations
+See the `Agent and Batcher` documentation for more details.

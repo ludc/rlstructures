@@ -69,6 +69,7 @@ class RL_Batcher:
             w.close()
         for w in self.workers:
             del w
+        self.buffer.close()
 
     def n_elems(self):
         return self._n_episodes
@@ -138,7 +139,3 @@ class RL_Batcher:
                 self.buffer,
             )
             self.workers.append(worker)
-
-    def close(self):
-        super().close()
-        self.buffer.close()

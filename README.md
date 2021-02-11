@@ -11,6 +11,8 @@ What you gain by using the new API:
 
 All these changes are documented in the HTML documentation at [http://facebookresearch.github.io/rlstructures](http://facebookresearch.github.io/rlstructures)
 
+We consider that the new provided API is faster and simpler to use.
+
 # TL;DR
 
 TL;DR: RLStructures is a lightweight Python library that provides simple APIs as well as data structures that make as few assumptions as possible about the structure of your agent or your task, while allowing for transparently executing multiple policies on multiple environments in parallel (incl. multiple GPUs). It thus facilitates the implementation of RL algorithms while avoiding complex abstractions.

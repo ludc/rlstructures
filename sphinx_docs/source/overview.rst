@@ -6,6 +6,21 @@ TL;DR
 -----
 `rlstructures` is a lightweight Python library that provides simple APIs as well as data structures that make as few assumptions as possible about the structure of your agent or your task while allowing the transparent execution of multiple policies on multiple environments in parallel (incl. multiple GPUs).
 
+Important Note (Feb 2021)
+-------------------------
+
+Due to feedback, we have made changed over the API. The old API is still working, but we encourage you to move to the new one. The modifications are:
+
+* There is now only one Batcher class (called `RL_Batcher`)
+
+  * The format of the trajectories returned by the batcher is different (see the `Getting Started` section)
+* The Agent API (`RL_Agent`) is different and simplified
+
+  * We also include a `replay` function to facilitate loss computation
+* The principles are exaclty the same, and adaptation is easy (and we can help !)
+* The API will not change anymore during the next months.
+
+
 Why/What?
 ---------
 RL research addresses multiple aspects of RL like hierarchical policies, option-based policies, goal-oriented policies, structured input/output spaces, transformers-based policies, etc. and there are currently few tools to handle this diversity of research projects.

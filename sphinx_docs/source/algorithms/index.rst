@@ -1,15 +1,14 @@
 Provided Algorithms
 ===================
 
-
 We provide multiple RL algorithms as examples.
+
 1) A2C with General Advantage Estimator
 2) PPO with discrete actions
-3) Duelling Q-Learning
+3) Double Duelling Q-Learning + Prioritized Experience Replay
 4) SAC for continuous actions
 
-The algorithms can be used as examples to implement your own algorithms. Each algorithm is parameterized by a `YAML` file that contains the hyper-parameters (based on the `hydra` framework, allowing to launch on cluster).
+The algorithms can be used as examples to implement your own algorithms.
+Typical execution is : `python main.py`
 
-Typical execution is : `python main.py -cd script_directory -cn config.yaml`
-
-Note that all algorithms produced a tensorboard and a CSV output.\
+Note that all algorithms produced a tensorboard and a CSV output (see `config["logdir"]` in `main.py`)

@@ -309,7 +309,7 @@ def s_worker_process(
         assert isinstance(order, tuple)
         order_name = order[0]
         if order_name == "close":
-            logging.debug("\tClosing process...")
+            print("\tClosing process...")
             terminate_process = True
             env.close()
             agent.close()
@@ -413,7 +413,7 @@ class S_ProcessWorker:
         self.outq.get()
 
     def close(self):
-        logging.debug("Stop process " + str(self.worker_id))
+        print("Stop process " + str(self.worker_id))
         self.inq.put(("close",))
         self.outq.get()
         time.sleep(0.1)

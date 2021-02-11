@@ -22,6 +22,9 @@ class ReinforceAgent(RL_Agent):
     def update(self,  state_dict):
         self.model.load_state_dict(state_dict)
 
+    def require_history(self):
+        return False
+
     def initial_state(self,agent_info,B):
         return DictTensor({})
 

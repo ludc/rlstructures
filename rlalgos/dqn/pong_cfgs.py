@@ -27,7 +27,7 @@
             #N paralellel evaluation processes: increase if you wnat more frequent evaluation
             "n_evaluation_processes": 4,
 
-            "verbose": True,
+            "verbose": False,
             #Optimizer name
             "optim":["Adam","RMSprop"],
             #Stop the process after n seconds

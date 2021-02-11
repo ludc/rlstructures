@@ -72,18 +72,18 @@ class RecurrentAgent(RL_Agent):
         initial_state = observation["initial_state"]
         B = observation.n_elems()
 
-        istate=self.initial_state(agent_info,B)
+        istate=self.initial_state(agent_info,B).to(initial_state.device)
         state=masked_dicttensor(state,istate,initial_state)
         new_z,action_proba = self.model.action_model(state["agent_state"],observation["frame"])
 
         diff=(action_proba-tslice.truncate_key("action/")["action_probabilities"]).abs().mean()
         #Check  that there is no computation error: replay is computing the same action probabilities than the batcher agents
-        # if diff>1e-7:
-        #     print("Problem ?")
-        #     exit()
+        if diff>1e-7:
+            print("Problem ?")
+            exit()
 
         critic=self.model.critic_model(state["agent_state"],observation["frame"])
-        _critic=self.model.critic_model(new_z,observation["frame"]).detach()
+        _critic=self.model.critic_model(new_z,_observation["frame"]).detach()
         new_state = DictTensor({"agent_state":new_z,"agent_step": state["agent_step"] + 1})
         return DictTensor({"critic":critic,"_critic":_critic,"action_probabilities":action_proba}), new_state
 

@@ -22,11 +22,16 @@ VecEnv
    :members:
    :undoc-members:
 
-Agent
------
+RL_Agent
+--------
 
-.. automodule:: rlstructures.agent
+.. automodule:: rlstructures.rl_batchers.agent
    :members:
    :undoc-members:
 
+RL_Batcher
+----------
 
+.. automodule:: rlstructures.rl_batchers.batcher
+   :members:
+   :undoc-members:
