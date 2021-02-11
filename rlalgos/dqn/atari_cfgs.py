@@ -36,7 +36,7 @@
             "n_processes": 4,
             "buffer/alpha":0.,
             "buffer/beta":0.,
-            "as_fast_as_possible":[False],
+            "as_fast_as_possible":False,
         }
         ,
         {
@@ -46,14 +46,14 @@
             "n_processes": 4,
             "buffer/alpha":0.0,
             "buffer/beta":0.0,
-            "as_fast_as_possible":[False],
+            "as_fast_as_possible":False,
         }
         ,
         {
             "initial_buffer_epochs": 600,
             "qvalue_epochs": 1,
             "batch_timesteps": 20,
-            "as_fast_as_possible":[True],
+            "as_fast_as_possible":True,
             "n_processes": 4,
             "buffer/alpha":0.0,
             "buffer/beta":0.0,
