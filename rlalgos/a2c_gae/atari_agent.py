@@ -71,7 +71,7 @@ class AtariAgent(RL_Agent):
         initial_state = observation["initial_state"]
         B = observation.n_elems()
 
-        istate=self.initial_state(agent_info,B)
+        istate=self.initial_state(agent_info,B).to(initial_state.device)
         state=masked_dicttensor(state,istate,initial_state)
         action_proba = self.model.action_model(observation["frame"])
 
