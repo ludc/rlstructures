@@ -4,9 +4,6 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 #
-
-
-from rlstructures import logging
 from rlstructures.env_wrappers import GymEnv, GymEnvInf
 from rlstructures.tools import weight_init
 import torch.nn as nn
