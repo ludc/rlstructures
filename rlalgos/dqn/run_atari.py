@@ -25,8 +25,6 @@ import math
 
 
 def create_env(n_envs, mode="train",max_episode_steps=None, seed=None,**args):
-
-
     if mode=="train":
         envs=[]
         for k in range(n_envs):

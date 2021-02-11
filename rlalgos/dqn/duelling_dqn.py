@@ -299,7 +299,7 @@ class DQN:
         logging.info("Sampling initial transitions")
         for k in range(self.config["initial_buffer_epochs"]):
             self.train_batcher.execute()
-            trajectories,n=self.train_batcher.get()
+            trajectories,n=self.train_batcher.get(blocking=True)
             assert not n==0
             self.replay_buffer.push(trajectories.trajectories)
             print(k,"/",self.config["initial_buffer_epochs"])
@@ -330,7 +330,6 @@ class DQN:
         self.train_batcher.update(self._state_dict(self.learning_model,torch.device("cpu")))
         self.train_batcher.execute(agent_info=DictTensor({"epsilon":torch.tensor([self.epsilon]).repeat(n_episodes).float()}))
 
-
         while time.time()-_start_time <self.config["time_limit"]:
             trajectories,n=self.train_batcher.get(blocking=not self.config["as_fast_as_possible"])
 
@@ -338,6 +337,7 @@ class DQN:
                 epsilon_step=(self.config["epsilon_greedy_max"]-self.config["epsilon_greedy_min"])/self.config["epsilon_min_epoch"]
                 self.epsilon=self.config["epsilon_greedy_max"]-epsilon_step*self.iteration
                 self.epsilon=max(self.epsilon,self.config["epsilon_greedy_min"])
+
                 self.logger.add_scalar("epsilon",self.epsilon,self.iteration)
                 n_episodes=self.config["n_envs"]*self.config["n_processes"]
                 self.train_batcher.update(self._state_dict(self.learning_model,torch.device("cpu")))
@@ -469,12 +469,7 @@ class DQN:
             actionp=qp.max(1)[1]
             _q_target_a= _q_target[Bv,actionp]
         _target_value=_q_target_a*(1-_done)*self.config["discount_factor"]+reward
-        # print(qa[:4]," vs ",_target_value[:4])
-        # m=reward.ne(0.0)
-        # if m.any():
-        #     print("Q: ",qa[m])
-        #     print("T: ",_target_value[m])
-        #     print("R: ",reward[m])
+
         td = (_target_value-qa)**2
         dt = DictTensor(
             {
