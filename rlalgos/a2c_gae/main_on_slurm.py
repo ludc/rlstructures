@@ -18,6 +18,7 @@ import gym
 from gym.wrappers import TimeLimit
 from gym import ObservationWrapper
 from rlalgos.atari_wrappers import make_atari, wrap_deepmind, wrap_pytorch
+import itertools
 
 def create_env(n_envs, env_name,max_episode_steps=None, seed=None,**args):
         envs=[]
