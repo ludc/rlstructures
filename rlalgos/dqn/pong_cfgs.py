@@ -15,21 +15,21 @@
             # Size of the replay buffer (number of transitions)
             "replay_buffer_size": [100000],
             # Size of the learning batches
-            "n_batches": 32,
+            "n_batches": [32,128,512],
             #Duelling architecture ?
-            "use_duelling": [False,True],
+            "use_duelling": [False],
             #Double DQN ?
-            "use_double": [False,True],
+            "use_double": [True],
             #Learning rate
             "lr": [1e-4,1e-5],
             #N env per evaluation process:   n_evaluation_processes*n_evaluation_envs is the number of trajectories used for each evaluation
-            "n_evaluation_envs": 4,
+            "n_evaluation_envs": 32,
             #N paralellel evaluation processes: increase if you wnat more frequent evaluation
             "n_evaluation_processes": 4,
 
             "verbose": False,
             #Optimizer name
-            "optim":["Adam","RMSprop"],
+            "optim":["Adam"],
             #Stop the process after n seconds
             "time_limit": 28800,
             #Env seed
@@ -78,8 +78,17 @@
         ,
         {
             "initial_buffer_epochs": 600,
-            "qvalue_epochs": 4,
+            "qvalue_epochs": 1,
             "batch_timesteps": 10,
+            "n_processes": 4,
+            "buffer/alpha":0.0,
+            "buffer/beta":0.0,
+        }
+        ,
+        {
+            "initial_buffer_epochs": 600,
+            "qvalue_epochs": 1,
+            "batch_timesteps": 20,
             "n_processes": 4,
             "buffer/alpha":0.0,
             "buffer/beta":0.0,
