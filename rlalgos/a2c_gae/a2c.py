@@ -110,7 +110,9 @@ class A2C:
 
         while(time.time()-_start_time<self.config["time_limit"]):
             self.train_batcher.execute()
+            print("coucou")
             trajectories,n=self.train_batcher.get(blocking=True)
+            print("end")
             assert n==self.config["n_envs"]*self.config["n_processes"]
 
             dt=self.get_loss(trajectories)
