@@ -75,7 +75,7 @@ if __name__=="__main__":
             "gae_coef":0.3,
             "logdir":"./results",
             "clip_grad":40,
-            "learner_device":"cpu",
+            "learner_device":"cuda",
             "save_every":100
     }
     exp=Experiment(config,create_train_env,create_env,create_agent)
