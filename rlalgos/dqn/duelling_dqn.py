@@ -196,6 +196,12 @@ class ReplayBuffer:
         limit=self.pos
         if self.full:
             limit=self.N
+        if (alpha==0 and beta==0):
+            w=1.0/limit
+            idxs=torch.randint(limit,size=(n,))
+            d={k:self.buffer[k][idxs] for k in self.buffer}
+            return DictTensor(d),None,None
+
         distribution=self.priorities[:limit]**alpha
         distribution=distribution/distribution.sum()
         #print(distribution)
@@ -369,8 +375,14 @@ class DQN:
                 transitions,idx,weights=self.replay_buffer.sample(n=self.config["n_batches"],alpha=self.config["buffer/alpha"],beta=self.config["buffer/beta"])
                 consumed+=transitions.n_elems()
                 dt = self.get_loss(transitions,device)
-                self.replay_buffer.update_priorities(idx,dt["q_loss"].sqrt().detach().to("cpu"))
-                _loss=(dt["q_loss"]*weights.to(self.config["learner_device"])).mean()
+                _loss=None
+
+                if alpha==0 and beta==0:
+                    _loss=dt["q_loss"].to(self.config["learner_device"])).mean()
+                else:
+                    self.replay_buffer.update_priorities(idx,dt["q_loss"].sqrt().detach().to("cpu"))
+                    _loss=(dt["q_loss"]*weights.to(self.config["learner_device"])).mean()
+
                 self.logger.add_scalar("q_loss",_loss.item(),self.iteration)
 
                 _loss.backward()

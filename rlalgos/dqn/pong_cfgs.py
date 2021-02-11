@@ -11,7 +11,7 @@
             #Epsilon value at the end of the decay
             "epsilon_greedy_min": [0.01],
             #Learning epoch when the min epsilon value is reached
-            "epsilon_min_epoch": [100000,200000],
+            "epsilon_min_epoch": [50000,100000,200000],
             # Size of the replay buffer (number of transitions)
             "replay_buffer_size": [100000,1000000],
             # Size of the learning batches
@@ -61,7 +61,7 @@
             #Number of transitions to acquire at each timestep
             "batch_timesteps": 1,
             #Number of learning processes
-            "n_processes": 1,
+            "n_processes": 4,
             #Parameters of the prioritized experience replay buffer. 0.0 and 0.0 => classical replay buffer
             "buffer/alpha":0.,
             "buffer/beta":0.,
