@@ -378,7 +378,7 @@ class DQN:
                 _loss=None
 
                 if alpha==0 and beta==0:
-                    _loss=dt["q_loss"].to(self.config["learner_device"])).mean()
+                    _loss=dt["q_loss"].to(self.config["learner_device"]).mean()
                 else:
                     self.replay_buffer.update_priorities(idx,dt["q_loss"].sqrt().detach().to("cpu"))
                     _loss=(dt["q_loss"]*weights.to(self.config["learner_device"])).mean()
