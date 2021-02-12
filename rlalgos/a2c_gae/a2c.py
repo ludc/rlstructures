@@ -112,13 +112,13 @@ class A2C:
             self.train_batcher.execute()
             trajectories,n=self.train_batcher.get(blocking=True)
             assert n==self.config["n_envs"]*self.config["n_processes"]
-
+            #print(trajectories.trajectories["_observation/reward"].sum(1))
             dt=self.get_loss(trajectories)
             [self.logger.add_scalar("loss/"+k,dt[k].item(),self.iteration) for k in dt.keys()]
             ld = self.config["critic_coef"] * dt["critic_loss"]
             lr = self.config["a2c_coef"] * dt["a2c_loss"]
             le = self.config["entropy_coef"] * dt["entropy_loss"]
-
+            print(dt["entropy_loss"].item())
             floss = ld - le - lr
 
             optimizer.zero_grad()

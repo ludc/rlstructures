@@ -59,24 +59,24 @@ if __name__=="__main__":
     mp.set_start_method("spawn")
 
     config={"env_name": "PongNoFrameskip-v4",
-            "a2c_timesteps": 20,
-            "n_envs": 1,
+            "a2c_timesteps": 1,
+            "n_envs": 4,
             "max_episode_steps": 15000,
             "env_seed": 42,
-            "n_processes": 8,
+            "n_processes": 4,
             "n_evaluation_processes": 4,
             "n_evaluation_envs": 1,
             "time_limit": 3600,
-            "lr": 0.001,
-            "discount_factor": 0.99,
+            "lr": 0.0001,
+            "discount_factor": 0.95,
             "critic_coef": 1.0,
             "entropy_coef": 0.01,
-            "a2c_coef": 0.1,
+            "a2c_coef": 1.0,
             "gae_coef":0.3,
             "logdir":"./results",
-            "clip_grad":40,
-            "learner_device":"cuda",
-            "save_every":100
+            "clip_grad":0,
+            "learner_device":"cpu",
+            "save_every":1
     }
     exp=Experiment(config,create_train_env,create_env,create_agent)
     exp.run()

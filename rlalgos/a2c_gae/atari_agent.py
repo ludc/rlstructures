@@ -75,11 +75,12 @@ class AtariAgent(RL_Agent):
         state=masked_dicttensor(state,istate,initial_state)
         action_proba = self.model.action_model(observation["frame"])
 
+        #print(action_proba[0])
         diff=(action_proba-tslice.truncate_key("action/")["action_probabilities"]).abs().mean()
-        #Check  that there is no computation error: replay is computing the same action probabilities than the batcher agents
-        # if diff>1e-7:
-        #     print("Problem ?")
-        #     exit()
+        # Check  that there is no computation error: replay is computing the same action probabilities than the batcher agents
+        if diff>1e-7:
+            print("Problem ?")
+            exit()
 
         critic=self.model.critic_model(observation["frame"])
         _critic=self.model.critic_model(observation["frame"]).detach()
@@ -94,7 +95,7 @@ class Model(nn.Module):
 
 class ActionModel(nn.Module):
     def __init__(self, inputs_shape, num_actions):
-        super(ActionModel, self).__init__()
+        super().__init__()
 
         self.inut_shape = inputs_shape
         self.num_actions = num_actions
@@ -110,7 +111,7 @@ class ActionModel(nn.Module):
 
         self.fc = nn.Sequential(
             nn.Linear(self.features_size(), 512),
-            nn.ReLU(),
+            nn.Tanh(),
             nn.Linear(512, self.num_actions)
         )
 
@@ -129,7 +130,7 @@ class CriticModel(nn.Module):
     """ The model that computes V(s)
     """
     def __init__(self, inputs_shape):
-        super(CriticModel, self).__init__()
+        super().__init__()
 
         self.inut_shape = inputs_shape
 

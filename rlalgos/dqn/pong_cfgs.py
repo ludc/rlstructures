@@ -1,7 +1,7 @@
 (
     {"environment/env_name": "PongNoFrameskip-v4",
             #n environment per process
-            "n_envs": 1,
+            "n_envs": [1,4],
             #Maximum number of timesteps (for evaluation episodes)
             "max_episode_steps": 15000,
             #Discount factor
@@ -39,7 +39,7 @@
             #cpu or cuda
             "learner_device": "cuda",
             # if True, the system will do as many model updates as possible
-            "as_fast_as_possible":[False,True],
+            "as_fast_as_possible":[True],
 
             #Update target model is a hard way (by copying) or with smooth upddates. If True=>update_target_epoch if False=>update_target_tau
             "update_target_hard":[True],
