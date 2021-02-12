@@ -79,6 +79,7 @@ class AtariAgent(RL_Agent):
         diff=(action_proba-tslice.truncate_key("action/")["action_probabilities"]).abs().mean()
         # Check  that there is no computation error: replay is computing the same action probabilities than the batcher agents
         if diff>1e-7:
+            print(diff)
             print("Problem ?")
             exit()
 
