@@ -109,7 +109,6 @@ class A2C:
         self.train_batcher.reset(agent_info=agent_info)
 
         while(time.time()-_start_time<self.config["time_limit"]):
-            print(self.iteration)
             self.train_batcher.execute()
             trajectories,n=self.train_batcher.get(blocking=True)
             assert n==self.config["n_envs"]*self.config["n_processes"]
