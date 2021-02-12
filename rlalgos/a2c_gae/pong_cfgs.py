@@ -12,7 +12,7 @@
             "critic_coef": 1.0,
             "entropy_coef": [0.01,0.001],
             "a2c_coef": [1.0,0.1],
-            "gae_coef":[0.0,0.3,1.0],
+            "gae_coef":[0.0,0.3],
             "logdir":"/checkpoint/denoyer/pong_a2c",
             "clip_grad":40,
             "learner_device":"cuda",
