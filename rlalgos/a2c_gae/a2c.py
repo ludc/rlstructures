@@ -118,7 +118,6 @@ class A2C:
             ld = self.config["critic_coef"] * dt["critic_loss"]
             lr = self.config["a2c_coef"] * dt["a2c_loss"]
             le = self.config["entropy_coef"] * dt["entropy_loss"]
-            print(dt["entropy_loss"].item())
             floss = ld - le - lr
 
             optimizer.zero_grad()
@@ -142,7 +141,7 @@ class A2C:
                 #Compute the cumulated reward
                 cumulated_reward=(evaluation_trajectories.trajectories["_observation/reward"]*evaluation_trajectories.trajectories.mask()).sum(1).mean()
                 self.logger.add_scalar("evaluation_reward",cumulated_reward.item(),self.evaluation_iteration)
-                print("At iteration %d, reward is %f"%(self.evaluation_iteration,cumulated_reward.item()))
+                #print("At iteration %d, reward is %f"%(self.evaluation_iteration,cumulated_reward.item()))
                 #We reexecute the evaluation batcher (with same value of agent_info and same number of episodes)
                 self.evaluation_batcher.update(self._state_dict(self.learning_model))
                 self.evaluation_iteration=self.iteration

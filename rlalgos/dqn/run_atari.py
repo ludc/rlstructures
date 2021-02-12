@@ -65,14 +65,14 @@ if __name__=="__main__":
 
     config={"environment/env_name": "PongNoFrameskip-v4",
             "n_envs": 1,
-            "max_episode_steps": 15000,
+            "max_episode_steps": 100,
             "discount_factor": 0.99,
             "epsilon_greedy_max": 0.5,
             "epsilon_greedy_min": 0.1,
             "epsilon_min_epoch": 1000,
-            "replay_buffer_size": 1000000,
+            "replay_buffer_size": 10000,
             "n_batches": 32,
-            "initial_buffer_epochs": 1,
+            "initial_buffer_epochs": 10,
             "qvalue_epochs": 1,
             "batch_timesteps": 1,
             "use_duelling": False,
@@ -92,8 +92,8 @@ if __name__=="__main__":
             "update_target_epoch":1000,
             "update_target_tau": 0.005,
 
-            "buffer/alpha":0.6,
-            "buffer/beta":0.4,
+            "buffer/alpha":0.,
+            "buffer/beta":0.,
 
             "logdir":"./results",
             "save_every":100,

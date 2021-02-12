@@ -133,6 +133,7 @@ class ReplayBuffer:
         self.priorities=None
 
     def _init_buffer(self,trajectories):
+        print("\tCreating relpay buffer of size ",self.N)
         self.buffer={}
         for k in trajectories.keys():
             dtype=trajectories[k].dtype
@@ -308,7 +309,6 @@ class DQN:
             trajectories,n=self.train_batcher.get(blocking=True)
             assert not n==0
             self.replay_buffer.push(trajectories.trajectories)
-            print(k,"/",self.config["initial_buffer_epochs"])
 
         self.iteration=0
 
@@ -329,13 +329,11 @@ class DQN:
         epsilon_step=(self.config["epsilon_greedy_max"]-self.config["epsilon_greedy_min"])/self.config["epsilon_min_epoch"]
         self.epsilon=self.config["epsilon_greedy_max"]-epsilon_step*self.iteration
         self.epsilon=max(self.epsilon,self.config["epsilon_greedy_min"])
-        if (self.epsilon<0.01):
-            self.epsilon=0.01
         self.logger.add_scalar("epsilon",self.epsilon,self.iteration)
         n_episodes=self.config["n_envs"]*self.config["n_processes"]
         self.train_batcher.update(self._state_dict(self.learning_model,torch.device("cpu")))
         self.train_batcher.execute(agent_info=DictTensor({"epsilon":torch.tensor([self.epsilon]).repeat(n_episodes).float()}))
-
+        print("Go learning...")
         while time.time()-_start_time <self.config["time_limit"]:
             trajectories,n=self.train_batcher.get(blocking=not self.config["as_fast_as_possible"])
 
@@ -372,7 +370,9 @@ class DQN:
             assert self.config["qvalue_epochs"]>0
             for k in range(self.config["qvalue_epochs"]):
                 optimizer.zero_grad()
-                transitions,idx,weights=self.replay_buffer.sample(n=self.config["n_batches"],alpha=self.config["buffer/alpha"],beta=self.config["buffer/beta"])
+                alpha=self.config["buffer/alpha"]
+                beta=self.config["buffer/beta"]
+                transitions,idx,weights=self.replay_buffer.sample(n=self.config["n_batches"],alpha=alpha,beta=beta)
                 consumed+=transitions.n_elems()
                 dt = self.get_loss(transitions,device)
                 _loss=None
