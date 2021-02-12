@@ -1,6 +1,6 @@
 (
     {"env_name": "PongNoFrameskip-v4",
-            "n_envs": [4,8]
+            "n_envs": [4,8],
             "max_episode_steps": 15000,
             "env_seed": 42,
             "n_processes": 8,
