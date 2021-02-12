@@ -23,7 +23,7 @@
             #Learning rate
             "lr": [1e-4,1e-5],
             #N env per evaluation process:   n_evaluation_processes*n_evaluation_envs is the number of trajectories used for each evaluation
-            "n_evaluation_envs": 4,
+            "n_evaluation_envs": 1,
             #N paralellel evaluation processes: increase if you wnat more frequent evaluation
             "n_evaluation_processes": 4,
 
