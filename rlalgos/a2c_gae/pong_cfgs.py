@@ -1,6 +1,6 @@
 (
     {"env_name": "PongNoFrameskip-v4",
-            "n_envs": [4,8],
+            "n_envs": [4],
             "max_episode_steps": 15000,
             "env_seed": 42,
             "n_processes": 8,
@@ -14,7 +14,7 @@
             "a2c_coef": [1.0,0.1],
             "gae_coef":[0.3,1.0],
             "logdir":"/checkpoint/denoyer/pong_a2c",
-            "clip_grad":[40,0.5,2],
+            "clip_grad":[40,0.5],
             "learner_device":"cuda",
             "save_every":100,
             "optim":["Adam","RMSprop"]
