@@ -1,5 +1,5 @@
 (
-    {"environment/env_name": ["AsteroidsNoFrameskip-v4","SeaquestNoFrameskip-v4","JamesbondNoFrameskip-v4"],
+    {"environment/env_name": ["SeaquestNoFrameskip-v4"],
             #n environment per process
             "n_envs": [4],
             #Maximum number of timesteps (for evaluation episodes)
