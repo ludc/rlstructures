@@ -44,7 +44,7 @@
             #Update target model is a hard way (by copying) or with smooth upddates. If True=>update_target_epoch if False=>update_target_tau
             "update_target_hard":[True],
             #Copy to target model every n epochs
-            "update_target_epoch":[1000,100]
+            "update_target_epoch":[1000,100],
             #Smooth update coefficient of the target model (i.e 0.005)
             "update_target_tau": 0.005,
 
