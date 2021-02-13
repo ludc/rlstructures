@@ -17,7 +17,7 @@
             # Size of the learning batches
             "n_batches": [32],
             #Duelling architecture ?
-            "use_duelling": [True,False],
+            "use_duelling": [False],
             #Double DQN ?
             "use_double": [True],
             #Learning rate
