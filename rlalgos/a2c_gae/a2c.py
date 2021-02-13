@@ -89,7 +89,9 @@ class A2C:
 
         #Creation of the optimizer
         self.learning_model.to(self.config["learner_device"])
-        optimizer = torch.optim.Adam(self.learning_model.parameters(), lr=self.config["lr"])
+        optimizer = getattr(torch.optim,self.config["optim"])(
+            self.learning_model.parameters(), lr=self.config["lr"]
+        )
 
         #Training Loop:
         _start_time=time.time()
@@ -114,6 +116,7 @@ class A2C:
             assert n==self.config["n_envs"]*self.config["n_processes"]
             #print(trajectories.trajectories["_observation/reward"].sum(1))
             dt=self.get_loss(trajectories)
+
             [self.logger.add_scalar("loss/"+k,dt[k].item(),self.iteration) for k in dt.keys()]
             ld = self.config["critic_coef"] * dt["critic_loss"]
             lr = self.config["a2c_coef"] * dt["a2c_loss"]

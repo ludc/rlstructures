@@ -112,7 +112,7 @@ class ActionModel(nn.Module):
 
         self.fc = nn.Sequential(
             nn.Linear(self.features_size(), 512),
-            nn.Tanh(),
+            nn.ReLU(),
             nn.Linear(512, self.num_actions)
         )
 

@@ -50,7 +50,7 @@ class Experiment(A2C):
         am=ActionModel(self.obs_shape, self.n_actions)
         cm=CriticModel(self.obs_shape)
         model=Model(am,cm)
-        model.apply(weight_init)
+        #model.apply(weight_init)
         return model
 
 if __name__=="__main__":
@@ -76,7 +76,8 @@ if __name__=="__main__":
             "logdir":"./results",
             "clip_grad":0,
             "learner_device":"cpu",
-            "save_every":1
+            "save_every":1,
+            "optim":"RMSprop",
     }
     exp=Experiment(config,create_train_env,create_env,create_agent)
     exp.run()
