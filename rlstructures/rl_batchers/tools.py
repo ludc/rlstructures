@@ -355,11 +355,7 @@ def s_worker_process(
             env_running = None
             assert agent_info.empty() or agent_info.n_elems() == env.n_envs()
             assert env_info.empty() or env_info.n_elems() == env.n_envs()
-            print("la")
-            time.sleep(10)
             observation, env_running = env.reset(env_info)
-            print("end la")
-            time.sleep(10)
             out_queue.put("ok")
         elif order_name == "slot":
             if len(env_running) == 0:
