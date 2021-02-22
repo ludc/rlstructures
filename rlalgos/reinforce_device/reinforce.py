@@ -130,9 +130,6 @@ class Reinforce:
         sd=self._state_dict(self.learning_model,self.config["batcher_device"])
         self.train_batcher.update(sd)
 
-        print("coucou")
-        time.sleep(30)
-
         n_interactions = 0
         while time.time() - _start_time < self.config["time_limit"]:
             # 1) The policy will be executed in "stochastic' mode
@@ -145,6 +142,10 @@ class Reinforce:
 
             # 2) We get the trajectories (and wait until the trajectories have been sampled)
             trajectories, n_env_running = self.train_batcher.get(blocking=True)
+
+            print("coucou")
+            time.sleep(30)
+
             assert n_env_running == 0  # Assert that all trajectories are finished
             n_interactions += trajectories.trajectories.mask().sum().item()
             self.logger.add_scalar(
