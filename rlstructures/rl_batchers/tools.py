@@ -335,9 +335,6 @@ def s_worker_process(
     terminate_process = False
     while not terminate_process:
         order = in_queue.get()
-        if order[0]=="reset":
-            print("la1 ---",order[1].device(),order[2].device())
-            time.sleep(10)
         assert isinstance(order, tuple)
         order_name = order[0]
         if order_name == "close":
@@ -404,8 +401,8 @@ class S_ProcessWorker:
     ):
         self.worker_id = worker_id
         ctx = mp.get_context("spawn")
-        self.inq = ctx.Queue()
-        self.outq = ctx.Queue()
+        self.inq = mp.Queue()
+        self.outq = mp.Queue()
         self.inq.cancel_join_thread()
         self.outq.cancel_join_thread()
         p = ctx.Process(
