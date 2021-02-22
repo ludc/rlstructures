@@ -72,7 +72,7 @@ if __name__ == "__main__":
         "evaluation_mode": "stochastic",
         "logdir": "./results",
         "learner_device":torch.device("cpu"),
-        "batcher_device":torch.device("cuda:1"),
+        "batcher_device":torch.device("cuda:0"),
         "evaluation_device":torch.device("cpu")
     }
     exp = Experiment(config, create_env, create_agent)
