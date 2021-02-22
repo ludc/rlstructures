@@ -434,11 +434,12 @@ class S_ProcessWorker:
         return t
 
     def reset(self, agent_info=None, env_info=None):
-        print("truc")
-        time.sleep(10)
-
         order = ("reset", agent_info, env_info)
+        print("truc",agent_info.device(),env_info.device())
+        time.sleep(10)
         self.inq.put(order)
+        print("fin truc")
+        time.sleep(10)
         self.outq.get()
 
     def finished(self):
