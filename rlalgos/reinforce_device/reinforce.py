@@ -241,6 +241,7 @@ class Reinforce:
         - entropy loss for entropy regularization
         """
         # Use self.agent to replay the trajectories computation on the batch of trajectories
+        print(trajectories.device())
         trajectories=trajectories.to(self.config["learner_device"])
         replayed = replay_agent(self.agent, trajectories)
 
