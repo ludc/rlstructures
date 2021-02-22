@@ -25,7 +25,7 @@ class RL_Batcher:
             wi = agent_info.slice(pos, pos + n)
             ei = env_info.slice(pos, pos + n)
             print("coucou")
-            time.sleep(30)
+            time.sleep(10)
             self.workers[k].reset(agent_info=wi, env_info=ei)
             pos += n
         assert agent_info.empty() or agent_info.n_elems() == pos
