@@ -15,6 +15,9 @@ import numpy as np
 
 class RL_Batcher:
     def reset(self, agent_info=DictTensor({}), env_info=DictTensor({})):
+        assert agent_info.empty() or agent_info.device()==torch.device("cpu"),"agent_info must be on CPU"
+        assert env_info.empty() or env_info.device()==torch.device("cpu"),"env_info must be on CPU"
+
         n_workers = len(self.workers)
         pos = 0
         for k in range(n_workers):
@@ -27,6 +30,7 @@ class RL_Batcher:
         assert env_info.empty() or env_info.n_elems() == pos
 
     def execute(self, agent_info=None):
+        assert agent_info is None or agent_info.empty() or agent_info.device()==torch.device("cpu"),"agent_info must be on CPU"
         n_workers = len(self.workers)
         pos = 0
         for k in range(n_workers):
@@ -81,10 +85,15 @@ class RL_Batcher:
         seeds,
         agent_info,
         env_info,
+        device=torch.device("cpu")
     ):
         # Buffer creation:
         agent = create_agent(**agent_args)
         env = create_env(**{**env_args, "seed": 0})
+
+        assert agent_info.empty() or agent_info.device()==torch.device("cpu"),"agent_info must be on CPU"
+        assert env_info.empty() or env_info.device()==torch.device("cpu"),"env_info must be on CPU"
+
         if not agent_info.empty():
             agent_info = agent_info.slice(0, 1)
             agent_info = DictTensor.cat([agent_info for k in range(env.n_envs())])
@@ -93,9 +102,12 @@ class RL_Batcher:
             env_info = DictTensor.cat([env_info for k in range(env.n_envs())])
 
         obs, who = env.reset(env_info)
+        assert obs.device()==device,"environment observation is not on the same device than the batcher"
+
         B = obs.n_elems()
         with torch.no_grad():
             istate = agent.initial_state(agent_info, B)
+            assert istate.empty() or istate.device()==device,"agent initial state is not on the same device than the batcher"
             b, a = agent(istate, obs, agent_info)
 
         self.n_envs = env.n_envs()
@@ -116,6 +128,7 @@ class RL_Batcher:
             specs_environment=specs_environment,
             specs_agent_info=specs_agent_info,
             specs_env_info=specs_env_info,
+            device=device
         )
         self.workers = []
         self.n_per_worker = []

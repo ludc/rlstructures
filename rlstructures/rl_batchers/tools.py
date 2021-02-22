@@ -25,15 +25,21 @@ def s_acquire_slot(
     env_running,
 ):
     with torch.no_grad():
+        device=buffer.device()
+        assert observation.device()==device,"observation is not on the right device"
+        assert agent_info.empty() or agent_info.device()==torch.device("cpu"),"agent_info must be on CPU"
+        assert env_running.device==device
+
         B = env_running.size()[0]
         if agent_state is None:
             agent_state = agent.initial_state(agent_info, B)
+            assert agent_state.empty() or agent_state.device()==device
 
         id_slots = buffer.get_free_slots(B)
         env_to_slot = {env_running[i].item(): id_slots[i] for i in range(len(id_slots))}
         to_write = (
-            agent_info.prepend_key("agent_info/")
-            + env_info.prepend_key("env_info/")
+            agent_info.prepend_key("agent_info/").to(device)
+            + env_info.prepend_key("env_info/").to(device)
             + agent_state.prepend_key("agent_state/")
         )
         buffer.fwrite(id_slots, to_write)
@@ -48,6 +54,8 @@ def s_acquire_slot(
             history = None
             if require_history:
                 history = buffer.get_single_slots(_id_slots, erase=False)
+                assert history.device()==device
+
             agent_output, new_agent_state = agent(
                 agent_state, observation, agent_info, history=history
             )
@@ -56,7 +64,8 @@ def s_acquire_slot(
             (nobservation, env_running), (nnobservation, nenv_running) = env.step(
                 agent_output
             )
-            position_in_slot = torch.tensor([t]).repeat(len(_id_slots))
+
+            position_in_slot = torch.tensor([t]).repeat(len(_id_slots)).to(device)
 
             to_write = (
                 observation.prepend_key("observation/")
@@ -80,11 +89,11 @@ def s_acquire_slot(
             ]
             if len(idxs) == 0:
                 return env_to_slot, None, None, None, None, nenv_running
-            idxs = torch.tensor(idxs)
+            idxs = torch.tensor(idxs).to(device)
 
             agent_state = new_agent_state.index(idxs)
-            agent_info = agent_info.index(idxs)
-            env_info = env_info.index(idxs)
+            agent_info = agent_info.index(idxs.to("cpu"))
+            env_info = env_info.index(idxs.to("cpu"))
             env_running = nenv_running
             assert len(agent_state.keys()) == 0 or (
                 agent_state.n_elems() == observation.n_elems()
@@ -100,7 +109,6 @@ def s_acquire_slot(
                     env_running,
                 )
         return env_to_slot, agent_state, observation, agent_info, env_info, env_running
-
 
 class S_Buffer:
     """
@@ -250,6 +258,7 @@ class S_Buffer:
             return
 
         if not variables.device() == self._device:
+            print("[warning] writing variables that do not have the right device in buffer. May slow down the process")
             variables = variables.to(self._device)
 
         slots = torch.tensor(slots).to(self._device)

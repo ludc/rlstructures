@@ -133,7 +133,8 @@ class DictTensor:
         Return the device of the tensors stored in the DictTensor.
         :rtype: torch.device
         """
-        assert not self.empty(), "Empty DictTensor does not have any device"
+        if self.empty():
+            return None
         return next(iter(self.variables.values())).device
 
     def n_elems(self) -> int:

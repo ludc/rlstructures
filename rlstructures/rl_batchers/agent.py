@@ -38,7 +38,7 @@ class RL_Agent:
         if state is None:
             assert t == 0
             state = info.truncate_key("agent_state/")
-        agent_info = info.truncate_key("agent_info/")
+        agent_info = info.truncate_key("agent_info/").to("cpu")
         tslice = trajectories.trajectories.temporal_index(t)
         observation = tslice.truncate_key("observation/")
         action, state = self.__call__(state, observation, agent_info, None)
@@ -48,6 +48,48 @@ class RL_Agent:
     def close(self):
         pass
 
+class RL_Agent_CheckDevice(RL_Agent):
+    """This class is used to check that an Agent is working correctly on a particular device
+    It does not modify the behaviour of the agent, but check that input/output are on the right devices
+    """
+    def __init__(self,agent,device):
+        self.agent=agent
+        self.device=device
+
+    def require_history(self):
+        return self.agent.require_history()
+
+    def initial_state(self, agent_info: DictTensor, B: int):
+        assert agent_info.empty() or agent_info.device()==torch.device("cpu"),"agent_info has to be on CPU"
+        i=self.agent.initial_state(agent_info,B)
+        assert i.empty() or i.device()==self.device,"[RL_CheckDeviceAgent] initial_state on wrong device"
+        return i
+
+    def update(self, info):
+        self.agent.update(info)
+
+    def __call__(
+        self,
+        state: DictTensor,
+        input: DictTensor,
+        agent_info: DictTensor,
+        history: TemporalDictTensor = None,
+    ):
+        assert state.empty() or state.device()==self.device,"[RL_CheckDeviceAgent] state on wrong device"
+        assert input.empty() or input.device()==self.device,"[RL_CheckDeviceAgent] input on wrong device"
+        assert agent_info.empty() or agent_info.device()==torch.device("cpu"),"agent_info has to be on CPU"
+        assert history is None or history.empty() or history.device()==self.device,"[RL_CheckDeviceAgent] history on wrong device"
+        action,new_state=self.agent(state,input,agent_info,history)
+        assert action.device()==self.device,"[RL_CheckDeviceAgent] action on wrong device"
+        assert new_state.empty() or new_state.device()==self.device,"[RL_CheckDeviceAgent] new_state on wrong device"
+        return action,new_state
+
+    def call_replay(self, trajectories: Trajectories, t: int, state):
+        assert trajectories.device()==self.device,"[RL_CheckDeviceAgent] trajectories on wrong device"
+        return self.agent.call_replay(trajectories,t,state)
+
+    def close(self):
+        self.agent.close()
 
 def replay_agent_stateless(agent, trajectories: Trajectories, replay_method_name: str):
     """

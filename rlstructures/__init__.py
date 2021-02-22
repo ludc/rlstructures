@@ -10,6 +10,7 @@ from rlstructures.core import (
 )
 from rlstructures.rl_batchers.agent import (
     RL_Agent,
+    RL_Agent_CheckDevice,
     replay_agent_stateless,
     replay_agent,
 )
