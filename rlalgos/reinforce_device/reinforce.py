@@ -100,6 +100,9 @@ class Reinforce:
             env_info=DictTensor({}),
             device=self.config["batcher_device"]
         )
+        print("la")
+        time.sleep(30)
+
 
         self.learning_model.to(self.config["learner_device"])
         # Creation of the optimizer
