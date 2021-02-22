@@ -242,7 +242,6 @@ class Reinforce:
         """
         # Use self.agent to replay the trajectories computation on the batch of trajectories
         trajectories=trajectories.to(self.config["learner_device"])
-        print(trajectories.device())
         replayed = replay_agent(self.agent, trajectories)
 
         info = trajectories.info
