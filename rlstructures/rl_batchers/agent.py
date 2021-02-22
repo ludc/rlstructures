@@ -85,6 +85,8 @@ class RL_Agent_CheckDevice(RL_Agent):
         return action,new_state
 
     def call_replay(self, trajectories: Trajectories, t: int, state):
+        print(trajectories.device)
+        print(self.device)
         assert trajectories.device()==self.device,"[RL_CheckDeviceAgent] trajectories on wrong device"
         return self.agent.call_replay(trajectories,t,state)
 
