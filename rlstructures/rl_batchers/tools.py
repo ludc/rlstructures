@@ -27,6 +27,7 @@ def s_acquire_slot(
     with torch.no_grad():
         device=buffer.device()
         print("Device ",device)
+        time.sleep(30)
         assert observation.device()==device,"observation is not on the right device"
         assert agent_info.empty() or agent_info.device()==torch.device("cpu"),"agent_info must be on CPU"
         assert env_running.device==device
