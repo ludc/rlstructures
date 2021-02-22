@@ -337,7 +337,7 @@ def s_worker_process(
         order = in_queue.get()
         if order[0]=="reset":
             print("la1 ---",order[1].device(),order[2].device())
-        time.sleep(10)
+            time.sleep(10)
         assert isinstance(order, tuple)
         order_name = order[0]
         if order_name == "close":
