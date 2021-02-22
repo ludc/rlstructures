@@ -109,19 +109,19 @@ class Reinforce:
         self.iteration = 0
 
         # We launch the evaluation batcher, such that it starts to collect trajectories with the current model
-        n_episodes = (
-            self.config["n_evaluation_processes"] * self.config["n_evaluation_envs"]
-        )
-        agent_info = DictTensor(
-            {
-                "stochastic": torch.tensor(
-                    [self.config["evaluation_mode"] == "stochastic"]
-                ).repeat(n_episodes)
-            }
-        )
-        self.evaluation_batcher.reset(agent_info=agent_info)
-        self.evaluation_batcher.execute()
-        self.evaluation_iteration = self.iteration
+        # n_episodes = (
+        #     self.config["n_evaluation_processes"] * self.config["n_evaluation_envs"]
+        # )
+        # agent_info = DictTensor(
+        #     {
+        #         "stochastic": torch.tensor(
+        #             [self.config["evaluation_mode"] == "stochastic"]
+        #         ).repeat(n_episodes)
+        #     }
+        # )
+        # self.evaluation_batcher.reset(agent_info=agent_info)
+        # self.evaluation_batcher.execute()
+        # self.evaluation_iteration = self.iteration
 
         # Update the batcher with the last version of the learning model
         sd=self._state_dict(self.learning_model,self.config["batcher_device"])
@@ -185,48 +185,48 @@ class Reinforce:
             self.iteration += 1
 
             # 8)---- Evaluation
-            evaluation_trajectories, n_env_running = self.evaluation_batcher.get(
-                blocking=False
-            )
-            if not evaluation_trajectories is None:  # trajectories are available
-                assert n_env_running == 0
-                # Compute the cumulated reward
-                cumulated_reward = (
-                    (
-                        evaluation_trajectories.trajectories["_observation/reward"]
-                        * evaluation_trajectories.trajectories.mask()
-                    )
-                    .sum(1)
-                    .mean()
-                )
-                self.logger.add_scalar(
-                    "evaluation_reward/" + self.config["evaluation_mode"],
-                    cumulated_reward.item(),
-                    self.evaluation_iteration,
-                )
-                print(
-                    "-- Iteration ",
-                    self.iteration,
-                    " Evaluation reward = ",
-                    cumulated_reward.item(),
-                )
-                # We reexecute the evaluation batcher to start the acquisition of new trajectories
-                sd=self._state_dict(self.learning_model,self.config["evaluation_device"])
-                self.evaluation_batcher.update(sd)
-                self.evaluation_iteration = self.iteration
-                n_episodes = (
-                    self.config["n_evaluation_processes"]
-                    * self.config["n_evaluation_envs"]
-                )
-                agent_info = DictTensor(
-                    {
-                        "stochastic": torch.tensor(
-                            [self.config["evaluation_mode"] == "stochastic"]
-                        ).repeat(n_episodes)
-                    }
-                )
-                self.evaluation_batcher.reset(agent_info=agent_info)
-                self.evaluation_batcher.execute()
+            # evaluation_trajectories, n_env_running = self.evaluation_batcher.get(
+            #     blocking=False
+            # )
+            # if not evaluation_trajectories is None:  # trajectories are available
+            #     assert n_env_running == 0
+            #     # Compute the cumulated reward
+            #     cumulated_reward = (
+            #         (
+            #             evaluation_trajectories.trajectories["_observation/reward"]
+            #             * evaluation_trajectories.trajectories.mask()
+            #         )
+            #         .sum(1)
+            #         .mean()
+            #     )
+            #     self.logger.add_scalar(
+            #         "evaluation_reward/" + self.config["evaluation_mode"],
+            #         cumulated_reward.item(),
+            #         self.evaluation_iteration,
+            #     )
+            #     print(
+            #         "-- Iteration ",
+            #         self.iteration,
+            #         " Evaluation reward = ",
+            #         cumulated_reward.item(),
+            #     )
+            #     # We reexecute the evaluation batcher to start the acquisition of new trajectories
+            #     sd=self._state_dict(self.learning_model,self.config["evaluation_device"])
+            #     self.evaluation_batcher.update(sd)
+            #     self.evaluation_iteration = self.iteration
+            #     n_episodes = (
+            #         self.config["n_evaluation_processes"]
+            #         * self.config["n_evaluation_envs"]
+            #     )
+            #     agent_info = DictTensor(
+            #         {
+            #             "stochastic": torch.tensor(
+            #                 [self.config["evaluation_mode"] == "stochastic"]
+            #             ).repeat(n_episodes)
+            #         }
+            #     )
+            #     self.evaluation_batcher.reset(agent_info=agent_info)
+            #     self.evaluation_batcher.execute()
 
         self.train_batcher.close()
         self.evaluation_batcher.get()  # To wait for the last trajectories
