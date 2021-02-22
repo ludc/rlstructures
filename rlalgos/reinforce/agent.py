@@ -41,7 +41,7 @@ class ReinforceAgent(RL_Agent):
 
         action_max = action_proba.max(1)[1]
         smask=agent_info["stochastic"].float().to(action_max.device)
-        action=masked_tensor(action_max,action_sampled,agent_info["stochastic"])
+        action=masked_tensor(action_max,action_sampled,smask)
 
         new_state = DictTensor({})
 
