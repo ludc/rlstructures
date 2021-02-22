@@ -53,30 +53,32 @@ class Reinforce:
         )
 
         # We create a batcher dedicated to evaluation
-        model = copy.deepcopy(self.learning_model).to(self.config["evaluation_device"])
-        self.evaluation_batcher = RL_Batcher(
-            n_timesteps=self.config["max_episode_steps"],
-            create_agent=self._create_agent,
-            create_env=self._create_env,
-            env_args={
-                "n_envs": self.config["n_evaluation_envs"],
-                "max_episode_steps": self.config["max_episode_steps"],
-                "env_name": self.config["env_name"],
-                "device": self.config["evaluation_device"]
-            },
-            agent_args={"n_actions": self.n_actions, "model": model,"device":self.config["evaluation_device"]},
-            n_processes=self.config["n_evaluation_processes"],
-            seeds=[
-                self.config["env_seed"] + k * 10
-                for k in range(self.config["n_evaluation_processes"])
-            ],
-            agent_info=DictTensor({"stochastic": torch.tensor([True])}),
-            env_info=DictTensor({}),
-            device=self.config["evaluation_device"]
-        )
+        model = copy.deepcopy(self.learning_model)
+        model.to(self.config["evaluation_device"])
+        # self.evaluation_batcher = RL_Batcher(
+        #     n_timesteps=self.config["max_episode_steps"],
+        #     create_agent=self._create_agent,
+        #     create_env=self._create_env,
+        #     env_args={
+        #         "n_envs": self.config["n_evaluation_envs"],
+        #         "max_episode_steps": self.config["max_episode_steps"],
+        #         "env_name": self.config["env_name"],
+        #         "device": self.config["evaluation_device"]
+        #     },
+        #     agent_args={"n_actions": self.n_actions, "model": model,"device":self.config["evaluation_device"]},
+        #     n_processes=self.config["n_evaluation_processes"],
+        #     seeds=[
+        #         self.config["env_seed"] + k * 10
+        #         for k in range(self.config["n_evaluation_processes"])
+        #     ],
+        #     agent_info=DictTensor({"stochastic": torch.tensor([True])}),
+        #     env_info=DictTensor({}),
+        #     device=self.config["evaluation_device"]
+        # )
 
         # Create a batcher to sample learning trajectories
-        model = copy.deepcopy(self.learning_model).to(self.config["batcher_device"])
+        model = copy.deepcopy(self.learning_model)
+        model.to(self.config["batcher_device"])
         self.train_batcher = RL_Batcher(
             n_timesteps=self.config["max_episode_steps"],
             create_agent=self._create_agent,
