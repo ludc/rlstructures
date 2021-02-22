@@ -51,9 +51,6 @@ class Reinforce:
         self.agent = self._create_agent(
             n_actions=self.n_actions, model=self.learning_model,device=self.config["learner_device"]
         )
-        print(type(self.config["learner_device"]))
-        print(self.config["learner_device"],self.agent.device)
-        exit()
 
         # We create a batcher dedicated to evaluation
         model = copy.deepcopy(self.learning_model).to(self.config["evaluation_device"])
