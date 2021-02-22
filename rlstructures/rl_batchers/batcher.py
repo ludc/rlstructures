@@ -24,6 +24,8 @@ class RL_Batcher:
             n = self.n_envs
             wi = agent_info.slice(pos, pos + n)
             ei = env_info.slice(pos, pos + n)
+            print("ici",wi.device(),ei.device())
+            time.sleep(10)
             self.workers[k].reset(agent_info=wi, env_info=ei)
             exit()
             pos += n
