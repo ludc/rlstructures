@@ -31,7 +31,7 @@ def create_env(n_envs, env_name=None, max_episode_steps=None, device=None,seed=N
         e = create_gym_env(env_name)
         e = TimeLimit(e, max_episode_steps=max_episode_steps)
         envs.append(e)
-    return DeviceEnv(GymEnv(envs, seed),device=device)
+    return DeviceEnv(GymEnv(envs, seed),from_device=torch.device("cpu"),to_device=device)
 
 
 # Create a rlstructures.Agent
