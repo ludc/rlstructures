@@ -53,8 +53,9 @@ class Reinforce:
         )
 
         # We create a batcher dedicated to evaluation
-        model = copy.deepcopy(self.learning_model)
-        model.to(self.config["evaluation_device"])
+        # model = copy.deepcopy(self.learning_model)
+        # model.to(self.config["evaluation_device"])
+
         # self.evaluation_batcher = RL_Batcher(
         #     n_timesteps=self.config["max_episode_steps"],
         #     create_agent=self._create_agent,
