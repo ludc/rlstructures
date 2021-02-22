@@ -335,7 +335,8 @@ def s_worker_process(
     terminate_process = False
     while not terminate_process:
         order = in_queue.get()
-        print("la1 ---",order)
+        if order[0]=="reset":
+            print("la1 ---",order[1].device(),order[2].device())
         time.sleep(10)
         assert isinstance(order, tuple)
         order_name = order[0]
@@ -345,7 +346,7 @@ def s_worker_process(
             env.close()
             agent.close()
         elif order_name == "reset":
-            print("la1")
+            print("la1",order[1].device(),order[2].device())
             time.sleep(10)
             _, _agent_info, _env_info = order
             agent_info = _agent_info.clone()
