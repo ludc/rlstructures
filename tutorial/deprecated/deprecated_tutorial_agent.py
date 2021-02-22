@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) Facebook, Inc. and its affiliates.
 #
@@ -7,8 +6,8 @@
 #
 
 # Agents/Policies in RLStructures
-# 
-# An agent is the (only) abstraction need to allow RLStructures to collect interactions at scale. 
+#
+# An agent is the (only) abstraction need to allow RLStructures to collect interactions at scale.
 # * An Agent class represents a policy (or *multiple policies*)
 # * An Agent may include (or not) one or multiple pytorch Module, but it is not mandatory
 # * An Agent is stateless, and only implements a **__call__** methods
@@ -28,36 +27,37 @@
 # * * In some other cases (e.g reinitialization of the state of the agent during one episode), having *agent_state!=old_state* may be very useful to implement complex agents.
 
 
-from rlstructures import Agent,DictTensor
+from rlstructures import Agent, DictTensor
 import torch
 
-class UniformAgent(Agent):
-    def __init__(self,n_actions):
-        super().__init__()        
-        self.n_actions=n_actions
-    
-    def __call__(self,state,observation,agent_info=None,history=None):        
-        B=observation.n_elems()
-        
-        agent_state=None
-        if state is None:
-            agent_state=DictTensor({"timestep":torch.zeros(B).long()})
-        else:
-            agent_state=state
 
-        scores=torch.randn(B,self.n_actions)
-        probabilities=torch.softmax(scores,dim=1)
-        actions=torch.distributions.Categorical(probabilities).sample()
-        new_state=DictTensor({"timestep":agent_state["timestep"]+1})
-        return agent_state,DictTensor({"action":actions}),new_state
+class UniformAgent(Agent):
+    def __init__(self, n_actions):
+        super().__init__()
+        self.n_actions = n_actions
+
+    def __call__(self, state, observation, agent_info=None, history=None):
+        B = observation.n_elems()
+
+        agent_state = None
+        if state is None:
+            agent_state = DictTensor({"timestep": torch.zeros(B).long()})
+        else:
+            agent_state = state
+
+        scores = torch.randn(B, self.n_actions)
+        probabilities = torch.softmax(scores, dim=1)
+        actions = torch.distributions.Categorical(probabilities).sample()
+        new_state = DictTensor({"timestep": agent_state["timestep"] + 1})
+        return agent_state, DictTensor({"action": actions}), new_state
 
 
 # Agent and Batcher
-# 
+#
 # An *Agent* and a *VecEnv* are used together into a **Batcher** to collect episodes or trjaectories (a trajectory is a piece of episode)
 # The simplest Batcher is the **MonoThreadEpisodeBatcher** which is running in the main process. Other batcher are in RLStructures:
 # * The *EpisodeBatcher* is a multi-process batcher sampling full episodes
-# * The *Batcher* is a multi-process batcher sampling N timesteps 
+# * The *Batcher* is a multi-process batcher sampling N timesteps
 # The complex batchers are explained later
 
 # For creating a batcher, one has to provide **(pickable) functions and arguments** and not built object. Indeed, the batchers are taking in charge the creation of the objects.
@@ -66,13 +66,15 @@ import gym
 from gym.wrappers import TimeLimit
 from rlstructures.env_wrappers import GymEnv
 
+
 def create_env(max_episode_steps=100):
-    envs=[]
+    envs = []
     for k in range(4):
-        e=gym.make("CartPole-v0")
-        e=TimeLimit(e, max_episode_steps=max_episode_steps)
+        e = gym.make("CartPole-v0")
+        e = TimeLimit(e, max_episode_steps=max_episode_steps)
         envs.append(e)
-    return GymEnv(envs,seed=10)
+    return GymEnv(envs, seed=10)
+
 
 def create_agent(n_actions):
     return UniformAgent(n_actions)
@@ -82,21 +84,19 @@ def create_agent(n_actions):
 
 
 from rlstructures.batchers import MonoThreadEpisodeBatcher
-batcher=MonoThreadEpisodeBatcher(
-        create_agent=create_agent,
-        agent_args={"n_actions":2},
-        create_env=create_env,
-        env_args={"max_episode_steps":100}
+
+batcher = MonoThreadEpisodeBatcher(
+    create_agent=create_agent,
+    agent_args={"n_actions": 2},
+    create_env=create_env,
+    env_args={"max_episode_steps": 100},
 )
 
 # Depending on the batcher, one may then use different acquisition functions
-# In the mono-process case, on can use the 
+# In the mono-process case, on can use the
 # * * *execute(agent_info,env_info)* function returns env.n_envs() episodes
 # * * Acquired episodes are accessible by calling the *get* method that returns a *TemporalDictTensor*
 
 batcher.execute()
-trajectories=batcher.get()
-print("Lengths of trajectories = ",trajectories.lengths)
-
-
-
+trajectories = batcher.get()
+print("Lengths of trajectories = ", trajectories.lengths)

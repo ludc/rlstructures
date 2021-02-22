@@ -11,7 +11,8 @@ import math
 
 import torch
 import torch.multiprocessing as mp
-from rlstructures import TemporalDictTensor,DictTensor
+from rlstructures import TemporalDictTensor, DictTensor
+
 
 def s_acquire_slot(
     buffer,
@@ -26,17 +27,17 @@ def s_acquire_slot(
     with torch.no_grad():
         B = env_running.size()[0]
         if agent_state is None:
-            agent_state=agent.initial_state(agent_info,B)
+            agent_state = agent.initial_state(agent_info, B)
 
         id_slots = buffer.get_free_slots(B)
         env_to_slot = {env_running[i].item(): id_slots[i] for i in range(len(id_slots))}
         to_write = (
-                agent_info.prepend_key("agent_info/")
-                +env_info.prepend_key("env_info/")
-                +agent_state.prepend_key("agent_state/")
+            agent_info.prepend_key("agent_info/")
+            + env_info.prepend_key("env_info/")
+            + agent_state.prepend_key("agent_state/")
         )
         buffer.fwrite(id_slots, to_write)
-        require_history=agent.require_history()
+        require_history = agent.require_history()
 
         t = 0
         for t in range(buffer.s_slots):
@@ -44,9 +45,9 @@ def s_acquire_slot(
             _id_slots = [
                 env_to_slot[env_running[i].item()] for i in range(env_running.size()[0])
             ]
-            history=None
+            history = None
             if require_history:
-                history=buffer.get_single_slots(_id_slots,erase=False)
+                history = buffer.get_single_slots(_id_slots, erase=False)
             agent_output, new_agent_state = agent(
                 agent_state, observation, agent_info, history=history
             )
@@ -55,7 +56,7 @@ def s_acquire_slot(
             (nobservation, env_running), (nnobservation, nenv_running) = env.step(
                 agent_output
             )
-            position_in_slot=torch.tensor([t]).repeat(len(_id_slots))
+            position_in_slot = torch.tensor([t]).repeat(len(_id_slots))
 
             to_write = (
                 observation.prepend_key("observation/")
@@ -66,7 +67,7 @@ def s_acquire_slot(
             id_slots = [
                 env_to_slot[env_running[i].item()] for i in range(env_running.size()[0])
             ]
-            assert id_slots==_id_slots
+            assert id_slots == _id_slots
             buffer.write(id_slots, to_write)
 
             # Now, let us prepare the next step
@@ -90,8 +91,15 @@ def s_acquire_slot(
             )
 
             if nenv_running.size()[0] == 0:
-                return env_to_slot, agent_state, observation,  agent_info, env_info,env_running
-        return env_to_slot, agent_state, observation, agent_info, env_info,env_running
+                return (
+                    env_to_slot,
+                    agent_state,
+                    observation,
+                    agent_info,
+                    env_info,
+                    env_running,
+                )
+        return env_to_slot, agent_state, observation, agent_info, env_info, env_running
 
 
 class S_Buffer:
@@ -127,9 +135,15 @@ class S_Buffer:
         self.s_slots = s_slots
 
         # Creation of the storage buffers
-        nspecs_env = {"_observation/" + k: specs_environment[k] for k in specs_environment}
-        specs_environment = {"observation/" + k: specs_environment[k] for k in specs_environment}
-        specs_agent_output = {"action/" + k: specs_agent_output[k] for k in specs_agent_output}
+        nspecs_env = {
+            "_observation/" + k: specs_environment[k] for k in specs_environment
+        }
+        specs_environment = {
+            "observation/" + k: specs_environment[k] for k in specs_environment
+        }
+        specs_agent_output = {
+            "action/" + k: specs_agent_output[k] for k in specs_agent_output
+        }
 
         specs = {
             **specs_agent_output,
@@ -154,12 +168,16 @@ class S_Buffer:
                 .share_memory_()
             )
 
-        specs_agent_info = {"agent_info/" + k: specs_agent_info[k] for k in specs_agent_info}
+        specs_agent_info = {
+            "agent_info/" + k: specs_agent_info[k] for k in specs_agent_info
+        }
         specs_env_info = {"env_info/" + k: specs_env_info[k] for k in specs_env_info}
-        specs_agent_state = {"agent_state/"+k:specs_agent_state[k] for k in specs_agent_state}
-        specs_info = {**specs_agent_info,**specs_env_info,**specs_agent_state}
+        specs_agent_state = {
+            "agent_state/" + k: specs_agent_state[k] for k in specs_agent_state
+        }
+        specs_info = {**specs_agent_info, **specs_env_info, **specs_agent_state}
         for n in specs_info:
-            size = (n_slots, ) + specs_info[n]["size"]
+            size = (n_slots,) + specs_info[n]["size"]
             print(
                 "Creating F buffer for '"
                 + n
@@ -210,7 +228,7 @@ class S_Buffer:
             for ss in s:
                 self._free_slots_queue.put(ss)
 
-    def fwrite(self,slots,variables):
+    def fwrite(self, slots, variables):
         if variables.empty():
             return
 
@@ -222,7 +240,7 @@ class S_Buffer:
         a = torch.arange(len(slots)).to(self._device)
         # print("Write in "+str(slot)+" at positions "+str(position))
         for n in variables.keys():
-            #print("FWrite ",n,":", variables[n]," in ",slots)
+            # print("FWrite ",n,":", variables[n]," in ",slots)
             # assert variables[n].size()[0] == 1
             # print(self.buffers[n][slots].size())
             self.fbuffers[n][slots] = variables[n][a].detach()
@@ -251,11 +269,11 @@ class S_Buffer:
         """
         return self.position_in_slot[slot] == self.s_slots
 
-    def get_single(self,slots,position):
+    def get_single(self, slots, position):
         assert isinstance(slots, list)
         assert isinstance(slots[0], int)
         idx = torch.tensor(slots).to(self._device).long()
-        d={k:self.buffers[k][idx,position] for k in self.buffers}
+        d = {k: self.buffers[k][idx, position] for k in self.buffers}
         return DictTensor(d)
 
     def close(self):
@@ -273,15 +291,17 @@ class S_Buffer:
         ml = lengths.max().item()
         if not clone:
             v = {k: self.buffers[k][idx, :ml] for k in self.buffers}
-            fvalues=DictTensor({k:self.fbuffers[k][idx] for k in self.fbuffers})
+            fvalues = DictTensor({k: self.fbuffers[k][idx] for k in self.fbuffers})
         else:
             v = {k: self.buffers[k][idx, :ml].clone() for k in self.buffers}
-            fvalues=DictTensor({k:self.fbuffers[k][idx].clone() for k in self.fbuffers})
-            lengths=lengths.clone()
+            fvalues = DictTensor(
+                {k: self.fbuffers[k][idx].clone() for k in self.fbuffers}
+            )
+            lengths = lengths.clone()
         if erase:
             self.set_free_slots(slots)
         tdt = TemporalDictTensor(v, lengths)
-        return (tdt,fvalues)
+        return (tdt, fvalues)
 
 
 def s_worker_process(
@@ -315,36 +335,43 @@ def s_worker_process(
             agent.close()
         elif order_name == "reset":
             _, _agent_info, _env_info = order
-            agent_info=_agent_info.clone()
-            env_info=_env_info.clone()
-            del(_agent_info)
-            del(_env_info)
+            agent_info = _agent_info.clone()
+            env_info = _env_info.clone()
+            del _agent_info
+            del _env_info
             agent_state = None
             observation = None
             env_running = None
-            assert agent_info.empty() or agent_info.n_elems()==env.n_envs()
-            assert env_info.empty() or env_info.n_elems()==env.n_envs()
+            assert agent_info.empty() or agent_info.n_elems() == env.n_envs()
+            assert env_info.empty() or env_info.n_elems() == env.n_envs()
             observation, env_running = env.reset(env_info)
             out_queue.put("ok")
         elif order_name == "slot":
-            if len(env_running)==0:
-                out_queue.put(([],0))
+            if len(env_running) == 0:
+                out_queue.put(([], 0))
             else:
                 if not order[1] is None:
-                    agent_info=order[1]
-                    assert agent_info.n_elems()==len(env_running)
-                env_to_slot, agent_state, observation, agent_info,env_info, env_running = s_acquire_slot(
-                        buffer,
-                        env,
-                        agent,
-                        agent_state,
-                        observation,
-                        agent_info,
-                        env_info,
-                        env_running,
+                    agent_info = order[1]
+                    assert agent_info.n_elems() == len(env_running)
+                (
+                    env_to_slot,
+                    agent_state,
+                    observation,
+                    agent_info,
+                    env_info,
+                    env_running,
+                ) = s_acquire_slot(
+                    buffer,
+                    env,
+                    agent,
+                    agent_state,
+                    observation,
+                    agent_info,
+                    env_info,
+                    env_running,
                 )
-                slots=[env_to_slot[k] for k in env_to_slot]
-                out_queue.put((slots,len(env_running)))
+                slots = [env_to_slot[k] for k in env_to_slot]
+                out_queue.put((slots, len(env_running)))
         elif order_name == "update":
             agent.update(order[1])
             out_queue.put("ok")
@@ -379,33 +406,33 @@ class S_ProcessWorker:
         p.daemon = True
         p.start()
 
-    def acquire_slot(self,agent_info=None):
+    def acquire_slot(self, agent_info=None):
         order = ("slot", agent_info)
         self.inq.put(order)
 
     def acquire_state(self):
-        order = ("acquire_state")
+        order = "acquire_state"
         self.inq.put(order)
 
     def get_state(self):
-        t=self.outq.get()
+        t = self.outq.get()
         return t
 
-    def reset(self,agent_info=None, env_info=None):
+    def reset(self, agent_info=None, env_info=None):
         order = ("reset", agent_info, env_info)
         self.inq.put(order)
         self.outq.get()
 
     def finished(self):
         try:
-            r=self.outq.get(False)
+            r = self.outq.get(False)
             self.outq.put(r)
             return True
         except:
             return False
 
     def get(self):
-        t=self.outq.get()
+        t = self.outq.get()
         return t
 
     def update_worker(self, info):

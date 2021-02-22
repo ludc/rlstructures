@@ -11,6 +11,7 @@ import time
 import torch
 from rlstructures import DictTensor
 
+
 class VecEnv:
     """
     An VecEnvironment corresponds to multiple 'gym' environments (i.e a batch)
@@ -40,16 +41,18 @@ class VecEnv:
     def __init__(self):
         pass
 
-    def reset(self,env_info:DictTensor=None):
-        """ reset the environments instances
+    def reset(self, env_info: DictTensor = None):
+        """reset the environments instances
 
         :param env_info: a DictTensor of size n_envs, such that each value will be transmitted to each environment instance
         :type env_info: DictTensor, optional
         """
         pass
 
-    def step(self, policy_output:DictTensor)-> [[DictTensor,torch.Tensor],[DictTensor,torch.Tensor]]:
-        """ Execute one step over alll the running environment instances
+    def step(
+        self, policy_output: DictTensor
+    ) -> [[DictTensor, torch.Tensor], [DictTensor, torch.Tensor]]:
+        """Execute one step over alll the running environment instances
 
         :param policy_output: the output given by the policy
         :type policy_output: DictTensor
@@ -59,12 +62,11 @@ class VecEnv:
         raise NotImplementedError
 
     def close(self):
-        """Terminate the environment
-        """
+        """Terminate the environment"""
         raise NotImplementedError
 
-    def n_envs(self)->int:
-        """ Returns the number of environment instances contained in this env
+    def n_envs(self) -> int:
+        """Returns the number of environment instances contained in this env
         :rtype: int
         """
         return self.reset()[0].n_elems()

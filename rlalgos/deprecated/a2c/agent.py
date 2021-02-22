@@ -8,7 +8,8 @@
 
 import torch
 import torch.nn as nn
-#import rlstructures.logging as logging
+
+# import rlstructures.logging as logging
 from rlstructures import DictTensor
 from rlstructures import Agent
 import time
@@ -21,7 +22,7 @@ class NNAgent(Agent):
     state.
     """
 
-    def __init__(self,model=None, n_actions=None):
+    def __init__(self, model=None, n_actions=None):
         """
         Args:
             model (nn.Module): a module producing a tuple: (actions scores, value)
@@ -32,11 +33,10 @@ class NNAgent(Agent):
         self.n_actions = n_actions
         self.z_size = self.model.initial_state(1).size()[1]
 
-
-    def update(self,  state_dict):
+    def update(self, state_dict):
         self.model.load_state_dict(state_dict)
 
-    def __call__(self, state, observation,agent_info=None,history=None):
+    def __call__(self, state, observation, agent_info=None, history=None):
         """
         Executing one step of the agent
         """
@@ -45,7 +45,7 @@ class NNAgent(Agent):
         B = observation.n_elems()
 
         if agent_info is None:
-            agent_info=DictTensor({"stochastic":torch.tensor([True]).repeat(B)})
+            agent_info = DictTensor({"stochastic": torch.tensor([True]).repeat(B)})
 
         model_initial_state = self.model.initial_state(B)
         agent_state = None
@@ -73,19 +73,18 @@ class NNAgent(Agent):
         dist = torch.distributions.Categorical(action_proba)
         action_sampled = dist.sample()
         action_max = action_proba.max(1)[1]
-        smask=agent_info["stochastic"].float()
-        action=(action_sampled*smask+(1-smask)*action_max).long()
+        smask = agent_info["stochastic"].float()
+        action = (action_sampled * smask + (1 - smask) * action_max).long()
 
         new_state = DictTensor(
             {"agent_state": next_state, "agent_step": agent_step + 1}
         )
 
-        agent_do = DictTensor(
-            {"action": action, "action_probabilities": action_proba}
-        )
+        agent_do = DictTensor({"action": action, "action_probabilities": action_proba})
 
         state = DictTensor({"agent_state": agent_state, "agent_step": agent_step})
         return state, agent_do, new_state
+
 
 class MLPAgentModel(nn.Module):
     def __init__(self, n_observations, n_actions, n_hidden):

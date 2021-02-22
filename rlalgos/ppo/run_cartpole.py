@@ -15,50 +15,59 @@ import torch
 import time
 import numpy as np
 import torch.nn.functional as F
-from rlalgos.a2c_gae.agent import RecurrentAgent,ActionModel
+from rlalgos.a2c_gae.agent import RecurrentAgent, ActionModel
 import gym
 from gym.wrappers import TimeLimit
 from rlalgos.ppo.discrete_ppo import PPO
-from rlalgos.a2c_gae.agent import ActionModel,CriticModel,Model
+from rlalgos.a2c_gae.agent import ActionModel, CriticModel, Model
+
 
 def create_gym_env(env_name):
     return gym.make(env_name)
 
+
 def create_env(n_envs, env_name=None, max_episode_steps=None, seed=None):
-    envs=[]
+    envs = []
     for k in range(n_envs):
         e = create_gym_env(env_name)
         e = TimeLimit(e, max_episode_steps=max_episode_steps)
         envs.append(e)
     return GymEnv(envs, seed)
 
+
 def create_train_env(n_envs, env_name=None, max_episode_steps=None, seed=None):
-    envs=[]
+    envs = []
     for k in range(n_envs):
         e = create_gym_env(env_name)
         e = TimeLimit(e, max_episode_steps=max_episode_steps)
         envs.append(e)
     return GymEnvInf(envs, seed)
 
-def create_agent(model,n_actions=1):
+
+def create_agent(model, n_actions=1):
     return RecurrentAgent(model=model, n_actions=n_actions)
+
 
 class Experiment(PPO):
     def __init__(self, config, create_train_env, create_env, create_agent):
         super().__init__(config, create_train_env, create_env, create_agent)
 
     def _create_model(self):
-        action_model=ActionModel(self.obs_dim,self.n_actions,self.config["model/hidden_size"])
-        critic_model=CriticModel(self.obs_dim,self.config["model/hidden_size"])
-        module=Model(action_model,critic_model)
+        action_model = ActionModel(
+            self.obs_dim, self.n_actions, self.config["model/hidden_size"]
+        )
+        critic_model = CriticModel(self.obs_dim, self.config["model/hidden_size"])
+        module = Model(action_model, critic_model)
         module.apply(weight_init)
         return module
 
+
 if __name__ == "__main__":
     import torch.multiprocessing as mp
+
     mp.set_start_method("spawn")
 
-    config={
+    config = {
         "env_name": "CartPole-v0",
         "n_envs": 4,
         "max_episode_steps": 100,
@@ -81,7 +90,7 @@ if __name__ == "__main__":
         "learner_device": "cpu",
         "evaluation_mode": "stochastic",
         "verbose": True,
-        "model/hidden_size": 16
+        "model/hidden_size": 16,
     }
     exp = Experiment(config, create_train_env, create_env, create_agent)
     exp.run()

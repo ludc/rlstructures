@@ -15,7 +15,7 @@ import torch
 import time
 import numpy as np
 import torch.nn.functional as F
-from rlalgos.sac.agent import SACAgent,SACPolicy,SACQ
+from rlalgos.sac.agent import SACAgent, SACPolicy, SACQ
 import gym
 from gym.wrappers import TimeLimit
 from rlalgos.sac.sac import SAC
@@ -23,27 +23,31 @@ from rlalgos.sac.continuouscartopole import ContinuousCartPoleEnv
 
 
 def create_gym_env(env_name):
-    assert env_name=="ContinousCartPole"
+    assert env_name == "ContinousCartPole"
     return ContinuousCartPoleEnv()
 
+
 def create_env(n_envs, env_name=None, max_episode_steps=None, seed=None):
-    envs=[]
+    envs = []
     for k in range(n_envs):
         e = create_gym_env(env_name)
         e = TimeLimit(e, max_episode_steps=max_episode_steps)
         envs.append(e)
     return GymEnv(envs, seed)
 
+
 def create_train_env(n_envs, env_name=None, max_episode_steps=None, seed=None):
-    envs=[]
+    envs = []
     for k in range(n_envs):
         e = create_gym_env(env_name)
         e = TimeLimit(e, max_episode_steps=max_episode_steps)
         envs.append(e)
     return GymEnvInf(envs, seed)
 
-def create_agent(policy,action_dim=None):
+
+def create_agent(policy, action_dim=None):
     return SACAgent(policy=policy, action_dim=action_dim)
+
 
 class Experiment(SAC):
     def __init__(self, config, create_train_env, create_env, create_agent):
@@ -59,11 +63,13 @@ class Experiment(SAC):
         module.apply(weight_init)
         return module
 
+
 if __name__ == "__main__":
     import torch.multiprocessing as mp
+
     mp.set_start_method("spawn")
 
-    config={
+    config = {
         "env_name": "ContinousCartPole",
         "n_envs": 4,
         "n_processes": 4,
@@ -78,7 +84,6 @@ if __name__ == "__main__":
         "replay_buffer_size": 1000000,
         "lr": 0.0003,
         "lambda_entropy": 0.01,
-
         "n_evaluation_processes": 4,
         "n_evaluation_envs": 64,
         "time_limit": 600,
@@ -86,7 +91,7 @@ if __name__ == "__main__":
         "clip_grad": 40,
         "learner_device": "cpu",
         "evaluation_mode": "stochastic",
-        "verbose": True
+        "verbose": True,
     }
     exp = Experiment(config, create_train_env, create_env, create_agent)
     exp.run()

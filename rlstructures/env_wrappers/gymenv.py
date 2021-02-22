@@ -15,6 +15,7 @@ from rlstructures import DictTensor
 import gym.spaces
 import torch
 
+
 def format_frame(frame):
     if isinstance(frame, dict):
         r = {}
@@ -22,17 +23,17 @@ def format_frame(frame):
             r[k] = format_frame(frame[k])
         return r
     elif isinstance(frame, list):
-        t=torch.tensor(frame).unsqueeze(0)
-        if t.dtype!=torch.float32:
-            t=t.float()
+        t = torch.tensor(frame).unsqueeze(0)
+        if t.dtype != torch.float32:
+            t = t.float()
         return t
     elif isinstance(frame, np.ndarray):
-        t=torch.from_numpy(frame).unsqueeze(0)
-        if t.dtype!=torch.float32:
-            t=t.float()
+        t = torch.from_numpy(frame).unsqueeze(0)
+        if t.dtype != torch.float32:
+            t = t.float()
         return t
     elif isinstance(frame, torch.Tensor):
-        return frame.unsqueeze(0) #.float()
+        return frame.unsqueeze(0)  # .float()
     elif isinstance(frame, int):
         return torch.tensor([frame]).unsqueeze(0).long()
     elif isinstance(frame, float):
@@ -46,15 +47,17 @@ def format_frame(frame):
         except:
             assert False
 
+
 class GymEnv(VecEnv):
     """
     A wrapper for gym env
     """
+
     def __init__(self, gym_env=None, seed=None):
         super().__init__()
         assert not seed is None
         assert type(gym_env) is list
-        self.gym_envs=gym_env
+        self.gym_envs = gym_env
         for k in range(len(self.gym_envs)):
             self.gym_envs[k].seed(seed + k)
         self.action_space = self.gym_envs[0].action_space
@@ -63,29 +66,29 @@ class GymEnv(VecEnv):
     def n_envs(self):
         return len(self.gym_envs)
 
-    def reset(self,env_info=DictTensor({})):
-        assert env_info.empty() or env_info.n_elems()==self.n_envs()
+    def reset(self, env_info=DictTensor({})):
+        assert env_info.empty() or env_info.n_elems() == self.n_envs()
         N = self.n_envs()
         self.envs_running = torch.arange(N)
         reward = torch.zeros(N)
 
-        last_action=None
-        if (isinstance(self.gym_envs[0].action_space,gym.spaces.Discrete)):
+        last_action = None
+        if isinstance(self.gym_envs[0].action_space, gym.spaces.Discrete):
             last_action = torch.zeros(N, dtype=torch.int64)
         else:
-            a=self.gym_envs[0].action_space.sample()
-            a=torch.tensor(a).unsqueeze(0).repeat(N,1)
+            a = self.gym_envs[0].action_space.sample()
+            a = torch.tensor(a).unsqueeze(0).repeat(N, 1)
             last_action = a
 
         done = torch.zeros(N).bool()
         initial_state = torch.ones(N).bool()
         frames = None
-        if (env_info.empty()):
+        if env_info.empty():
             frames = [format_frame(e.reset()) for e in self.gym_envs]
         else:
-            frames=[]
+            frames = []
             for n in range(len(self.gym_envs)):
-                v={k:env_info[k][n].tolist() for k in env_info.keys()}
+                v = {k: env_info[k][n].tolist() for k in env_info.keys()}
                 frames.append(format_frame(self.gym_envs[n].reset(env_info=v)))
         _frames = []
         for f in frames:
@@ -109,13 +112,13 @@ class GymEnv(VecEnv):
         for b in range(len(outputs)):
             idx_env = self.envs_running[b]
             action = policy_output["action"][b]
-            last_action=action
-            if (isinstance(self.gym_envs[0].action_space,gym.spaces.Discrete)):
-                action=action.item()
-                last_action=last_action.unsqueeze(0)
+            last_action = action
+            if isinstance(self.gym_envs[0].action_space, gym.spaces.Discrete):
+                action = action.item()
+                last_action = last_action.unsqueeze(0)
             else:
-                action=action.tolist()
-                last_action=last_action.unsqueeze(0)
+                action = action.tolist()
+                last_action = last_action.unsqueeze(0)
 
             initial_state = torch.tensor([False])
             act = action
@@ -168,11 +171,12 @@ class GymEnvInf(VecEnv):
     """
     A wrapper for gym env that automaitcally reset each stopping instance
     """
+
     def __init__(self, gym_env=None, seed=None):
         super().__init__()
         assert not seed is None
         assert type(gym_env) is list
-        self.gym_envs=gym_env
+        self.gym_envs = gym_env
         for k in range(len(self.gym_envs)):
             self.gym_envs[k].seed(seed + k)
         self.action_space = self.gym_envs[0].action_space
@@ -181,30 +185,29 @@ class GymEnvInf(VecEnv):
     def n_envs(self):
         return len(self.gym_envs)
 
-    def reset(self,env_info=DictTensor({})):
-        assert env_info.empty() or env_info.n_elems()==self.n_envs()
+    def reset(self, env_info=DictTensor({})):
+        assert env_info.empty() or env_info.n_elems() == self.n_envs()
         N = self.n_envs()
         reward = torch.zeros(N)
 
-        last_action=None
-        if (isinstance(self.gym_envs[0].action_space,gym.spaces.Discrete)):
+        last_action = None
+        if isinstance(self.gym_envs[0].action_space, gym.spaces.Discrete):
             last_action = torch.zeros(N, dtype=torch.int64)
         else:
-            a=self.gym_envs[0].action_space.sample()
-            a=torch.tensor(a).unsqueeze(0).repeat(N,1)
+            a = self.gym_envs[0].action_space.sample()
+            a = torch.tensor(a).unsqueeze(0).repeat(N, 1)
             last_action = a
-
 
         done = torch.zeros(N).bool()
         initial_state = torch.ones(N).bool()
-        self.env_info=env_info
+        self.env_info = env_info
         frames = None
-        if (env_info.empty()):
+        if env_info.empty():
             frames = [format_frame(e.reset()) for e in self.gym_envs]
         else:
-            frames=[]
+            frames = []
             for n in range(len(self.gym_envs)):
-                v={k:env_info[k][n].tolist() for k in env_info.keys()}
+                v = {k: env_info[k][n].tolist() for k in env_info.keys()}
                 frames.append(format_frame(self.gym_envs[n].reset(env_info=v)))
         _frames = []
         for f in frames:
@@ -229,12 +232,12 @@ class GymEnvInf(VecEnv):
         for b in range(len(outputs)):
             action = policy_output["action"][b]
             last_action = action
-            if (isinstance(self.gym_envs[0].action_space,gym.spaces.Discrete)):
-                action=action.item()
-                last_action=last_action.unsqueeze(0)
+            if isinstance(self.gym_envs[0].action_space, gym.spaces.Discrete):
+                action = action.item()
+                last_action = last_action.unsqueeze(0)
             else:
-                action=action.tolist()
-                last_action=last_action.unsqueeze(0)
+                action = action.tolist()
+                last_action = last_action.unsqueeze(0)
 
             initial_state = torch.tensor([False])
             act = action
@@ -264,19 +267,19 @@ class GymEnvInf(VecEnv):
                 if self.env_info.empty():
                     frame = self.gym_envs[b].reset()
                 else:
-                    v={k:env_info[k][b].tolist() for k in env_info.keys()}
+                    v = {k: env_info[k][b].tolist() for k in env_info.keys()}
                     frame = self.gym_envs[b].reset(env_info=v)
 
                 frame = format_frame(frame)
                 if isinstance(frame, torch.Tensor):
                     frame = {"frame": frame}
 
-                last_action=None
-                if (isinstance(self.gym_envs[0].action_space,gym.spaces.Discrete)):
+                last_action = None
+                if isinstance(self.gym_envs[0].action_space, gym.spaces.Discrete):
                     last_action = torch.zeros(1, dtype=torch.int64)
                 else:
-                    a=self.gym_envs[0].action_space.sample()
-                    a=torch.tensor([a])
+                    a = self.gym_envs[0].action_space.sample()
+                    a = torch.tensor([a])
                     last_action = a
 
                 initial_state = torch.tensor([True])

@@ -17,9 +17,10 @@ import numpy as np
 import time
 import pickle
 
+
 class Logger:
-    """ A logger to store experimental measures in different formats.
-    """
+    """A logger to store experimental measures in different formats."""
+
     def __init__(self, **config):
         self.date = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
         self.all_values = []
@@ -118,19 +119,19 @@ class Logger:
 
 
 class TFLogger(SummaryWriter, Logger):
-    """ A logger that stores informations both in tensorboard and CSV formats
-    """
+    """A logger that stores informations both in tensorboard and CSV formats"""
+
     def __init__(self, log_dir=None, hps={}, save_every=1):
         SummaryWriter.__init__(self, log_dir=log_dir)
         Logger.__init__(self, **hps)
-        self.for_save_every={}
+        self.for_save_every = {}
         self.save_every = save_every
         f = open(log_dir + "/params.json", "wt")
         f.write(str(hps) + "\n")
         f.close()
-        self.log_dir=log_dir
-        outfile = open(log_dir+"/params.pickle",'wb')
-        pickle.dump(hps,outfile)
+        self.log_dir = log_dir
+        outfile = open(log_dir + "/params.pickle", "wb")
+        pickle.dump(hps, outfile)
         outfile.close()
 
         self.last_csv_update_iteration = 0
@@ -142,18 +143,18 @@ class TFLogger(SummaryWriter, Logger):
         SummaryWriter.add_images(self, name, value, iteration)
 
     def add_scalar(self, name, value, iteration):
-        if (self.save_every>1):
+        if self.save_every > 1:
             if not name in self.for_save_every:
                 if isinstance(value, int) or isinstance(value, float):
                     SummaryWriter.add_scalar(self, name, value, iteration)
                 Logger.add_scalar(self, name, value, iteration)
-                self.for_save_every[name]=iteration
+                self.for_save_every[name] = iteration
             else:
-                if iteration-self.for_save_every[name]>self.save_every:
+                if iteration - self.for_save_every[name] > self.save_every:
                     if isinstance(value, int) or isinstance(value, float):
                         SummaryWriter.add_scalar(self, name, value, iteration)
                     Logger.add_scalar(self, name, value, iteration)
-                    self.for_save_every[name]=iteration
+                    self.for_save_every[name] = iteration
         else:
             if isinstance(value, int) or isinstance(value, float):
                 SummaryWriter.add_scalar(self, name, value, iteration)
@@ -166,7 +167,7 @@ class TFLogger(SummaryWriter, Logger):
         values = []
         for i in range(len(values_to_save)):
             l = values_to_save[i]
-            if len(l)>0:
+            if len(l) > 0:
                 vv = {**l, "training_iteration": i + self.last_csv_update_iteration}
                 vv = {**{"_hp_" + k: self.config[k] for k in self.config}, **vv}
                 values.append(vv)

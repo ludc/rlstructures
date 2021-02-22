@@ -6,7 +6,7 @@ Examples
 
 * https://github.com/facebookresearch/rlstructures/blob/main/tutorial/tutorial_environments.py
 
-We also provide the https://github.com/facebookresearch/rlstructures/blob/main/tutorial/playing_with_rlstructures.py tutorial to help you to understand the data structures exchanged and built by the diffrent components.
+We also provide the https://github.com/facebookresearch/rlstructures/blob/main/tutorial/playing_with_rlstructures.py tutorial to help you to understand the data structures exchanged by the different components.
 
 Principles
 ----------

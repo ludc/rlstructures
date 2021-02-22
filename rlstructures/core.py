@@ -8,10 +8,11 @@
 
 from __future__ import annotations
 import torch
-from typing import Iterable,List,Dict
+from typing import Iterable, List, Dict
 
-def masked_tensor(tensor0,tensor1,mask):
-    """  Compute a tensor by combining two tensors with a mask
+
+def masked_tensor(tensor0, tensor1, mask):
+    """Compute a tensor by combining two tensors with a mask
 
     :param tensor0: a Bx(N) tensor
     :type tensor0: torch.Tensor
@@ -22,35 +23,38 @@ def masked_tensor(tensor0,tensor1,mask):
     :return: (1-m) * tensor 0 + m *tensor1 (averafging is made ine by line)
     :rtype: tensor0.dtype
     """
-    s=tensor0.size()
-    assert s[0]==mask.size()[0]
-    m=mask
-    for i in range(len(s)-1):
-        m=mask.unsqueeze(-1)
-    m=m.repeat(1,*s[1:])
-    m=m.float()
-    out=((1.0-m)*tensor0+m*tensor1).type(tensor0.dtype)
+    s = tensor0.size()
+    assert s[0] == mask.size()[0]
+    m = mask
+    for i in range(len(s) - 1):
+        m = mask.unsqueeze(-1)
+    m = m.repeat(1, *s[1:])
+    m = m.float()
+    out = ((1.0 - m) * tensor0 + m * tensor1).type(tensor0.dtype)
     return out
 
-def masked_dicttensor(dicttensor0,dicttensor1,mask):
+
+def masked_dicttensor(dicttensor0, dicttensor1, mask):
     """
     Same as `masked_tensor`, but for DictTensor
     """
-    variables={}
+    variables = {}
     for k in dicttensor0.keys():
-        v0=dicttensor0[k]
-        v1=dicttensor1[k]
-        variables[k]=masked_tensor(v0,v1,mask)
+        v0 = dicttensor0[k]
+        v1 = dicttensor1[k]
+        variables[k] = masked_tensor(v0, v1, mask)
     return DictTensor(variables)
+
 
 class DictTensor:
     """
     A dictionary of torch.Tensor. The first dimension of each tensor is the batch dimension such that all tensors have the same
     batch dimension size.
     """
-    def __init__(self, v:Dict=None):
-        """ Initialize the DictTensor with a dictionary of Tensors.
-            All tensors must have the same first dimension size.
+
+    def __init__(self, v: Dict = None):
+        """Initialize the DictTensor with a dictionary of Tensors.
+        All tensors must have the same first dimension size.
         """
         if v is None:
             self.variables = {}
@@ -64,7 +68,7 @@ class DictTensor:
                 else:
                     assert d == k.device
 
-    def _check(self)->bool:
+    def _check(self) -> bool:
         """
         Check that all tensors have the same batch dimension size.
         """
@@ -75,13 +79,13 @@ class DictTensor:
             else:
                 assert s == v.size()[0]
 
-    def keys(self)-> Iterable[str]:
+    def keys(self) -> Iterable[str]:
         """
         Return the keys of the DictTensor (as an iterator)
         """
         return self.variables.keys()
 
-    def __getitem__(self, key:str)->torch.Tensor:
+    def __getitem__(self, key: str) -> torch.Tensor:
         """Get one particular tensor in the DictTensor
 
         :param key: the name of the tensor
@@ -91,8 +95,8 @@ class DictTensor:
         """
         return self.variables[key]
 
-    def get(self, keys:Iterable[str],clone=False)-> DictTensor:
-        """ Returns a DictTensor composed of a subset of the tensors specifed by their keys
+    def get(self, keys: Iterable[str], clone=False) -> DictTensor:
+        """Returns a DictTensor composed of a subset of the tensors specifed by their keys
 
         :param keys: The keys to keep in the new DictTensor
         :type keys: Iterable[str]
@@ -100,17 +104,17 @@ class DictTensor:
         :type clone: bool, optional
         :rtype: DictTensor
         """
-        d=DictTensor({k: self.variables[k] for k in keys})
+        d = DictTensor({k: self.variables[k] for k in keys})
         if clone:
             return d.clone()
         else:
             return d
 
-    def clone(self)->DictTensor:
+    def clone(self) -> DictTensor:
         """Clone the dicttensor by cloning all its tensors
         :rtype: DictTensor
         """
-        return DictTensor({k:self.variables[k].clone() for k in self.variables})
+        return DictTensor({k: self.variables[k].clone() for k in self.variables})
 
     def specs(self):
         """
@@ -124,15 +128,15 @@ class DictTensor:
             }
         return _specs
 
-    def device(self)->torch.device:
+    def device(self) -> torch.device:
         """
         Return the device of the tensors stored in the DictTensor.
         :rtype: torch.device
         """
-        assert not self.empty(),"Empty DictTensor does not have any device"
+        assert not self.empty(), "Empty DictTensor does not have any device"
         return next(iter(self.variables.values())).device
 
-    def n_elems(self)->int:
+    def n_elems(self) -> int:
         """
         Return the size of size of the batch dimension (i.e the first dimension of the tensors)
         """
@@ -142,13 +146,13 @@ class DictTensor:
         # TODO: Empty dicts should be handled better than this
         return 0
 
-    def empty(self)->bool:
-        """ Is the DictTensor empty? (no tensors in it)
+    def empty(self) -> bool:
+        """Is the DictTensor empty? (no tensors in it)
         :rtype: bool
         """
-        return len(self.variables)==0
+        return len(self.variables) == 0
 
-    def unfold(self)->List[DictTensor]:
+    def unfold(self) -> List[DictTensor]:
         """
         Returns a list of DictTensor, each DictTensor capturing one element of the batch dimension (i.e suc that n_elems()==1)
         """
@@ -159,8 +163,8 @@ class DictTensor:
             r.append(pt)
         return r
 
-    def slice(self, index_from:int, index_to:int=None)->DictTensor:
-        """ Returns a dict tensor, keeping only batch dimensions between index_from and index_to+1
+    def slice(self, index_from: int, index_to: int = None) -> DictTensor:
+        """Returns a dict tensor, keeping only batch dimensions between index_from and index_to+1
 
         :param index_from: The first batch index to keep
         :type index_from: int
@@ -179,21 +183,21 @@ class DictTensor:
                 v[k] = self.variables[k][index_from]
             return DictTensor(v)
 
-    def index(self, index:int)->DictTensor:
+    def index(self, index: int) -> DictTensor:
         """
         The same as self.slice(index)
         """
         v = {k: self.variables[k][index] for k in self.variables}
         return DictTensor(v)
 
-    def cat(tensors:Iterable[DictTensor])->DictTensor:
+    def cat(tensors: Iterable[DictTensor]) -> DictTensor:
         """
         Aggregate multiple packed tensors over the batch dimension
 
         Args:
             tensors (list): a list of tensors
         """
-        if (len(tensors)==0):
+        if len(tensors) == 0:
             return DictTensor({})
         retour = {}
         for key in tensors[0].variables:
@@ -204,11 +208,11 @@ class DictTensor:
             retour[key] = torch.cat(to_concat, dim=0)
         return DictTensor(retour)
 
-    def to(self, device:torch.device):
+    def to(self, device: torch.device):
         """
         Create a copy of the DictTensor on a new device (if needed)
         """
-        if (self.empty()):
+        if self.empty():
             return DictTensor({})
 
         if device == self.device():
@@ -219,7 +223,7 @@ class DictTensor:
             v[k] = self.variables[k].to(device)
         return DictTensor(v)
 
-    def set(self, key:str, value:torch.Tensor):
+    def set(self, key: str, value: torch.Tensor):
         """
         Add a tensor to the DictTensor
 
@@ -230,34 +234,34 @@ class DictTensor:
         """
         assert value.size()[0] == self.n_elems()
         assert isinstance(value, torch.Tensor)
-        assert self.empty() or value.device==self.device()
+        assert self.empty() or value.device == self.device()
         self.variables[key] = value
 
-    def prepend_key(self, _str:str)->DictTensor:
+    def prepend_key(self, _str: str) -> DictTensor:
         """
         Return a new DictTensor where _str has been concatenated to all the keys
         """
         v = {_str + key: self.variables[key] for key in self.variables}
         return DictTensor(v)
 
-    def truncate_key(self, _str:str)->DictTensor:
+    def truncate_key(self, _str: str) -> DictTensor:
         """
         Return a new DictTensor where _str has been removed to all the keys that have _str as a prefix
         """
         v = {}
         for k in self.variables:
             if k.startswith(_str):
-                nk=k[len(_str):]
-                v[nk]=self.variables[k]
+                nk = k[len(_str) :]
+                v[nk] = self.variables[k]
         return DictTensor(v)
 
     def __str__(self):
         return "DictTensor: " + str(self.variables)
 
-    def __contains__(self, key:str)->bool:
+    def __contains__(self, key: str) -> bool:
         return key in self.variables
 
-    def __add__(self, dt:DictTensor)->DictTensor:
+    def __add__(self, dt: DictTensor) -> DictTensor:
         """
         Create a new DictTensor containing all the tensors from self and dt
         """
@@ -265,7 +269,7 @@ class DictTensor:
             return dt.clone()
         if dt.empty():
             return self.clone()
-        assert dt.device()==self.device()
+        assert dt.device() == self.device()
         for k in dt.keys():
             assert not k in self.variables, (
                 "variable " + k + " already exists in the DictTensor"
@@ -273,13 +277,13 @@ class DictTensor:
         v = {**self.variables, **dt}
         return DictTensor(v)
 
-    def copy_(self,source,source_indexes,destination_indexes):
+    def copy_(self, source, source_indexes, destination_indexes):
         """
         Copy the values of a source TDT at given indexes to the current TDT at the specified indexes
         """
-        assert source_indexes.size()==destination_indexes.size()
+        assert source_indexes.size() == destination_indexes.size()
         for k in self.variables.keys():
-            self.variables[k][destination_indexes]=source[k][source_indexes]
+            self.variables[k][destination_indexes] = source[k][source_indexes]
 
 
 class TemporalDictTensor:
@@ -298,7 +302,7 @@ class TemporalDictTensor:
     the batch.
     """
 
-    def __init__(self, from_dict:Dict[torch.Tensor], lengths:torch.Tensor=None):
+    def __init__(self, from_dict: Dict[torch.Tensor], lengths: torch.Tensor = None):
         """
         Args:
             from_dict (dict of tensors): the tensors to store.
@@ -319,11 +323,11 @@ class TemporalDictTensor:
         self._specs = None
 
     def clone(self):
-        v={k:self.variables[k].clone() for k in self.variables}
-        return TemporalDictTensor(v,lengths=self.lengths.clone())
+        v = {k: self.variables[k].clone() for k in self.variables}
+        return TemporalDictTensor(v, lengths=self.lengths.clone())
 
-    def set(self,name,tensor):
-        self.variables[name]=tensor
+    def set(self, name, tensor):
+        self.variables[name] = tensor
 
     def specs(self):
         if self._specs is None:
@@ -333,26 +337,26 @@ class TemporalDictTensor:
             self._specs = s
         return self._specs
 
-    def device(self)->torch.device:
+    def device(self) -> torch.device:
         """
         Returns the device of the TemporalDictTensor
         """
         return self.lengths.device
 
-    def n_elems(self)->int:
+    def n_elems(self) -> int:
         """
         Returns the number of element in the TemporalDictTensor (i.e size of
         the first dimension of each tensor).
         """
         return self.variables[self._keys[0]].size()[0]
 
-    def keys(self)->Iterable[str]:
+    def keys(self) -> Iterable[str]:
         """
         Returns the keys in the TemporalDictTensor
         """
         return self.variables.keys()
 
-    def mask(self)->torch.Tensor:
+    def mask(self) -> torch.Tensor:
         """
         Returns a mask over sequences based on the length of each trajectory
 
@@ -371,7 +375,7 @@ class TemporalDictTensor:
             _mask = _mask.lt(self.lengths.unsqueeze(1).repeat(1, max_length)).float()
             return _mask
 
-    def __getitem__(self, key:str)->torch.Tensor:
+    def __getitem__(self, key: str) -> torch.Tensor:
         """
         Returns a single tensor of size B x T x ....
 
@@ -380,7 +384,7 @@ class TemporalDictTensor:
         """
         return self.variables[key]
 
-    def shorten(self)->TemporalDictTensor:
+    def shorten(self) -> TemporalDictTensor:
         """
         Restrict the size of the variables (in term of timesteps) to provide the smallest
         possible tensors.
@@ -393,7 +397,7 @@ class TemporalDictTensor:
         pt = TemporalDictTensor(v, self.lengths.clone())
         return pt
 
-    def unfold(self)->List[TemporalDictTensor]:
+    def unfold(self) -> List[TemporalDictTensor]:
         """
         Return a list of TemporalDictTensor of size 1 x T
         """
@@ -405,18 +409,18 @@ class TemporalDictTensor:
             r.append(pt)
         return r
 
-    def get(self, keys:Iterable[str])->TemporalDictTensor:
+    def get(self, keys: Iterable[str]) -> TemporalDictTensor:
         """
         Returns a subset of the TemporalDictTensor depending on the specifed keys
 
         Args:
             keys (iterable): the keys to keep in the new TemporalDictTensor
         """
-        assert not isinstance(keys,str)
+        assert not isinstance(keys, str)
 
         return TemporalDictTensor({k: self.variables[k] for k in keys}, self.lengths)
 
-    def slice(self, index_from:int, index_to:int=None)->TemporalDictTensor:
+    def slice(self, index_from: int, index_to: int = None) -> TemporalDictTensor:
         """
         Returns a slice (in the batch dimension)
         """
@@ -429,7 +433,7 @@ class TemporalDictTensor:
             l = self.lengths[index_from].unsqueeze(0)
             return TemporalDictTensor(v, l)
 
-    def temporal_slice(self, index_from:int, index_to:int)->TemporalDictTensor:
+    def temporal_slice(self, index_from: int, index_to: int) -> TemporalDictTensor:
         """
         Returns a slice (in the temporal dimension)
         """
@@ -445,7 +449,7 @@ class TemporalDictTensor:
         m = low * l + (1 - low) * m
         return TemporalDictTensor(v, m.long())
 
-    def index(self, index:int)->TemporalDictTensor:
+    def index(self, index: int) -> TemporalDictTensor:
         """
         Returns the 1xT TemporalDictTensor for the specified batch index
         """
@@ -453,21 +457,21 @@ class TemporalDictTensor:
         l = self.lengths[index]
         return TemporalDictTensor(v, l)
 
-    def temporal_index(self, index_t:int)->TemporalDictTensor:
+    def temporal_index(self, index_t: int) -> TemporalDictTensor:
         """
         Return a DictTensor corresponding to the TemporalDictTensor at time
         index_t.
         """
         return DictTensor({k: self.variables[k][:, index_t] for k in self.variables})
 
-    def temporal_multi_index(self, index_t:torch.Tensor)->TemporalDictTensor:
+    def temporal_multi_index(self, index_t: torch.Tensor) -> TemporalDictTensor:
         """
         Return a DictTensor corresponding to the TemporalDictTensor at time index_t
         """
-        a=torch.arange(self.n_elems()).to(self.device())
+        a = torch.arange(self.n_elems()).to(self.device())
         return DictTensor({k: self.variables[k][a, index_t] for k in self.variables})
 
-    def masked_temporal_index(self, index_t:int)->[DictTensor,torch.Tensor]:
+    def masked_temporal_index(self, index_t: int) -> [DictTensor, torch.Tensor]:
         """
         Return a DictTensor at time t along with a mapping vector
         Considering the TemporalDictTensor is of size BxT, the method returns
@@ -483,7 +487,7 @@ class TemporalDictTensor:
         m = torch.arange(self.n_elems())[m]
         return DictTensor(v), m
 
-    def cat(tensors:Iterable[TemporalDictTensor])->TemporalDictTensor:
+    def cat(tensors: Iterable[TemporalDictTensor]) -> TemporalDictTensor:
         """
         Aggregate multiple packed tensors over the batch dimension
 
@@ -506,7 +510,7 @@ class TemporalDictTensor:
             retour[key] = torch.cat(to_concat, dim=0)
         return TemporalDictTensor(retour, lengths)
 
-    def to(self, device:torch.device):
+    def to(self, device: torch.device):
         """
         Returns a copy of the TemporalDictTensor to the provided device (if
         needed).
@@ -527,60 +531,65 @@ class TemporalDictTensor:
         r.append("Lengths =" + str(self.lengths.numpy()))
         return " ".join(r)
 
-    def __contains__(self, item:str)->bool:
+    def __contains__(self, item: str) -> bool:
         return item in self.variables
 
     def full(self):
-        """ returns True if self.lengths==self.lengts.max() => No empty element
-        """
-        return self.mask().sum()==0.0
+        """returns True if self.lengths==self.lengts.max() => No empty element"""
+        return self.mask().sum() == 0.0
 
-    def expand(self,new_batch_size):
+    def expand(self, new_batch_size):
         """
         Expand a TemporalDictTensor to reach a given batch_size
         """
-        assert new_batch_size>self.n_elems()
-        diff=new_batch_size-self.n_elems()
-        new_lengths=torch.zeros(new_batch_size).long().to(self.device())
-        new_lengths[0:self.n_elems()]=self.lengths
-        new_variables={}
+        assert new_batch_size > self.n_elems()
+        diff = new_batch_size - self.n_elems()
+        new_lengths = torch.zeros(new_batch_size).long().to(self.device())
+        new_lengths[0 : self.n_elems()] = self.lengths
+        new_variables = {}
 
         for k in self.variables.keys():
-            s=self.variables[k].size()
-            zeros=torch.zeros(diff,*s[1:]).to(self.device())
-            nv=torch.cat([self.variables[k],zeros])
-            new_variables[k]=nv
+            s = self.variables[k].size()
+            zeros = torch.zeros(diff, *s[1:]).to(self.device())
+            nv = torch.cat([self.variables[k], zeros])
+            new_variables[k] = nv
 
-        return TemporalDictTensor(new_variables,new_lengths)
+        return TemporalDictTensor(new_variables, new_lengths)
 
-    def copy_(self,source,source_indexes,destination_indexes):
+    def copy_(self, source, source_indexes, destination_indexes):
         """
         Copy the values of a source TDT at given indexes to the current TDT at the specified indexes
         """
-        assert source_indexes.size()==destination_indexes.size()
-        max_length_source=source.lengths.max().item()
+        assert source_indexes.size() == destination_indexes.size()
+        max_length_source = source.lengths.max().item()
         for k in self.variables.keys():
-            self.variables[k][destination_indexes,0:max_length_source]=source[k][source_indexes,0:max_length_source]
-        self.lengths[destination_indexes]=source.lengths[source_indexes]
+            self.variables[k][destination_indexes, 0:max_length_source] = source[k][
+                source_indexes, 0:max_length_source
+            ]
+        self.lengths[destination_indexes] = source.lengths[source_indexes]
+
 
 class Trajectories:
-    def __init__(self,info,trajectories):
-        self.info=info
-        self.trajectories=trajectories
-        assert info.empty() or self.info.device()==self.trajectories.device()
-        assert self.info.empty() or self.info.n_elems()==self.trajectories.n_elems()
+    def __init__(self, info, trajectories):
+        self.info = info
+        self.trajectories = trajectories
+        assert info.empty() or self.info.device() == self.trajectories.device()
+        assert self.info.empty() or self.info.n_elems() == self.trajectories.n_elems()
 
-    def to(self,device):
-        return Trajectories(self.info.to(device),self.trajectories.to(device))
+    def to(self, device):
+        return Trajectories(self.info.to(device), self.trajectories.to(device))
 
     def device(self):
         return self.trajectories.device()
 
-    def cat(trajectories:Iterable[Trajectories]):
-        return Trajectories(DictTensor.cat([t.info for t in trajectories]),TemporalDictTensor([t.trajectories for t in trajectories]))
+    def cat(trajectories: Iterable[Trajectories]):
+        return Trajectories(
+            DictTensor.cat([t.info for t in trajectories]),
+            TemporalDictTensor([t.trajectories for t in trajectories]),
+        )
 
     def n_elems(self):
         return self.trajectories.n_elems()
 
-    def sample(self,n):
+    def sample(self, n):
         raise NotImplementedError

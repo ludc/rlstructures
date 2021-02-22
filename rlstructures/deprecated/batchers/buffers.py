@@ -8,7 +8,8 @@
 
 import torch
 import torch.multiprocessing as mp
-from rlstructures import TemporalDictTensor,DictTensor
+from rlstructures import TemporalDictTensor, DictTensor
+
 
 class Buffer:
     def get_free_slots(self, k):
@@ -64,7 +65,7 @@ class LocalBuffer(Buffer):
             **specs_environment,
             **nspecs_agent_state,
             **nspecs_env,
-            "position_in_slot":{"size": torch.Size([]), "dtype": torch.int64}
+            "position_in_slot": {"size": torch.Size([]), "dtype": torch.int64},
         }
 
         for n in specs:
@@ -139,11 +140,11 @@ class LocalBuffer(Buffer):
         """
         return self.position_in_slot[slot] == self.s_slots
 
-    def get_single(self,slots,position):
+    def get_single(self, slots, position):
         assert isinstance(slots, list)
         assert isinstance(slots[0], int)
         idx = torch.tensor(slots).to(self._device).long()
-        d={k:self.buffers[k][idx,position] for k in self.buffers}
+        d = {k: self.buffers[k][idx, position] for k in self.buffers}
         return DictTensor(d)
 
     def close(self):

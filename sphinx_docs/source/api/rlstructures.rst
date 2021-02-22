@@ -1,17 +1,10 @@
 rlstructures API
 ====================
 
-DictTensor
-----------
+DictTensor, TemporalDictTensor, Trajectories
+--------------------------------------------
 
-.. automodule:: rlstructures.dicttensor
-   :members:
-   :undoc-members:
-
-TemporalDictTensor
-------------------
-
-.. automodule:: rlstructures.temporaldicttensor
+.. automodule:: rlstructures.core
    :members:
    :undoc-members:
 

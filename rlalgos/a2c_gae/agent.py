@@ -32,7 +32,7 @@ class RecurrentAgent(RL_Agent):
         Executing one step of the agent
         """
         assert not state is None
-        # Verify that the batch size is 1
+
         initial_state = observation["initial_state"]
         B = observation.n_elems()
 
@@ -40,11 +40,10 @@ class RecurrentAgent(RL_Agent):
         state=masked_dicttensor(state,istate,initial_state)
 
         new_z,action_proba = self.model.action_model(state["agent_state"],observation["frame"])
-        #We sample an action following the distribution
+
         dist = torch.distributions.Categorical(action_proba)
         action_sampled = dist.sample()
 
-        #Depending on the agent_info variable that tells us if we are in 'stochastic' or 'deterministic' mode, we keep the sampled action, or compute the action with the max score
         action_max = action_proba.max(1)[1]
         smask=agent_info["stochastic"].float()
         action=masked_tensor(action_max,action_sampled,agent_info["stochastic"])
@@ -77,10 +76,12 @@ class RecurrentAgent(RL_Agent):
         new_z,action_proba = self.model.action_model(state["agent_state"],observation["frame"])
 
         diff=(action_proba-tslice.truncate_key("action/")["action_probabilities"]).abs().mean()
+
         #Check  that there is no computation error: replay is computing the same action probabilities than the batcher agents
-        if diff>1e-7:
-            print("Problem ? ",diff)
-            #exit()
+        # Note that this problem will happen when using PPO
+        # if diff>1e-7:
+        #     print("Problem ? ",diff)
+        #     #exit()
 
         critic=self.model.critic_model(state["agent_state"],observation["frame"])
         _critic=self.model.critic_model(new_z,_observation["frame"]).detach()

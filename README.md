@@ -1,6 +1,6 @@
 # IMPORTANT NOTE
 
-**Due to feedback, the API of the batcher has been improved with the following consequences:**
+**February 2021: Due to recent feedback, the API of the batcher has been improved with the following consequences:**
 * The EpisodeBatcher and Batcher, associated with the Agent classes are still working but will print a deprecated message
 * The new Batcher is called RL_Batcher (see documentation) and associated with a RL_Agent with a simplified API
 * Learning algorithms using the old version are now in 'rlalgos/deprecated' and the algorithms using the new API are located in 'rlalgos/'

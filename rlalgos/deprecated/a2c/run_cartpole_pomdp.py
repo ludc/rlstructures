@@ -1,6 +1,7 @@
 from rlstructures import logging
 from rlstructures.env_wrappers import GymEnv
 from rlstructures.tools import weight_init
+
 #
 # Copyright (c) Facebook, Inc. and its affiliates.
 #
@@ -29,18 +30,21 @@ from omegaconf import DictConfig, OmegaConf
 
 class MyWrapper(ObservationWrapper):
     r"""Observation wrapper that flattens the observation."""
+
     def __init__(self, env):
         super(MyWrapper, self).__init__(env)
-        self.observation_space = None #spaces.flatten_space(env.observation_space)
+        self.observation_space = None  # spaces.flatten_space(env.observation_space)
 
     def observation(self, observation):
-        return [observation[0],observation[2]]
+        return [observation[0], observation[2]]
+
 
 def create_gym_env(args):
     return gym.make(args["environment/env_name"])
 
-def create_env(n_envs, max_episode_steps=None, seed=None,**args):
-    envs=[]
+
+def create_env(n_envs, max_episode_steps=None, seed=None, **args):
+    envs = []
     for k in range(n_envs):
         e = create_gym_env(args)
         e = MyWrapper(e)
@@ -48,19 +52,24 @@ def create_env(n_envs, max_episode_steps=None, seed=None,**args):
         envs.append(e)
     return GymEnv(envs, seed)
 
-def create_agent(model,n_actions=1):
+
+def create_agent(model, n_actions=1):
     return NNAgent(model=model, n_actions=n_actions)
+
 
 class Experiment(A2CGAE):
     def __init__(self, config, create_env, create_agent):
         super().__init__(config, create_env, create_agent)
 
     def _create_model(self):
-        module = GRUAgentModel(self.obs_dim, self.n_actions,self.config["model/hidden_size"])
+        module = GRUAgentModel(
+            self.obs_dim, self.n_actions, self.config["model/hidden_size"]
+        )
         module.apply(weight_init)
         return module
 
-def flatten(d, parent_key='', sep='/'):
+
+def flatten(d, parent_key="", sep="/"):
     items = []
     for k, v in d.items():
         new_key = parent_key + sep + k if parent_key else k
@@ -70,15 +79,18 @@ def flatten(d, parent_key='', sep='/'):
             items.append((new_key, v))
     return dict(items)
 
+
 @hydra.main()
-def my_app(cfg : DictConfig) -> None:
-    f=flatten(cfg)
+def my_app(cfg: DictConfig) -> None:
+    f = flatten(cfg)
     print(f)
     exp = Experiment(f, create_env, create_agent)
     exp.go()
 
+
 if __name__ == "__main__":
     import torch.multiprocessing as mp
+
     mp.set_start_method("spawn")
 
     my_app()

@@ -42,14 +42,9 @@ Please reach out to us if you intend to use it. We will be happy to help, and po
 Where?
 ------
 
-* http://github.com/facebookresearch/rlstructures
-
-
-Discussion Group
-----------------
-
+* Github: http://github.com/facebookresearch/rlstructures
 * Discussion Group: https://www.facebook.com/groups/834804787067021
-
+* Medium posts/Tutorials: https://medium.com/@ludovic.den
 
 .. toctree::
    :maxdepth: 1

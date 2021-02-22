@@ -16,22 +16,23 @@ import time
 import numpy as np
 import torch.nn.functional as F
 
+
 class BaseExperiment:
-    def __init__(self, config,create_env,create_agent):
+    def __init__(self, config, create_env, create_agent):
         assert self.check_arguments(config)
         self.config = config
         self.logger = TFLogger(log_dir=self.config["logdir"], hps=self.config)
-        self.batchers=[]
-        self._create_env=create_env
-        self._create_agent=create_agent
+        self.batchers = []
+        self._create_env = create_env
+        self._create_agent = create_agent
 
-    def check_arguments(self,arguments):
+    def check_arguments(self, arguments):
         """
         The function aims at checking that the arguments (provided in config) are the good ones
         """
         return True
 
-    def register_batcher(self,batcher):
+    def register_batcher(self, batcher):
         """
         Register a new batcher when you create one, to ensure a correct closing of the experiment
         """
@@ -44,7 +45,6 @@ class BaseExperiment:
     def create_model(self):
         self.learning_model = self._create_model()
         self.iteration = 0
-
 
     def reset(self):
         raise NotImplementedError

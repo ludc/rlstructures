@@ -6,35 +6,39 @@
 #
 
 
-from rlstructures import TemporalDictTensor,  DictTensor
-from .buffers import Buffer,LocalBuffer
+from rlstructures import TemporalDictTensor, DictTensor
+from .buffers import Buffer, LocalBuffer
 from .threadworker import ThreadWorker
-#import rlstructures.logging as logging
+
+# import rlstructures.logging as logging
 import torch
 import numpy as np
 import rlstructures
 
+
 class MultiThreadTrajectoryBatcher:
-    def reset(self,agent_info=DictTensor({}), env_info=DictTensor({})):
+    def reset(self, agent_info=DictTensor({}), env_info=DictTensor({})):
         n_workers = len(self.workers)
-        assert isinstance(agent_info,DictTensor) and (agent_info.empty() or agent_info.n_elems()==self.n_envs*n_workers)
-        assert isinstance(env_info,DictTensor) and (env_info.empty() or env_info.n_elems()==self.n_envs*n_workers)
-        pos=0
+        assert isinstance(agent_info, DictTensor) and (
+            agent_info.empty() or agent_info.n_elems() == self.n_envs * n_workers
+        )
+        assert isinstance(env_info, DictTensor) and (
+            env_info.empty() or env_info.n_elems() == self.n_envs * n_workers
+        )
+        pos = 0
         for k in range(n_workers):
-                n=self.n_envs
-                wi=None if agent_info is None else agent_info.slice(pos,pos+n)
-                ei= None if env_info is None else env_info.slice(pos,pos+n)
-                self.workers[k].reset(
-                    agent_info=wi, env_info=ei
-                )
-                pos+=n
+            n = self.n_envs
+            wi = None if agent_info is None else agent_info.slice(pos, pos + n)
+            ei = None if env_info is None else env_info.slice(pos, pos + n)
+            self.workers[k].reset(agent_info=wi, env_info=ei)
+            pos += n
 
     def execute(self):
         n_workers = len(self.workers)
         for k in range(n_workers):
-                self.workers[k].acquire_slot()
+            self.workers[k].acquire_slot()
 
-    def get(self,blocking=True):
+    def get(self, blocking=True):
         if not blocking:
             for w in range(len(self.workers)):
                 if not self.workers[w].finished():
@@ -43,7 +47,8 @@ class MultiThreadTrajectoryBatcher:
         buffer_slot_ids = []
         for w in range(len(self.workers)):
             buffer_slot_ids += self.workers[w].get()
-        if len(buffer_slot_ids)==0: return None
+        if len(buffer_slot_ids) == 0:
+            return None
         slots = self.buffer.get_single_slots(buffer_slot_ids, erase=True)
         assert not slots.lengths.eq(0).any()
         return slots
@@ -59,7 +64,6 @@ class MultiThreadTrajectoryBatcher:
             del w
 
 
-
 class Batcher(MultiThreadTrajectoryBatcher):
     def __init__(
         self,
@@ -72,20 +76,22 @@ class Batcher(MultiThreadTrajectoryBatcher):
         n_threads,
         seeds=None,
     ):
-        if (rlstructures.__deprecated_message__==False):
-            print("[DEPRECATED]: The current version of rlstructures is based on rlstructures.rl_batchers implementation. We advise you to switch your codebase for using this new batcher, and the corresponding needed adaptations")
-            rlstructures.__deprecated_message__=True
+        if rlstructures.__deprecated_message__ == False:
+            print(
+                "[DEPRECATED]: The current version of rlstructures is based on rlstructures.rl_batchers implementation. We advise you to switch your codebase for using this new batcher, and the corresponding needed adaptations"
+            )
+            rlstructures.__deprecated_message__ = True
 
         # Buffer creation:
         agent = create_agent(**agent_args)
-        env = create_env(**{**env_args,"seed":0})
-        obs,who=env.reset()
-        a,b,c=agent(None,obs)
+        env = create_env(**{**env_args, "seed": 0})
+        obs, who = env.reset()
+        a, b, c = agent(None, obs)
 
-        self.n_envs=env.n_envs()
-        specs_agent_state=a.specs()
-        specs_agent_output=b.specs()
-        specs_environment=obs.specs()
+        self.n_envs = env.n_envs()
+        specs_agent_state = a.specs()
+        specs_agent_output = b.specs()
+        specs_environment = obs.specs()
         del env
         del agent
 
@@ -100,15 +106,13 @@ class Batcher(MultiThreadTrajectoryBatcher):
         self.n_per_worker = []
 
         if seeds is None:
-            print(
-                "Seeds for batcher environments has not been chosen. Default is None"
-            )
+            print("Seeds for batcher environments has not been chosen. Default is None")
             seeds = [None for k in range(n_threads)]
 
-        if (isinstance(seeds,int)):
-            s=seeds
-            seeds=[s+k*64 for k in range(n_threads)]
-        assert len(seeds)==n_threads,"You have to choose one seed per thread"
+        if isinstance(seeds, int):
+            s = seeds
+            seeds = [s + k * 64 for k in range(n_threads)]
+        assert len(seeds) == n_threads, "You have to choose one seed per thread"
 
         print("[Batcher] Creating %d threads " % (n_threads))
         for k in range(n_threads):

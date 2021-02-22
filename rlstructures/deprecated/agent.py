@@ -5,8 +5,9 @@
 # LICENSE file in the root directory of this source tree.
 #
 
-from rlstructures import DictTensor,TemporalDictTensor
+from rlstructures import DictTensor, TemporalDictTensor
 import torch
+
 
 class Agent:
     """
@@ -27,16 +28,22 @@ class Agent:
             the computation. This value will then be provided to the agent at
             the next timestep.
     """
+
     def __init__(self):
         pass
 
     def require_history(self):
-        """ if True, then the 'history' argument in the __call__ method will contain the set of previous transitions (e.g for transformers based policies)
-        """
+        """if True, then the 'history' argument in the __call__ method will contain the set of previous transitions (e.g for transformers based policies)"""
         return False
 
-    def __call__(self, state:DictTensor, input:DictTensor,user_info:DictTensor,history:TemporalDictTensor = None):
-        """ Execute one step of the agent
+    def __call__(
+        self,
+        state: DictTensor,
+        input: DictTensor,
+        user_info: DictTensor,
+        history: TemporalDictTensor = None,
+    ):
+        """Execute one step of the agent
 
         :param state: the previous state of the agent, or None if the agent needs to be initialized
         :type state: DictTensor

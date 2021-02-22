@@ -17,6 +17,7 @@
 
 import os
 import sys
+
 sys.path.insert(0, os.path.abspath("../../"))
 
 
@@ -40,12 +41,12 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.autosummary",
     "recommonmark",
-    "sphinx.ext.viewcode"
+    "sphinx.ext.viewcode",
 ]
 
 
-autoapi_type = 'python'
-autoapi_dirs = ['..']
+autoapi_type = "python"
+autoapi_dirs = [".."]
 
 source_suffix = {
     ".rst": "restructuredtext",
@@ -70,7 +71,9 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # a list of builtin themes.
 #
 html_theme = "sphinx_rtd_theme"
-html_sidebars = { '**': ['globaltoc.html', 'relations.html', 'sourcelink.html', 'searchbox.html'] }
+html_sidebars = {
+    "**": ["globaltoc.html", "relations.html", "sourcelink.html", "searchbox.html"]
+}
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".

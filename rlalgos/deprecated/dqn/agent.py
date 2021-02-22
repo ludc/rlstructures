@@ -8,11 +8,13 @@
 
 import torch
 import torch.nn as nn
-#import rlstructures.logging as logging
+
+# import rlstructures.logging as logging
 from rlstructures import DictTensor
 from rlstructures import Agent
 import time
 import numpy as np
+
 
 class QAgent(Agent):
     """
@@ -21,7 +23,7 @@ class QAgent(Agent):
     state.
     """
 
-    def __init__(self, model=None,n_actions=None):
+    def __init__(self, model=None, n_actions=None):
         """
         Args:
             model (nn.Module): a module producing a tuple: (actions scores, value)
@@ -31,10 +33,10 @@ class QAgent(Agent):
         self.model = model
         self.n_actions = n_actions
 
-    def update(self,  sd):
+    def update(self, sd):
         self.model.load_state_dict(sd)
 
-    def __call__(self, state, observation,agent_info=None,history=None):
+    def __call__(self, state, observation, agent_info=None, history=None):
         """
         Executing one step of the agent
         """
@@ -44,7 +46,7 @@ class QAgent(Agent):
         B = observation.n_elems()
 
         if agent_info is None:
-            agent_info=DictTensor({"epsilon":torch.zeros(B)})
+            agent_info = DictTensor({"epsilon": torch.zeros(B)})
 
         agent_step = None
         if state is None:
@@ -56,29 +58,25 @@ class QAgent(Agent):
                 + (1 - initial_state.float()) * state["agent_step"]
             ).long()
 
-        q = self.model(
-            observation["frame"]
+        q = self.model(observation["frame"])
+
+        qs, action = q.max(1)
+        raction = torch.tensor(
+            np.random.randint(low=0, high=self.n_actions, size=(action.size()[0]))
         )
+        epsilon = agent_info["epsilon"]
+        mask = torch.rand(action.size()[0]).lt(epsilon).float()
+        action = mask * raction + (1 - mask) * action
+        action = action.long()
 
-        qs,action = q.max(1)
-        raction = torch.tensor(np.random.randint(low=0,high=self.n_actions,size=(action.size()[0])))
-        epsilon=agent_info["epsilon"]
-        mask=torch.rand(action.size()[0]).lt(epsilon).float()
-        action=mask*raction+(1-mask)*action
-        action=action.long()
+        new_state = DictTensor({"agent_step": agent_step + 1})
 
-
-        new_state = DictTensor(
-            {"agent_step": agent_step + 1}
-        )
-
-        agent_do = DictTensor(
-            {"action": action, "q": q}
-        )
+        agent_do = DictTensor({"action": action, "q": q})
 
         state = DictTensor({"agent_step": agent_step})
 
         return state, agent_do, new_state
+
 
 class QMLP(nn.Module):
     def __init__(self, n_observations, n_actions, n_hidden):
@@ -91,28 +89,29 @@ class QMLP(nn.Module):
         score_actions = self.linear2(z)
         return score_actions
 
+
 class DQMLP(nn.Module):
     def __init__(self, n_observations, n_actions, n_hidden):
         super().__init__()
         self.linear = nn.Linear(n_observations, n_hidden)
-        self.linear_adv= nn.Linear(n_hidden, n_actions)
+        self.linear_adv = nn.Linear(n_hidden, n_actions)
         self.linear_value = nn.Linear(n_hidden, 1)
-        self.n_actions=n_actions
+        self.n_actions = n_actions
 
     def forward_common(self, frame):
         z = torch.tanh(self.linear(frame))
         return z
 
-    def forward_value(self,z):
+    def forward_value(self, z):
         return self.linear_value(z)
 
-    def forward_advantage(self,z):
-        adv=self.linear_adv(z)
-        advm=adv.mean(1).unsqueeze(-1).repeat(1,self.n_actions)
-        return adv-advm
+    def forward_advantage(self, z):
+        adv = self.linear_adv(z)
+        advm = adv.mean(1).unsqueeze(-1).repeat(1, self.n_actions)
+        return adv - advm
 
     def forward(self, state):
         z = self.forward_common(state)
         v = self.forward_value(z)
         adv = self.forward_advantage(z)
-        return v+adv
+        return v + adv

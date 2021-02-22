@@ -8,7 +8,8 @@
 
 import torch
 import torch.nn as nn
-#import rlstructures.logging as logging
+
+# import rlstructures.logging as logging
 from rlstructures import DictTensor
 from rlstructures import RL_Agent
 import time
@@ -17,6 +18,7 @@ import math
 import torch.nn.functional as F
 from torch import distributions as pyd
 
+
 class SACAgent(RL_Agent):
     """
     Describes a discrete agent based on a model that produces a score for each
@@ -24,7 +26,7 @@ class SACAgent(RL_Agent):
     state.
     """
 
-    def __init__(self,policy=None, action_dim=None):
+    def __init__(self, policy=None, action_dim=None):
         """
         Args:
             model (nn.Module): a module producing a tuple: (actions scores, value)
@@ -34,33 +36,33 @@ class SACAgent(RL_Agent):
         self.model = policy
         self.action_dim = action_dim
 
-    def update(self,  state_dict):
+    def update(self, state_dict):
         self.model.load_state_dict(state_dict)
 
-    def initial_state(self,agent_info,B):
+    def initial_state(self, agent_info, B):
         return DictTensor({})
 
-    def __call__(self, state, observation,agent_info=None,history=None):
+    def __call__(self, state, observation, agent_info=None, history=None):
         """
         Executing one step of the agent
         """
         B = observation.n_elems()
 
-        _mean,_var = self.model(observation["frame"])
+        _mean, _var = self.model(observation["frame"])
         _id = torch.eye(self.action_dim).unsqueeze(0).repeat(B, 1, 1)
-        # _nvar = _var.unsqueeze(-1).repeat(1, 1, self.action_dim)
-        # _nvar = _nvar * _id
-        distribution=torch.distributions.Normal(_mean, _var)
-        action_sampled=distribution.sample()
-        action_max = _mean
-        smask=agent_info["stochastic"].float().unsqueeze(-1).repeat(1,self.action_dim)
-        action=(action_sampled*smask+(1.0-smask)*action_max)
 
-        agent_do = DictTensor(
-            {"action": action, "mean":_mean,"std":_var}
+        distribution = torch.distributions.Normal(_mean, _var)
+        action_sampled = distribution.sample()
+        action_max = _mean
+        smask = (
+            agent_info["stochastic"].float().unsqueeze(-1).repeat(1, self.action_dim)
         )
+        action = action_sampled * smask + (1.0 - smask) * action_max
+
+        agent_do = DictTensor({"action": action, "mean": _mean, "std": _var})
         state = DictTensor({})
         return agent_do, state
+
 
 class TanhTransform(pyd.transforms.Transform):
     domain = pyd.constraints.real
@@ -89,7 +91,7 @@ class TanhTransform(pyd.transforms.Transform):
     def log_abs_det_jacobian(self, x, y):
         # We use a formula that is more numerically stable, see details in the following link
         # https://github.com/tensorflow/probability/commit/ef6bb176e0ebd1cf6e25c6b5cecdd2428c22963f#diff-e120f70e92e6741bca649f04fcd907b7
-        return 2. * (math.log(2.) - x - F.softplus(-2. * x))
+        return 2.0 * (math.log(2.0) - x - F.softplus(-2.0 * x))
 
 
 class SquashedNormal(pyd.transformed_distribution.TransformedDistribution):
@@ -111,19 +113,21 @@ class SquashedNormal(pyd.transformed_distribution.TransformedDistribution):
 
 class DiagGaussianActor(nn.Module):
     """torch.distributions implementation of an diagonal Gaussian policy."""
+
     def __init__(self, log_std_bounds=[-5, 2]):
         super().__init__()
         self.log_std_bounds = log_std_bounds
 
-    def forward(self, mu,log_std):
+    def forward(self, mu, log_std):
 
         # constrain log_std inside [log_std_min, log_std_max]
         log_std = torch.tanh(log_std)
         log_std_min, log_std_max = self.log_std_bounds
-        log_std = log_std_min + 0.5 * (log_std_max - log_std_min) * (log_std +1)
+        log_std = log_std_min + 0.5 * (log_std_max - log_std_min) * (log_std + 1)
         std = log_std.exp()
         mu = torch.tanh(mu)
-        return mu,std
+        return mu, std
+
 
 class SACPolicy(nn.Module):
     def __init__(self, n_observations, action_dim, n_hidden):
@@ -131,25 +135,26 @@ class SACPolicy(nn.Module):
         self.linear = nn.Linear(n_observations, n_hidden)
         self.linear_mean = nn.Linear(n_hidden, action_dim)
         self.linear_std = nn.Linear(n_hidden, action_dim)
-        self.dg=DiagGaussianActor()
+        self.dg = DiagGaussianActor()
 
     def forward(self, frame):
         z = torch.relu(self.linear(frame))
         mean = self.linear_mean(z)
         std = self.linear_std(z)
-        return self.dg(mean,std)
+        return self.dg(mean, std)
+
 
 class SACQ(nn.Module):
     def __init__(self, n_observations, action_dim, n_hidden):
         super().__init__()
         self.linear = nn.Linear(n_observations, n_hidden)
         self.linear_2 = nn.Linear(action_dim, n_hidden)
-        self.linear_q = nn.Linear(n_hidden*2, n_hidden)
+        self.linear_q = nn.Linear(n_hidden * 2, n_hidden)
         self.linear_qq = nn.Linear(n_hidden, 1)
 
     def forward(self, frame, action):
         zf = torch.relu(self.linear(frame))
         za = torch.relu(self.linear_2(action))
-        q = torch.relu(self.linear_q(torch.cat([zf,za],dim=1)))
+        q = torch.relu(self.linear_q(torch.cat([zf, za], dim=1)))
         q = self.linear_qq(q)
         return q

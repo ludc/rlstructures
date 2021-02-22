@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) Facebook, Inc. and its affiliates.
 #
@@ -6,25 +5,26 @@
 # LICENSE file in the root directory of this source tree.
 #
 
-from rlstructures import RL_Agent,DictTensor
+from rlstructures import RL_Agent, DictTensor
 import torch
 
+
 class UniformAgent(RL_Agent):
-    def __init__(self,n_actions):
+    def __init__(self, n_actions):
         super().__init__()
-        self.n_actions=n_actions
+        self.n_actions = n_actions
 
-    def initial_state(self,agent_info,B):
-        return DictTensor({"timestep":torch.zeros(B).long()})
+    def initial_state(self, agent_info, B):
+        return DictTensor({"timestep": torch.zeros(B).long()})
 
-    def __call__(self,state,observation,agent_info=None,history=None):
-        B=observation.n_elems()
+    def __call__(self, state, observation, agent_info=None, history=None):
+        B = observation.n_elems()
 
-        scores=torch.randn(B,self.n_actions)
-        probabilities=torch.softmax(scores,dim=1)
-        actions=torch.distributions.Categorical(probabilities).sample()
-        new_state=DictTensor({"timestep":state["timestep"]+1})
-        return DictTensor({"action":actions}),new_state
+        scores = torch.randn(B, self.n_actions)
+        probabilities = torch.softmax(scores, dim=1)
+        actions = torch.distributions.Categorical(probabilities).sample()
+        new_state = DictTensor({"timestep": state["timestep"] + 1})
+        return DictTensor({"action": actions}), new_state
 
 
 # Agent and Batcher
@@ -41,40 +41,45 @@ import gym
 from gym.wrappers import TimeLimit
 from rlstructures.env_wrappers import GymEnv
 
-def create_env(max_episode_steps=100,seed=None):
-    envs=[]
+
+def create_env(max_episode_steps=100, seed=None):
+    envs = []
     for k in range(4):
-        e=gym.make("CartPole-v0")
+        e = gym.make("CartPole-v0")
         e.seed(seed)
-        e=TimeLimit(e, max_episode_steps=max_episode_steps)
+        e = TimeLimit(e, max_episode_steps=max_episode_steps)
         envs.append(e)
-    return GymEnv(envs,seed=10)
+    return GymEnv(envs, seed=10)
+
 
 def create_agent(n_actions):
     return UniformAgent(n_actions)
 
-if __name__=="__main__":
-    #We use spawn mode such that most of the environment will run in multiple processes
+
+if __name__ == "__main__":
+    # We use spawn mode such that most of the environment will run in multiple processes
     import torch.multiprocessing as mp
+
     mp.set_start_method("spawn")
     from rlstructures import RL_Batcher
-    batcher=RL_Batcher(
-                n_timesteps=100,
-                create_agent=create_agent,
-                create_env=create_env,
-                agent_args={"n_actions":2},
-                env_args={"max_episode_steps":100},
-                n_processes=1,
-                seeds=[42],
-                agent_info=DictTensor({}),
-                env_info=DictTensor({})
-            )
+
+    batcher = RL_Batcher(
+        n_timesteps=100,
+        create_agent=create_agent,
+        create_env=create_env,
+        agent_args={"n_actions": 2},
+        env_args={"max_episode_steps": 100},
+        n_processes=1,
+        seeds=[42],
+        agent_info=DictTensor({}),
+        env_info=DictTensor({}),
+    )
 
     batcher.reset()
     batcher.execute()
-    trajectories,n_still_running_envs=batcher.get()
+    trajectories, n_still_running_envs = batcher.get()
 
     print("Informations: ")
-    print(trajectories,trajectories.info)
+    print(trajectories, trajectories.info)
     print("Lengths of trajectories: ")
     print(trajectories.trajectories.lengths)
