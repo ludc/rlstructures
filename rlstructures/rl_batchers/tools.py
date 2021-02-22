@@ -343,6 +343,8 @@ def s_worker_process(
             env.close()
             agent.close()
         elif order_name == "reset":
+            print("la")
+            time.sleep(10)
             _, _agent_info, _env_info = order
             agent_info = _agent_info.clone()
             env_info = _env_info.clone()
