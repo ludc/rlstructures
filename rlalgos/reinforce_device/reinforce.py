@@ -100,9 +100,6 @@ class Reinforce:
             env_info=DictTensor({}),
             device=self.config["batcher_device"]
         )
-        print("la")
-        time.sleep(30)
-
 
         self.learning_model.to(self.config["learner_device"])
         # Creation of the optimizer
@@ -132,6 +129,9 @@ class Reinforce:
         # Update the batcher with the last version of the learning model
         sd=self._state_dict(self.learning_model,self.config["batcher_device"])
         self.train_batcher.update(sd)
+
+        print("coucou")
+        time.sleep(30)
 
         n_interactions = 0
         while time.time() - _start_time < self.config["time_limit"]:
