@@ -71,8 +71,8 @@ if __name__ == "__main__":
         "reinforce_coef": 1.0,
         "evaluation_mode": "stochastic",
         "logdir": "./results",
-        "learner_device":torch.device("cuda:1"),
-        "batcher_device":torch.device("cuda:2"),
+        "learner_device":torch.device("cpu"),
+        "batcher_device":torch.device("cuda:1"),
         "evaluation_device":torch.device("cpu")
     }
     exp = Experiment(config, create_env, create_agent)
