@@ -71,7 +71,7 @@ if __name__ == "__main__":
         "reinforce_coef": 1.0,
         "evaluation_mode": "stochastic",
         "logdir": "./results",
-        "learner_device":torch.device("cpu"),
+        "learner_device":torch.device("cuda"),
         "batcher_device":torch.device("cpu"),
         "evaluation_device":torch.device("cpu")
     }
