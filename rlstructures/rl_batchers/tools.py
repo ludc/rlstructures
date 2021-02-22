@@ -335,6 +335,8 @@ def s_worker_process(
     terminate_process = False
     while not terminate_process:
         order = in_queue.get()
+        print("la1 ---",order)
+        time.sleep(10)
         assert isinstance(order, tuple)
         order_name = order[0]
         if order_name == "close":
