@@ -138,9 +138,7 @@ class Reinforce:
                 {"stochastic": torch.tensor([True]).repeat(n_episodes)}
             )
             self.train_batcher.reset(agent_info=agent_info)
-
-            print("coucou")
-            time.sleep(30)
+            exit()
             self.train_batcher.execute()
 
 
