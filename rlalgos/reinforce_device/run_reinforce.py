@@ -54,7 +54,6 @@ class Experiment(Reinforce):
 if __name__ == "__main__":
     # We use spawn mode such that most of the environment will run in multiple processes
     import torch.multiprocessing as mp
-    print("la")
     mp.set_start_method("spawn")
 
     config = {
