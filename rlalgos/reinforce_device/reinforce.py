@@ -99,9 +99,7 @@ class Reinforce:
             env_info=DictTensor({}),
             device=self.config["batcher_device"]
         )
-        self.train_batcher.close()
-        print("coucou")
-        exit()
+
         self.learning_model.to(self.config["learner_device"])
         # Creation of the optimizer
         optimizer = torch.optim.RMSprop(
