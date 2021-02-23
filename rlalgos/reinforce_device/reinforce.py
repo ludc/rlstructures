@@ -139,10 +139,10 @@ class Reinforce:
                 {"stochastic": torch.tensor([True]).repeat(n_episodes)}
             )
             self.train_batcher.reset(agent_info=agent_info)
-            print("coucou")
+            print("coucou1")
             time.sleep(5)
             self.train_batcher.execute()
-            print("coucou")
+            print("coucou2")
             time.sleep(5)
             # 2) We get the trajectories (and wait until the trajectories have been sampled)
             trajectories, n_env_running = self.train_batcher.get(blocking=True)
