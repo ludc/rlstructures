@@ -224,7 +224,7 @@ class Reinforce:
 
         self.train_batcher.close()
         self.evaluation_batcher.get()  # To wait for the last trajectories
-        elf.evaluation_batcher.close()
+        self.evaluation_batcher.close()
         self.logger.update_csv()  # To save as a CSV file in logdir
         self.logger.close()
 
