@@ -419,12 +419,17 @@ class S_ProcessWorker:
 
         p = ctx.Process(
             target=s_worker_process,
+            # args=(
+            #     buffer,
+            #     create_env,
+            #     env_args,
+            #     create_agent,
+            #     agent_args,
+            #     self.inq,
+            #     self.outq,
+            # ),
             args=(
-                None,
-                create_env,
-                env_args,
-                create_agent,
-                agent_args,
+                None,None,None,None,None,
                 self.inq,
                 self.outq,
             ),
