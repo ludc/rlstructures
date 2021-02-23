@@ -103,7 +103,7 @@ class Reinforce:
             device=self.config["batcher_device"]
         )
         self.train_batcher.close()
-        del(model)
+        #del(model)
         exit()
 
         self.learning_model.to(self.config["learner_device"])
