@@ -140,8 +140,6 @@ class Reinforce:
             )
             self.train_batcher.reset(agent_info=agent_info)
             self.train_batcher.execute()
-            print("go")
-            time.sleep(100)
 
             # 2) We get the trajectories (and wait until the trajectories have been sampled)
             trajectories, n_env_running = self.train_batcher.get(blocking=True)
