@@ -473,4 +473,3 @@ class S_ProcessWorker:
         time.sleep(0.1)
         del self.inq
         del self.outq
-        del(buffer)
