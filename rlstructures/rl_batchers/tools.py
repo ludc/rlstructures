@@ -331,7 +331,7 @@ def s_worker_process(
     # agent_info = None
     # env_info = None
     # n_episodes = None
-    # terminate_process = False
+    terminate_process = False
     while not terminate_process:
         order = in_queue.get()
         assert isinstance(order, tuple)
