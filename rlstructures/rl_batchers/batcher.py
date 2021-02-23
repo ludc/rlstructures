@@ -137,7 +137,8 @@ class RL_Batcher:
         self.n_per_worker = []
         assert isinstance(seeds, list), "You have to choose one seed per process"
         assert len(seeds) == n_processes, "You have to choose one seed per process"
-
+        print(agent_args)
+        print(env_args)
         print("[Batcher] Creating %d processes " % (n_processes))
         for k in range(n_processes):
             e_args = {**env_args, "seed": seeds[k]}
