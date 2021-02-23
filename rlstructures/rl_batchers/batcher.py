@@ -132,7 +132,7 @@ class RL_Batcher:
         )
         self.workers = []
         self.n_per_worker = []
-
+        exit()
         assert isinstance(seeds, list), "You have to choose one seed per process"
         assert len(seeds) == n_processes, "You have to choose one seed per process"
 
@@ -147,5 +147,4 @@ class RL_Batcher:
                 e_args,
                 self.buffer,
             )
-            exit()
             self.workers.append(worker)
