@@ -325,7 +325,7 @@ def s_worker_process(
     env = create_env(**env_parameters)
     n_envs = env.n_envs()
     agent = create_agent(**agent_parameters)
-
+    exit()
     agent_state = None
     observation = None
     env_running = None
@@ -415,7 +415,6 @@ class S_ProcessWorker:
         self.process = p
         p.daemon = True
         p.start()
-        exit()
 
     def acquire_slot(self, agent_info=None):
         order = ("slot", agent_info)
