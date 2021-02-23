@@ -126,23 +126,20 @@ class RL_Batcher:
         del env
         del agent
 
-        self.buffer = None
-        # S_Buffer(n_slots=self.n_envs * n_processes,
-        #     s_slots=n_timesteps,
-        #     specs_agent_state=specs_agent_state,
-        #     specs_agent_output=specs_agent_output,
-        #     specs_environment=specs_environment,
-        #     specs_agent_info=specs_agent_info,
-        #     specs_env_info=specs_env_info,
-        #     device=device
-        # )
+        self.buffer = S_Buffer(n_slots=self.n_envs * n_processes,
+            s_slots=n_timesteps,
+            specs_agent_state=specs_agent_state,
+            specs_agent_output=specs_agent_output,
+            specs_environment=specs_environment,
+            specs_agent_info=specs_agent_info,
+            specs_env_info=specs_env_info,
+            device=device
+        )
 
         self.workers = []
         self.n_per_worker = []
         assert isinstance(seeds, list), "You have to choose one seed per process"
         assert len(seeds) == n_processes, "You have to choose one seed per process"
-        print(agent_args)
-        print(env_args)
         print("[Batcher] Creating %d processes " % (n_processes))
         for k in range(n_processes):
             e_args = {**env_args, "seed": seeds[k]}
