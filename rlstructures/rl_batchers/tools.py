@@ -342,7 +342,7 @@ def s_worker_process(
     # env_info = None
     # n_episodes = None
     a=torch.rand(5)
-    a.to(torch.device("cuda:1"))
+    a.to(torch.device("cuda:0"))
     terminate_process = False
     out_queue.put("ready")
     while not terminate_process:
