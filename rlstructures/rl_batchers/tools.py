@@ -443,6 +443,7 @@ class S_ProcessWorker:
 
     def get(self):
         t = self.outq.get()
+        print(t)
         return t
 
     def update_worker(self, info):
