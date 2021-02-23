@@ -428,9 +428,9 @@ class S_ProcessWorker:
         )
         self.process = p
         p.daemon = True
-        print("starting....")
+        print("starting process")
         p.start()
-        print(self.outq.get())
+        self.outq.get()
 
     def acquire_slot(self, agent_info=None):
         order = ("slot", agent_info)

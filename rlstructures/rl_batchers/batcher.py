@@ -21,7 +21,6 @@ class RL_Batcher:
         n_workers = len(self.workers)
         pos = 0
         for k in range(n_workers):
-            print("For ",k," => reset")
             n = self.n_envs
             wi = agent_info.slice(pos, pos + n)
             ei = env_info.slice(pos, pos + n)
@@ -125,7 +124,6 @@ class RL_Batcher:
         del who
         del env
         del agent
-        print(specs_environment)
 
         self.buffer = S_Buffer(n_slots=self.n_envs * n_processes,
             s_slots=n_timesteps,
