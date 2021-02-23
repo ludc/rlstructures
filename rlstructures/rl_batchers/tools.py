@@ -334,13 +334,15 @@ def s_worker_process(
     print("s_worker_process")
     # env = create_env(**env_parameters)
     # n_envs = env.n_envs()
-    agent = create_agent(**agent_parameters)
+    #agent = create_agent(**agent_parameters)
     # agent_state = None
     # observation = None
     # env_running = None
     # agent_info = None
     # env_info = None
     # n_episodes = None
+    a=torch.rand(5)
+    a.to(torch.device("cuda:1"))
     terminate_process = False
     out_queue.put("ready")
     while not terminate_process:
