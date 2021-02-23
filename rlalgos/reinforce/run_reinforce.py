@@ -60,7 +60,7 @@ if __name__ == "__main__":
         "n_envs": 4,
         "max_episode_steps": 100,
         "env_seed": 42,
-        "n_processes": 1
+        "n_processes": 1,
         "n_evaluation_processes": 2,
         "n_evaluation_envs": 128,
         "time_limit": 3600,
