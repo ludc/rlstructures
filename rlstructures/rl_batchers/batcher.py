@@ -91,6 +91,7 @@ class RL_Batcher:
         # Buffer creation:
         print(agent_args)
         agent = create_agent(**agent_args)
+        print(type(agent))
         print(agent)
         print(agent.model)
         del(agent.model)
