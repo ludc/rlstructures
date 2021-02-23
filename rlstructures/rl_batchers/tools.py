@@ -414,8 +414,8 @@ class S_ProcessWorker:
         )
         self.process = p
         p.daemon = True
-        exit()
         p.start()
+        exit()
 
     def acquire_slot(self, agent_info=None):
         order = ("slot", agent_info)
