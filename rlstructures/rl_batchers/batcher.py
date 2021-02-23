@@ -89,6 +89,7 @@ class RL_Batcher:
         device=torch.device("cpu")
     ):
         # Buffer creation:
+        print(agent_args)
         agent = create_agent(**agent_args)
         # env = create_env(**{**env_args, "seed": 0})
 
