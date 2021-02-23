@@ -31,13 +31,11 @@ def create_env(n_envs, env_name=None, max_episode_steps=None, device=None,seed=N
         e = create_gym_env(env_name)
         e = TimeLimit(e, max_episode_steps=max_episode_steps)
         envs.append(e)
-    return GymEnv(envs, seed)
-
-#    return DeviceEnv(GymEnv(envs, seed),from_device=torch.device("cpu"),to_device=device)
+    return DeviceEnv(GymEnv(envs, seed),from_device=torch.device("cpu"),to_device=device)
 
 # Create a rlstructures.Agent
 def create_agent(model, n_actions=1,device=None,copy_model=True):
-    print("agent on ",device)
+    print("create agent on ",device)
     if copy_model:
         model=copy.deepcopy(model)
 

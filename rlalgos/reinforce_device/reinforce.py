@@ -131,21 +131,15 @@ class Reinforce:
         # self.train_batcher.update(sd)
 
         n_interactions = 0
-        print("start")
-        time.sleep(20)
         while time.time() - _start_time < self.config["time_limit"]:
             # 1) The policy will be executed in "stochastic' mode
             n_episodes = self.config["n_envs"] * self.config["n_processes"]
             agent_info = DictTensor(
                 {"stochastic": torch.tensor([True]).repeat(n_episodes)}
             )
-            print("--reset")
             self.train_batcher.reset(agent_info=agent_info)
-            print("coucou1")
-            time.sleep(5)
             self.train_batcher.execute()
-            print("coucou2")
-            time.sleep(5)
+
             # 2) We get the trajectories (and wait until the trajectories have been sampled)
             trajectories, n_env_running = self.train_batcher.get(blocking=True)
 
