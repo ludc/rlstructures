@@ -332,17 +332,15 @@ def s_worker_process(
     out_queue,
 ):
     print("s_worker_process")
-    # env = create_env(**env_parameters)
-    # n_envs = env.n_envs()
-    #agent = create_agent(**agent_parameters)
-    # agent_state = None
-    # observation = None
-    # env_running = None
-    # agent_info = None
-    # env_info = None
-    # n_episodes = None
-    a=torch.rand(5)
-    a.to(torch.device("cuda:0"))
+    env = create_env(**env_parameters)
+    n_envs = env.n_envs()
+    agent = create_agent(**agent_parameters)
+    agent_state = None
+    observation = None
+    env_running = None
+    agent_info = None
+    env_info = None
+    n_episodes = None
     terminate_process = False
     out_queue.put("ready")
     while not terminate_process:
@@ -418,17 +416,12 @@ class S_ProcessWorker:
 
         p = ctx.Process(
             target=s_worker_process,
-            # args=(
-            #     buffer,
-            #     create_env,
-            #     env_args,
-            #     create_agent,
-            #     agent_args,
-            #     self.inq,
-            #     self.outq,
-            # ),
             args=(
-                None,None,None,None,None,
+                buffer,
+                create_env,
+                env_args,
+                create_agent,
+                agent_args,
                 self.inq,
                 self.outq,
             ),
