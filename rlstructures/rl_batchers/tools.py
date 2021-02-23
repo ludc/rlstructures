@@ -342,6 +342,7 @@ def s_worker_process(
     env_info = None
     n_episodes = None
     terminate_process = False
+    out_queue.put("ready")
     while not terminate_process:
         print(in_queue," wiating")
         order = in_queue.get()
@@ -417,7 +418,7 @@ class S_ProcessWorker:
         p = ctx.Process(
             target=s_worker_process,
             args=(
-                None,
+                buffer,
                 create_env,
                 env_args,
                 create_agent,
@@ -430,6 +431,7 @@ class S_ProcessWorker:
         p.daemon = True
         print("starting....")
         p.start()
+        print(self.outq.get())
 
     def acquire_slot(self, agent_info=None):
         order = ("slot", agent_info)
