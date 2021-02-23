@@ -21,6 +21,7 @@ class RL_Batcher:
         n_workers = len(self.workers)
         pos = 0
         for k in range(n_workers):
+            print("For ",k," => reset")
             n = self.n_envs
             wi = agent_info.slice(pos, pos + n)
             ei = env_info.slice(pos, pos + n)

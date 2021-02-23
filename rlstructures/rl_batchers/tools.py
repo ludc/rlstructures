@@ -441,7 +441,6 @@ class S_ProcessWorker:
         return t
 
     def reset(self, agent_info=None, env_info=None):
-        print("RESET",agent_info.device())
         order = ("reset", agent_info, env_info)
         self.inq.put(order)
         self.outq.get()
