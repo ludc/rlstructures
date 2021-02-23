@@ -80,7 +80,6 @@ class Reinforce:
         # Create a batcher to sample learning trajectories
         model = copy.deepcopy(self.learning_model)
         model.to(self.config["batcher_device"])
-        exit()
 
         self.train_batcher = RL_Batcher(
             n_timesteps=self.config["max_episode_steps"],
@@ -102,6 +101,8 @@ class Reinforce:
             env_info=DictTensor({}),
             device=self.config["batcher_device"]
         )
+        self.train_batcher.close()
+        exit()
 
         self.learning_model.to(self.config["learner_device"])
         # Creation of the optimizer
