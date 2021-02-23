@@ -292,6 +292,10 @@ class S_Buffer:
         """
         self._free_slots_queue.close()
         self._full_slots_queue.close()
+        for k in self.buffers:
+            del(self.buffers[k])
+        for k in self.fbuffers:
+            del(self.fbuffers[k])
 
     def get_single_slots(self, slots, erase=True, clone=True):
         assert isinstance(slots, list)
