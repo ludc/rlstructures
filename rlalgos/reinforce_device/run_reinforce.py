@@ -20,6 +20,9 @@ import gym
 from gym.wrappers import TimeLimit
 from rlstructures import RL_Agent_CheckDevice
 # We write the 'create_env' and 'create_agent' function in the main file to allow these functions to be used with pickle when creating the batcher processes
+
+print("truc")
+
 def create_gym_env(env_name):
     return gym.make(env_name)
 
