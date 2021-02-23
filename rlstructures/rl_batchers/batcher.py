@@ -57,11 +57,6 @@ class RL_Batcher:
             assert False, "Don't call batcher.get when all environnments are finished"
 
         slots, info = self.buffer.get_single_slots(buffer_slot_ids, erase=True)
-        if not slots.device()==torch.device("cpu"):
-            slots=slots.clone()
-            del(slots)
-            info=info.clone()
-            del(info)
         assert not slots.lengths.eq(0).any()
         return Trajectories(info, slots), n_still_running
 
