@@ -70,7 +70,7 @@ class RL_Batcher:
         for w in self.workers:
             del w
         self.buffer.close()
-        # del(self.buffer)
+        del(self.buffer)
 
     def n_elems(self):
         return self._n_episodes
