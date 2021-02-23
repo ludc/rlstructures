@@ -94,7 +94,7 @@ class RL_Batcher:
         print(type(agent))
         print(agent)
         print(agent.agent.model)
-        del(agent.model)
+        del(agent.agent.model)
         del(agent)
         # env = create_env(**{**env_args, "seed": 0})
 
