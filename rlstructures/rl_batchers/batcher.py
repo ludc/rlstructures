@@ -69,8 +69,8 @@ class RL_Batcher:
             w.close()
         for w in self.workers:
             del w
-        self.buffer.close()
-        del(self.buffer)
+        # self.buffer.close()
+        # del(self.buffer)
 
     def n_elems(self):
         return self._n_episodes
@@ -121,15 +121,16 @@ class RL_Batcher:
         specs_env_info = env_info.specs()
         del env
         del agent
-        self.buffer = S_Buffer(n_slots=self.n_envs * n_processes,
-            s_slots=n_timesteps,
-            specs_agent_state=specs_agent_state,
-            specs_agent_output=specs_agent_output,
-            specs_environment=specs_environment,
-            specs_agent_info=specs_agent_info,
-            specs_env_info=specs_env_info,
-            device=device
-        )
+        self.buffer = None
+        # S_Buffer(n_slots=self.n_envs * n_processes,
+        #     s_slots=n_timesteps,
+        #     specs_agent_state=specs_agent_state,
+        #     specs_agent_output=specs_agent_output,
+        #     specs_environment=specs_environment,
+        #     specs_agent_info=specs_agent_info,
+        #     specs_env_info=specs_env_info,
+        #     device=device
+        # )
 
         self.workers = []
         self.n_per_worker = []
