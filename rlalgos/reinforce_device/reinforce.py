@@ -30,6 +30,7 @@ class Reinforce:
         self._create_agent = create_agent
 
     def _state_dict(self, model, device="cpu"):
+        print(device)
         sd = model.state_dict()
         for k, v in sd.items():
             sd[k] = v.to(device)
