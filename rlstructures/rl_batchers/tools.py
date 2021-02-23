@@ -344,7 +344,6 @@ def s_worker_process(
             agent.close()
         elif order_name == "reset":
             print("la1",order[1].device(),order[2].device())
-            time.sleep(10)
             _, _agent_info, _env_info = order
             agent_info = _agent_info.clone()
             env_info = _env_info.clone()
@@ -431,11 +430,7 @@ class S_ProcessWorker:
 
     def reset(self, agent_info=None, env_info=None):
         order = ("reset", agent_info, env_info)
-        print("truc",agent_info.device(),env_info.device())
-        time.sleep(10)
         self.inq.put(order)
-        print("fin truc")
-        time.sleep(10)
         self.outq.get()
 
     def finished(self):

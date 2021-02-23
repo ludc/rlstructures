@@ -242,12 +242,6 @@ class Reinforce:
         self.logger.close()
 
     def get_loss(self, trajectories):
-        """Compute the different individual losses needed for REINFORCE
-        - baseline loss for updating the baseline
-        - reinforce loss for updating the policy
-        - entropy loss for entropy regularization
-        """
-        # Use self.agent to replay the trajectories computation on the batch of trajectories
         trajectories=trajectories.to(self.config["learner_device"])
         replayed = replay_agent(self.agent, trajectories)
 
