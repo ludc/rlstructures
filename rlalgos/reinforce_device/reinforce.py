@@ -126,9 +126,10 @@ class Reinforce:
         # self.evaluation_iteration = self.iteration
 
         # Update the batcher with the last version of the learning model
-
+        print(self.learning_model.state_dict())
         sd=self._state_dict(self.learning_model,self.config["batcher_device"])
         self.train_batcher.update(sd)
+        exit()
 
         n_interactions = 0
         while time.time() - _start_time < self.config["time_limit"]:
