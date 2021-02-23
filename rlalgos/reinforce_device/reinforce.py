@@ -124,7 +124,8 @@ class Reinforce:
         # self.evaluation_iteration = self.iteration
 
         # Update the batcher with the last version of the learning model
-        sd=self.learning_model.state_dict() #self._state_dict(self.learning_model,self.config["batcher_device"])
+#        sd=self.learning_model.state_dict() #self._state_dict(self.learning_model,self.config["batcher_device"])
+        sd=self._state_dict(self.learning_model,torch.device("cpu"))
         self.train_batcher.update(sd)
 
         n_interactions = 0
@@ -168,7 +169,8 @@ class Reinforce:
             optimizer.step()
 
             # 6) Update the train batcher with the updated model
-            sd=self.learning_model.state_dict() #self._state_dict(self.learning_model,torch.device("cpu")) #self._state_dict(self.learning_model,self.config["batcher_device"])
+#            sd=self.learning_model.state_dict() #self._state_dict(self.learning_model,torch.device("cpu")) #self._state_dict(self.learning_model,self.config["batcher_device"])
+            sd=self._state_dict(self.learning_model,torch.device("cpu"))
             self.train_batcher.update(sd)
 
             # 7) Print some messages
