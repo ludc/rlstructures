@@ -323,15 +323,15 @@ def s_worker_process(
     in_queue,
     out_queue,
 ):
-    env = create_env(**env_parameters)
-    n_envs = env.n_envs()
-    agent = create_agent(**agent_parameters)
-    agent_state = None
-    observation = None
-    env_running = None
-    agent_info = None
-    env_info = None
-    n_episodes = None
+    # env = create_env(**env_parameters)
+    # n_envs = env.n_envs()
+    # agent = create_agent(**agent_parameters)
+    # agent_state = None
+    # observation = None
+    # env_running = None
+    # agent_info = None
+    # env_info = None
+    # n_episodes = None
     terminate_process = False
     while not terminate_process:
         order = in_queue.get()
