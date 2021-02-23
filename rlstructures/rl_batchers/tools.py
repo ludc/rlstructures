@@ -298,7 +298,7 @@ class S_Buffer:
             del(self.buffers[k])
         while(len(self.fbuffers)>0):
             k=list(self.fbuffers.keys())[0]
-            del(self.fbuffers[k])
+            del(self.f  buffers[k])
         del(self.position_in_slot)
 
     def get_single_slots(self, slots, erase=True, clone=True):
@@ -473,3 +473,4 @@ class S_ProcessWorker:
         time.sleep(0.1)
         del self.inq
         del self.outq
+        del(buffer)
