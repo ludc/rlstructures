@@ -341,10 +341,10 @@ def s_worker_process(
         if order_name == "close":
             print("\tClosing process...")
             terminate_process = True
-            env.close()
-            agent.close()
-            del(env)
-            del(agent)
+            # env.close()
+            # agent.close()
+            # del(env)
+            # del(agent)
         elif order_name == "reset":
             print("la1",order[1].device(),order[2].device())
             _, _agent_info, _env_info = order
