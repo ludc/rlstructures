@@ -132,6 +132,10 @@ class RL_Batcher:
         #     specs_env_info=specs_env_info,
         #     device=device
         # )
+        del(obs)
+        del(who)
+        del(a)
+        del(b)
         self.workers = []
         self.n_per_worker = []
         assert isinstance(seeds, list), "You have to choose one seed per process"
