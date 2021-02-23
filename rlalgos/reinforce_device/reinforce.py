@@ -174,7 +174,7 @@ class Reinforce:
             print("#######")
             sd=self._state_dict(self.learning_model,self.config["batcher_device"])
             self.train_batcher.update(sd)
-
+            exit()
             # 7) Print some messages
             print(
                 "At iteration %d, avg (discounted) reward is %f"
