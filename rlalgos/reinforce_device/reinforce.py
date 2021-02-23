@@ -79,7 +79,6 @@ class Reinforce:
 
         # Create a batcher to sample learning trajectories
         model = copy.deepcopy(self.learning_model)
-
         self.train_batcher = RL_Batcher(
             n_timesteps=self.config["max_episode_steps"],
             create_agent=self._create_agent,
