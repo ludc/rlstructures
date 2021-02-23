@@ -292,9 +292,12 @@ class S_Buffer:
         """
         self._free_slots_queue.close()
         self._full_slots_queue.close()
-        for k in self.buffers:
+
+        while(len(self.buffers)>0):
+            k=list(self.buffers.keys())[0]
             del(self.buffers[k])
-        for k in self.fbuffers:
+        while(len(self.fbuffers)>0):
+            k=list(self.fbuffers.keys())[0]
             del(self.fbuffers[k])
         del(self.position_in_slot)
 
