@@ -414,6 +414,7 @@ class S_ProcessWorker:
         )
         self.process = p
         p.daemon = True
+        exit()
         p.start()
 
     def acquire_slot(self, agent_info=None):
