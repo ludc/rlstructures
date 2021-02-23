@@ -123,8 +123,8 @@ class RL_Batcher:
         # del b
         # del obs
         # del who
-        del env
-        del agent
+        # del env
+        # del agent
 
         self.buffer = None
         # S_Buffer(n_slots=self.n_envs * n_processes,
