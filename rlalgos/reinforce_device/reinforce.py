@@ -100,8 +100,6 @@ class Reinforce:
             env_info=DictTensor({}),
             device=self.config["batcher_device"]
         )
-        self.train_batcher.close()
-        exit()
 
         self.learning_model.to(self.config["learner_device"])
         # Creation of the optimizer
