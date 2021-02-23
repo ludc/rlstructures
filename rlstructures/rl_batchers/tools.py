@@ -342,6 +342,7 @@ def s_worker_process(
     n_episodes = None
     terminate_process = False
     while not terminate_process:
+        print(in_queue," wiating")
         order = in_queue.get()
         assert isinstance(order, tuple)
         order_name = order[0]
