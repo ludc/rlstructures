@@ -126,11 +126,13 @@ class Reinforce:
         # self.evaluation_iteration = self.iteration
 
         # Update the batcher with the last version of the learning model
-
+        print("la")
+        time.sleep(50)
         sd=self.learning_model.state_dict() #self._state_dict(self.learning_model,self.config["batcher_device"])
         self.train_batcher.update(sd)
 
         n_interactions = 0
+
         while time.time() - _start_time < self.config["time_limit"]:
             # 1) The policy will be executed in "stochastic' mode
             n_episodes = self.config["n_envs"] * self.config["n_processes"]
