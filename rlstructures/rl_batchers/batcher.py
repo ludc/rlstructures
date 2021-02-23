@@ -89,11 +89,11 @@ class RL_Batcher:
         device=torch.device("cpu")
     ):
         # Buffer creation:
-        agent = create_agent(**agent_args)
-        env = create_env(**{**env_args, "seed": 0})
+        # agent = create_agent(**agent_args)
+        # env = create_env(**{**env_args, "seed": 0})
 
-        assert agent_info.empty() or agent_info.device()==torch.device("cpu"),"agent_info must be on CPU"
-        assert env_info.empty() or env_info.device()==torch.device("cpu"),"env_info must be on CPU"
+        # assert agent_info.empty() or agent_info.device()==torch.device("cpu"),"agent_info must be on CPU"
+        # assert env_info.empty() or env_info.device()==torch.device("cpu"),"env_info must be on CPU"
 
         # if not agent_info.empty():
         #     agent_info = agent_info.slice(0, 1)
