@@ -131,6 +131,7 @@ class Reinforce:
         # self.train_batcher.update(sd)
 
         n_interactions = 0
+        print("start")
         while time.time() - _start_time < self.config["time_limit"]:
             # 1) The policy will be executed in "stochastic' mode
             n_episodes = self.config["n_envs"] * self.config["n_processes"]
@@ -138,6 +139,8 @@ class Reinforce:
                 {"stochastic": torch.tensor([True]).repeat(n_episodes)}
             )
             self.train_batcher.reset(agent_info=agent_info)
+            print("coucou")
+            time.sleep(5)
             self.train_batcher.execute()
             print("coucou")
             time.sleep(5)
