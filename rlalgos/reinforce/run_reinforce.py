@@ -18,6 +18,7 @@ from rlalgos.reinforce.agent import ReinforceAgent, ActionModel, BaselineModel, 
 from rlalgos.reinforce.reinforce import Reinforce
 import gym
 from gym.wrappers import TimeLimit
+import copy
 
 # We write the 'create_env' and 'create_agent' function in the main file to allow these functions to be used with pickle when creating the batcher processes
 def create_gym_env(env_name):
@@ -36,6 +37,7 @@ def create_env(n_envs, env_name=None, max_episode_steps=None, seed=None):
 
 # Create a rlstructures.Agent
 def create_agent(model, n_actions=1):
+    model=copy.deepcopy(model)
     return ReinforceAgent(model=model, n_actions=n_actions)
 
 
