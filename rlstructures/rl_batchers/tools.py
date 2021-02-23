@@ -336,6 +336,7 @@ def s_worker_process(
         order = in_queue.get()
         assert isinstance(order, tuple)
         order_name = order[0]
+        print(order_name)
         if order_name == "close":
             print("\tClosing process...")
             terminate_process = True
