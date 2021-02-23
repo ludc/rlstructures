@@ -132,7 +132,7 @@ class Reinforce:
 
         n_interactions = 0
         print("start")
-        time.sleep(5)
+        time.sleep(20)
         while time.time() - _start_time < self.config["time_limit"]:
             # 1) The policy will be executed in "stochastic' mode
             n_episodes = self.config["n_envs"] * self.config["n_processes"]
