@@ -415,7 +415,7 @@ class S_ProcessWorker:
         p = ctx.Process(
             target=s_worker_process,
             args=(
-                buffer,
+                None,
                 create_env,
                 env_args,
                 create_agent,
