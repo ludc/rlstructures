@@ -100,7 +100,8 @@ class Reinforce:
             env_info=DictTensor({}),
             device=self.config["batcher_device"]
         )
-
+        self.train_batcher.close()
+        exit()
         self.learning_model.to(self.config["learner_device"])
         # Creation of the optimizer
         optimizer = torch.optim.RMSprop(
@@ -127,8 +128,7 @@ class Reinforce:
         # self.evaluation_iteration = self.iteration
 
         # Update the batcher with the last version of the learning model
-        self.train_batcher.close()
-        exit()
+
         sd=self._state_dict(self.learning_model,torch.device("cpu")) #self.config["batcher_device"])
         self.train_batcher.update(sd)
 
