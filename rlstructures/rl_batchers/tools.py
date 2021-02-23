@@ -296,6 +296,7 @@ class S_Buffer:
             del(self.buffers[k])
         for k in self.fbuffers:
             del(self.fbuffers[k])
+        del(self.position_in_slot)
 
     def get_single_slots(self, slots, erase=True, clone=True):
         assert isinstance(slots, list)
