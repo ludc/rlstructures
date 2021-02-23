@@ -138,7 +138,6 @@ class Reinforce:
                 {"stochastic": torch.tensor([True]).repeat(n_episodes)}
             )
             self.train_batcher.reset(agent_info=agent_info)
-            exit()
             self.train_batcher.execute()
 
 
@@ -173,7 +172,7 @@ class Reinforce:
             optimizer.step()
 
             # 6) Update the train batcher with the updated model
-            sd=self._state_dict(self.learning_model,self.config["batcher_device"])
+            sd=self._state_dict(self.learning_model,torch.device("cpu")) #self.config["batcher_device"])
             self.train_batcher.update(sd)
 
             # 7) Print some messages
