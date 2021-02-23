@@ -79,7 +79,8 @@ class Reinforce:
 
         # Create a batcher to sample learning trajectories
         model = copy.deepcopy(self.learning_model)
-        model.to(self.config["batcher_device"]).share_memory()
+        model.to(self.config["batcher_device"])
+        model=None
 
         self.train_batcher = RL_Batcher(
             n_timesteps=self.config["max_episode_steps"],
