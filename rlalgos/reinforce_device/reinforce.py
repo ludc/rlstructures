@@ -49,7 +49,7 @@ class Reinforce:
 
         # Create one agent for loss computation (see get_loss)
         self.agent = self._create_agent(
-            n_actions=self.n_actions, model=self.learning_model,device=self.config["learner_device"]
+            n_actions=self.n_actions, model=self.learning_model,device=self.config["learner_device"],copy_model=False
         )
 
         # We create a batcher dedicated to evaluation

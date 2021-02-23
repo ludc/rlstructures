@@ -36,9 +36,7 @@ def create_env(n_envs, env_name=None, max_episode_steps=None, seed=None):
 
 
 # Create a rlstructures.Agent
-def create_agent(model, n_actions=1,copy_model=True):
-    if copy_model:
-        model=copy.deepcopy(model)
+def create_agent(model, n_actions=1):
     return ReinforceAgent(model=model, n_actions=n_actions)
 
 
