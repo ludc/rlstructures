@@ -101,7 +101,6 @@ class Reinforce:
             env_info=DictTensor({}),
             device=self.config["batcher_device"]
         )
-        del(model)
         self.train_batcher.close()
         exit()
 
