@@ -47,11 +47,6 @@ class Reinforce:
         # Create the agent model
         self.learning_model = self._create_model()
 
-        # Create one agent for loss computation (see get_loss)
-        self.agent = self._create_agent(
-            n_actions=self.n_actions, model=self.learning_model,device=self.config["learner_device"],copy_model=False
-        )
-
         # We create a batcher dedicated to evaluation
         # model = copy.deepcopy(self.learning_model)
         # model.to(self.config["evaluation_device"])
@@ -101,6 +96,9 @@ class Reinforce:
         )
 
         self.learning_model.to(self.config["learner_device"])
+        self.agent = self._create_agent(
+            n_actions=self.n_actions, model=self.learning_model,device=self.config["learner_device"],copy_model=False
+        )
         # Creation of the optimizer
         optimizer = torch.optim.RMSprop(
             self.learning_model.parameters(), lr=self.config["lr"]
