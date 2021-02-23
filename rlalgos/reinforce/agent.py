@@ -19,6 +19,8 @@ class ReinforceAgent(RL_Agent):
         self.n_actions = n_actions
 
     def update(self,  state_dict):
+        print(self)
+        print(self.model)
         self.model.load_state_dict(state_dict)
 
     def require_history(self):
