@@ -80,6 +80,8 @@ class Reinforce:
         # Create a batcher to sample learning trajectories
         model = copy.deepcopy(self.learning_model)
         model.to(self.config["batcher_device"])
+        exit()
+
         self.train_batcher = RL_Batcher(
             n_timesteps=self.config["max_episode_steps"],
             create_agent=self._create_agent,
@@ -127,7 +129,6 @@ class Reinforce:
         # self.evaluation_iteration = self.iteration
 
         # Update the batcher with the last version of the learning model
-        exit()
         sd=self._state_dict(self.learning_model,torch.device("cpu")) #self.config["batcher_device"])
         self.train_batcher.update(sd)
 
