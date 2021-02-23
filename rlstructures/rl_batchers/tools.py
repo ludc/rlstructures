@@ -331,7 +331,7 @@ def s_worker_process(
     in_queue,
     out_queue,
 ):
-    print("s_worer_process")
+    print("s_worker_process")
     env = create_env(**env_parameters)
     n_envs = env.n_envs()
     agent = create_agent(**agent_parameters)
@@ -417,7 +417,7 @@ class S_ProcessWorker:
         p = ctx.Process(
             target=s_worker_process,
             args=(
-                buffer,
+                None,
                 create_env,
                 env_args,
                 create_agent,
