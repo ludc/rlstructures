@@ -20,8 +20,9 @@ class ReinforceAgent(RL_Agent):
 
     def update(self,  state_dict):
         print(self)
-        print(self.model)
         self.model.load_state_dict(state_dict)
+        print(self.model.state_dict)
+        print("====")
 
     def require_history(self):
         return False
