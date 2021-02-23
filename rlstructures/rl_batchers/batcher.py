@@ -147,4 +147,5 @@ class RL_Batcher:
                 e_args,
                 self.buffer,
             )
+            exit()
             self.workers.append(worker)
