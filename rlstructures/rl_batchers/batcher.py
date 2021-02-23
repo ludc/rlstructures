@@ -91,6 +91,8 @@ class RL_Batcher:
         # Buffer creation:
         print(agent_args)
         agent = create_agent(**agent_args)
+        print(agent)
+        print(agent.model)
         del(agent.model)
         del(agent)
         # env = create_env(**{**env_args, "seed": 0})
