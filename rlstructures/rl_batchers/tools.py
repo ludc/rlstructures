@@ -355,7 +355,6 @@ def s_worker_process(
             del(env)
             del(agent)
         elif order_name == "reset":
-            print("la1",order[1].device(),order[2].device())
             _, _agent_info, _env_info = order
             agent_info = _agent_info.clone()
             env_info = _env_info.clone()
