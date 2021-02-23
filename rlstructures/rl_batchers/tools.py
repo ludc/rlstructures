@@ -331,7 +331,6 @@ def s_worker_process(
     in_queue,
     out_queue,
 ):
-    print("s_worker_process")
     env = create_env(**env_parameters)
     n_envs = env.n_envs()
     agent = create_agent(**agent_parameters)
@@ -344,7 +343,6 @@ def s_worker_process(
     terminate_process = False
     out_queue.put("ready")
     while not terminate_process:
-        print(in_queue," wiating")
         order = in_queue.get()
         assert isinstance(order, tuple)
         order_name = order[0]
