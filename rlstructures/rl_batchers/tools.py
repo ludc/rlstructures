@@ -325,7 +325,6 @@ def s_worker_process(
     env = create_env(**env_parameters)
     n_envs = env.n_envs()
     agent = create_agent(**agent_parameters)
-    exit()
     agent_state = None
     observation = None
     env_running = None
@@ -342,6 +341,8 @@ def s_worker_process(
             terminate_process = True
             env.close()
             agent.close()
+            del(env)
+            del(agent)
         elif order_name == "reset":
             print("la1",order[1].device(),order[2].device())
             _, _agent_info, _env_info = order
