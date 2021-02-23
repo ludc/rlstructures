@@ -1,6 +1,6 @@
 # IMPORTANT NOTE
 
-**February 2021: Due to recent feedback, the API of the batcher has been improved with the following consequences:**
+**February 2021 - version 0.2 : Due to recent feedback, the API of the batcher has been improved with the following consequences:**
 * The EpisodeBatcher and Batcher, associated with the Agent classes are still working but will print a deprecated message
 * The new Batcher is called RL_Batcher (see documentation) and associated with a RL_Agent with a simplified API
 * Learning algorithms using the old version are now in 'rlalgos/deprecated' and the algorithms using the new API are located in 'rlalgos/'
@@ -40,7 +40,9 @@ pip install .
 
 The complete documentation is available at [http://facebookresearch.github.io/rlstructures](http://facebookresearch.github.io/rlstructures). The example algorithms are provided in *raglos/*.
 
-A facebook group is also open for discussion.
+Tutorials are provided at: [https://medium.com/@ludovic.den](https://medium.com/@ludovic.den)
+
+A facebook group is also open for discussions : [https://www.facebook.com/groups/834804787067021](https://www.facebook.com/groups/834804787067021)
 
 # List of Papers using rlstructures
 
