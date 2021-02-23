@@ -63,7 +63,7 @@ if __name__ == "__main__":
         "n_processes": 4,
         "n_evaluation_processes": 2,
         "n_evaluation_envs": 128,
-        "time_limit": 3600,
+        "time_limit": 20,
         "lr": 0.01,
         "discount_factor": 0.9,
         "baseline_coef": 0.1,
