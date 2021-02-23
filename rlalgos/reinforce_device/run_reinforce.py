@@ -36,7 +36,7 @@ def create_env(n_envs, env_name=None, max_episode_steps=None, device=None,seed=N
 
 # Create a rlstructures.Agent
 def create_agent(model, n_actions=1,device=None):
-    agent=ReinforceAgent(model=model, n_actions=n_actions)
+    agent=ReinforceAgent(model=model.to(device), n_actions=n_actions)
     return RL_Agent_CheckDevice(agent,device)
 
 class Experiment(Reinforce):

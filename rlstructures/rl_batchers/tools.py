@@ -404,8 +404,6 @@ class S_ProcessWorker:
         self.inq.cancel_join_thread()
         self.outq.cancel_join_thread()
 
-        agent_args["model"]=None
-
         p = ctx.Process(
             target=s_worker_process,
             args=(
