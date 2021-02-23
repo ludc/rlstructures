@@ -23,7 +23,6 @@ class Reinforce:
     def __init__(self, config, create_env,  create_agent):
         self.config = config
 
-        # Creation of the Logger (that saves in tensorboard and CSV)
         self.logger = TFLogger(log_dir=self.config["logdir"], hps=self.config)
 
         self._create_env = create_env
@@ -44,10 +43,8 @@ class Reinforce:
         self.obs_dim = env.reset()[0]["frame"].size()[1]
         del env
 
-        # Create the agent model
         self.learning_model = self._create_model()
 
-        # We create a batcher dedicated to evaluation
         model = self.learning_model
         self.evaluation_batcher = RL_Batcher(
             n_timesteps=self.config["max_episode_steps"],
@@ -70,7 +67,6 @@ class Reinforce:
             device=self.config["evaluation_device"]
         )
 
-        # Create a batcher to sample learning trajectories
         model = self.learning_model
         self.train_batcher = RL_Batcher(
             n_timesteps=self.config["max_episode_steps"],
@@ -97,12 +93,10 @@ class Reinforce:
         self.agent = self._create_agent(
             n_actions=self.n_actions, model=self.learning_model,device=self.config["learner_device"],copy_model=False
         )
-        # Creation of the optimizer
         optimizer = torch.optim.RMSprop(
             self.learning_model.parameters(), lr=self.config["lr"]
         )
 
-        # Training Loop:
         _start_time = time.time()
         self.iteration = 0
 
@@ -229,8 +223,8 @@ class Reinforce:
                 self.evaluation_batcher.execute()
 
         self.train_batcher.close()
-        #self.evaluation_batcher.get()  # To wait for the last trajectories
-        #self.evaluation_batcher.close()
+        self.evaluation_batcher.get()  # To wait for the last trajectories
+        elf.evaluation_batcher.close()
         self.logger.update_csv()  # To save as a CSV file in logdir
         self.logger.close()
 
