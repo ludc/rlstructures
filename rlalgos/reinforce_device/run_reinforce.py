@@ -21,11 +21,8 @@ from gym.wrappers import TimeLimit
 from rlstructures import RL_Agent_CheckDevice
 # We write the 'create_env' and 'create_agent' function in the main file to allow these functions to be used with pickle when creating the batcher processes
 
-print("truc")
-
 def create_gym_env(env_name):
     return gym.make(env_name)
-
 
 # Create a rlstructures.VecEnv from multiple gym.Env, limiting the number of steps
 def create_env(n_envs, env_name=None, max_episode_steps=None, device=None,seed=None):
@@ -35,7 +32,6 @@ def create_env(n_envs, env_name=None, max_episode_steps=None, device=None,seed=N
         e = TimeLimit(e, max_episode_steps=max_episode_steps)
         envs.append(e)
     return DeviceEnv(GymEnv(envs, seed),from_device=torch.device("cpu"),to_device=device)
-
 
 # Create a rlstructures.Agent
 def create_agent(model, n_actions=1,device=None,copy_model=True):
@@ -58,7 +54,7 @@ class Experiment(Reinforce):
 if __name__ == "__main__":
     # We use spawn mode such that most of the environment will run in multiple processes
     import torch.multiprocessing as mp
-
+    print("la")
     mp.set_start_method("spawn")
 
     config = {
