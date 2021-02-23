@@ -125,7 +125,7 @@ class RL_Batcher:
         del who
         del env
         del agent
-        print(specs_agent_state)
+        print(specs_environment)
 
         self.buffer = S_Buffer(n_slots=self.n_envs * n_processes,
             s_slots=n_timesteps,
