@@ -140,10 +140,8 @@ class Reinforce:
             self.train_batcher.reset(agent_info=agent_info)
             self.train_batcher.execute()
 
-
             # 2) We get the trajectories (and wait until the trajectories have been sampled)
             trajectories, n_env_running = self.train_batcher.get(blocking=True)
-
 
             assert n_env_running == 0  # Assert that all trajectories are finished
             n_interactions += trajectories.trajectories.mask().sum().item()

@@ -121,9 +121,7 @@ class RL_Batcher:
         specs_env_info = env_info.specs()
         del env
         del agent
-        self.buffer = None
-        S_Buffer(
-            n_slots=self.n_envs * n_processes,
+        self.buffer = S_Buffer(n_slots=self.n_envs * n_processes,
             s_slots=n_timesteps,
             specs_agent_state=specs_agent_state,
             specs_agent_output=specs_agent_output,
