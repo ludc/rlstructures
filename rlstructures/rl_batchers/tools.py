@@ -403,8 +403,9 @@ class S_ProcessWorker:
         self.outq = mp.Queue()
         self.inq.cancel_join_thread()
         self.outq.cancel_join_thread()
-        env_args=copy.deepcopy(env_args)
-        agent_args=copy.deepcopy(agent_args)
+
+        agent_args["model"]=None
+
         p = ctx.Process(
             target=s_worker_process,
             args=(
