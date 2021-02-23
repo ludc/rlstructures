@@ -90,43 +90,41 @@ class RL_Batcher:
     ):
         # Buffer creation:
         agent = create_agent(**agent_args)
-        del(agent)
+        env = create_env(**{**env_args, "seed": 0})
 
-        # env = create_env(**{**env_args, "seed": 0})
+        assert agent_info.empty() or agent_info.device()==torch.device("cpu"),"agent_info must be on CPU"
+        assert env_info.empty() or env_info.device()==torch.device("cpu"),"env_info must be on CPU"
 
-        # assert agent_info.empty() or agent_info.device()==torch.device("cpu"),"agent_info must be on CPU"
-        # assert env_info.empty() or env_info.device()==torch.device("cpu"),"env_info must be on CPU"
+        if not agent_info.empty():
+            agent_info = agent_info.slice(0, 1)
+            agent_info = DictTensor.cat([agent_info for k in range(env.n_envs())])
+        if not env_info.empty():
+            env_info = env_info.slice(0, 1)
+            env_info = DictTensor.cat([env_info for k in range(env.n_envs())])
 
-        # if not agent_info.empty():
-        #     agent_info = agent_info.slice(0, 1)
-        #     agent_info = DictTensor.cat([agent_info for k in range(env.n_envs())])
-        # if not env_info.empty():
-        #     env_info = env_info.slice(0, 1)
-        #     env_info = DictTensor.cat([env_info for k in range(env.n_envs())])
+        obs, who = env.reset(env_info)
+        assert obs.device()==device,"environment observation is not on the same device than the batcher"
 
-        # obs, who = env.reset(env_info)
-        # assert obs.device()==device,"environment observation is not on the same device than the batcher"
+        B = obs.n_elems()
+        with torch.no_grad():
+            istate = agent.initial_state(agent_info, B)
+            assert istate.empty() or istate.device()==device,"agent initial state is not on the same device than the batcher"
+            b, a = agent(istate, obs, agent_info)
 
-        # B = obs.n_elems()
-        # with torch.no_grad():
-        #     istate = agent.initial_state(agent_info, B)
-        #     assert istate.empty() or istate.device()==device,"agent initial state is not on the same device than the batcher"
-        #     b, a = agent(istate, obs, agent_info)
+        self.n_envs = env.n_envs()
+        self._n_episodes = n_processes * self.n_envs
 
-        # self.n_envs = env.n_envs()
-        # self._n_episodes = n_processes * self.n_envs
-
-        # specs_agent_state = a.specs()
-        # specs_agent_output = b.specs()
-        # specs_environment = obs.specs()
-        # specs_agent_info = agent_info.specs()
-        # specs_env_info = env_info.specs()
-        # del a
-        # del b
-        # del obs
-        # del who
-        # del env
-        # del agent
+        specs_agent_state = a.specs()
+        specs_agent_output = b.specs()
+        specs_environment = obs.specs()
+        specs_agent_info = agent_info.specs()
+        specs_env_info = env_info.specs()
+        del a
+        del b
+        del obs
+        del who
+        del env
+        del agent
 
         self.buffer = None
         # S_Buffer(n_slots=self.n_envs * n_processes,
