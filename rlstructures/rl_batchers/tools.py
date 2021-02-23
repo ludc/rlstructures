@@ -405,7 +405,7 @@ def s_worker_process(
             assert False, "Unknown order..."
     out_queue.put("TERMINATED")
 
-
+print("coucou")
 class S_ProcessWorker:
     def __init__(
         self, worker_id, create_agent, agent_args, create_env, env_args, buffer
