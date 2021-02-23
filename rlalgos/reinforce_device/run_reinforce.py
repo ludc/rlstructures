@@ -35,7 +35,7 @@ def create_env(n_envs, env_name=None, max_episode_steps=None, device=None,seed=N
 
 # Create a rlstructures.Agent
 def create_agent(model, n_actions=1,device=None,copy_model=True):
-    print("create agent on ",device)
+    print("create agent on ",device," with model copy==",copy_model)
     if copy_model:
         model=copy.deepcopy(model)
 
