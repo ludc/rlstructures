@@ -1,17 +1,19 @@
 # IMPORTANT NOTE
 
-**February 2021 - version 0.2 : Due to recent feedback, the API of the batcher has been improved with the following consequences:**
-* The EpisodeBatcher and Batcher, associated with the Agent classes are still working but will print a deprecated message
-* The new Batcher is called RL_Batcher (see documentation) and associated with a RL_Agent with a simplified API
-* Learning algorithms using the old version are now in 'rlalgos/deprecated' and the algorithms using the new API are located in 'rlalgos/'
+**February 2021 - version 0.2 : Due to recent feedback, the API has been modified improved**
 
-What you gain by using the new API:
-* The batcher returns a **Trajectories** object that contains both fixed information (as a DictTensor e.g agent_info, env_info, agent state at the beginning of the trajectories, ...) and sequence of transitions in a TemporalDictTensor
-* We provide a *replay* function to replay an agent on trajectories, allowing a faster and simpler implementation of algorithms
+* The new API is not compatible with the old one
+* The old API is still working (but printing a deprecated message)
+* The v0.1 version of rlstructures will remain available in the v0.1 github branch
+* We encourage users to switch to the v0.2 API which does not need lot of modifications in your current code
+
+Note that what you gain by using the new API:
+* A single Batcher class (instead of two)
+* A more clear organization of the information computed by the batcher
+* A few (replay) tools function to facilitate implementation.
 
 All these changes are documented in the HTML documentation at [http://facebookresearch.github.io/rlstructures](http://facebookresearch.github.io/rlstructures)
 
-We consider that the new provided API is faster and simpler to use.
 
 # TL;DR
 
@@ -38,11 +40,15 @@ pip install .
 
 * [http://facebookresearch.github.io/rlstructures](http://facebookresearch.github.io/rlstructures)
 
-The complete documentation is available at [http://facebookresearch.github.io/rlstructures](http://facebookresearch.github.io/rlstructures). The example algorithms are provided in *raglos/*.
+* A must read: tutorials are provided at: [https://medium.com/@ludovic.den](https://medium.com/@ludovic.den)
 
-Tutorials are provided at: [https://medium.com/@ludovic.den](https://medium.com/@ludovic.den)
+* The complete documentation is available at [http://facebookresearch.github.io/rlstructures](http://facebookresearch.github.io/rlstructures). The example algorithms are provided in *rlaglos/*.
 
-A facebook group is also open for discussions : [https://www.facebook.com/groups/834804787067021](https://www.facebook.com/groups/834804787067021)
+* A facebook group is also open for discussions : [https://www.facebook.com/groups/834804787067021](https://www.facebook.com/groups/834804787067021)
+
+## Targeted users
+
+RLStructures comes with a set of implemented RL algorithms. But rlstructures does not aim at being a repository of benchmarked RL algorithms (an other RL librairies do that very well). If your objective is to apply state-of-the-art methods on particular environments, then rlstructures is not the best fit. If your objective is to implement new algorithms, then rlstructures is a good fit.
 
 # List of Papers using rlstructures
 
@@ -56,7 +62,7 @@ Please use this bibtex if you want to cite this repository in your publications:
 
 ```
     @misc{rlstructures,
-        author = {L. Denoyer, D. Rothermel and X. Martinet},
+        author = {Ludovic Denoyer, Danielle Rothermel and Xavier Martinet},
         title = {{RLStructures - A simple library for RL research}},
         year = {2021},
         publisher = {GitHub},
@@ -65,10 +71,6 @@ Please use this bibtex if you want to cite this repository in your publications:
     }
 
 ```
-
-* Author: Ludovic Denoyer
-* Co-authors: Danielle Rothermel, Xavier Martinet
-* Other contributors: many....
 
 ## License
 

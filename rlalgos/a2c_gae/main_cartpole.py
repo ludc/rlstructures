@@ -99,6 +99,7 @@ if __name__ == "__main__":
         "clip_grad": 40,
         "learner_device": "cpu",
         "save_every": 100,
+        "optim":"Adam"
     }
     exp = Experiment(config, create_train_env, create_env, create_agent)
     exp.run()

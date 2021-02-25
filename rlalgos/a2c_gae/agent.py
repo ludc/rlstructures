@@ -110,7 +110,7 @@ class ActionModel(nn.Module):
     def initial_state(self,B):
         return torch.ones(B,self.n_hidden)
 
-    def forward(self, state,frame,debug=False,fframe=None):
+    def forward(self, state,frame):
         frame = self.actf(self.linear(frame))
         z=self.gru(frame,state)
         zz = self.actf(self.linear2(z))

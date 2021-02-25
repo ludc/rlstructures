@@ -18,7 +18,7 @@ import time
 import numpy as np
 import torch.nn.functional as F
 from rlstructures import replay_agent
-
+import torch.optim as optim
 
 class A2C:
     def __init__(self, config, create_train_env, create_env, create_agent):

@@ -39,12 +39,17 @@ It comes with multiple RL algorithms as examples including A2C, PPO, DDQN and SA
 
 Please reach out to us if you intend to use it. We will be happy to help, and potentially to implement missing functionalities.
 
+Targeted users
+--------------
+
+RLStructures comes with a set of implemented RL algorithms. But rlstructures does not aim at being a repository of benchmarked RL algorithms (an other RL librairies do that very well). If your objective is to apply state-of-the-art methods on particular environments, then rlstructures is not the best fit. If your objective is to implement new algorithms, then rlstructures is a good fit.
+
 Where?
 ------
 
 * Github: http://github.com/facebookresearch/rlstructures
+* Tutorials: https://medium.com/@ludovic.den
 * Discussion Group: https://www.facebook.com/groups/834804787067021
-* Medium posts/Tutorials: https://medium.com/@ludovic.den
 
 .. toctree::
    :maxdepth: 1
